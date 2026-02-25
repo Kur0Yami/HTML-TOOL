@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hitung Belanja untuk Dapat Diskon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .input-field {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            width: 80%;
+            max-width: 300px;
+        }
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hitung Belanja untuk Dapat Diskon</h1>
+    <div class="container">
+        <label for="discountPercentage">Masukkan persentase diskon (%):</label><br>
+        <input type="number" id="discountPercentage" class="input-field" placeholder="Misal: 20" min="0" max="100"><br>
+
+        <label for="maxDiscount">Masukkan batas maksimal diskon (Rp):</label><br>
+        <input type="number" id="maxDiscount" class="input-field" placeholder="Misal: 100000"><br>
+
+        <label for="discountAmount">Masukkan jumlah diskon yang ingin didapatkan (Rp):</label><br>
+        <input type="number" id="discountAmount" class="input-field" placeholder="Masukkan jumlah diskon (Rp)">
+        
+        <button class="button" onclick="calculateRequiredSpending()">Hitung Belanja</button>
+    </div>
+    <div class="result" id="result"></div>
+
+    <script>
+        function calculateRequiredSpending() {
+            var discountPercentage = document.getElementById('discountPercentage').value;
+            var maxDiscount = document.getElementById('maxDiscount').value;
+            var discountAmount = document.getElementById('discountAmount').value;
+
+            // Validasi input
+            if (discountPercentage === "" || discountAmount === "" || maxDiscount === "" || discountPercentage <= 0 || discountAmount <= 0 || maxDiscount <= 0) {
+                document.getElementById('result').innerText = "Harap masukkan nilai yang valid untuk semua kolom.";
+                return;
+            }
+
+            // Jika diskon yang diminta lebih besar dari batas maksimum, gunakan batas maksimum
+            if (discountAmount > maxDiscount) {
+                discountAmount = maxDiscount;
+            }
+
+            // Menghitung harga yang harus dibelanjakan berdasarkan diskon yang diinginkan
+            var requiredSpending = discountAmount / (discountPercentage / 100);
+
+            // Menampilkan hasil
+            document.getElementById('result').innerHTML = "Untuk mendapatkan diskon Rp " + discountAmount.toLocaleString('id-ID') + 
+            " (maksimal Rp " + maxDiscount.toLocaleString('id-ID') + "), Anda harus berbelanja sebesar: Rp " + requiredSpending.toLocaleString('id-ID');
+        }
+    </script>
+</body>
+</html>
