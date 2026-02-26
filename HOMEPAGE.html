@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glass New Tab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --glass: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.15);
+    --glass-hover: rgba(255,255,255,0.14);
+    --blur: 18px;
+    --text: rgba(255,255,255,0.92);
+    --text-muted: rgba(255,255,255,0.5);
+    --accent: rgba(255,255,255,0.2);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    font-family: 'Outfit', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Background */
+  #bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: #0d0d1a;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.6s ease;
+  }
+  #bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 100%);
+  }
+
+  /* Layout */
+  #app {
+    position: relative; z-index: 1;
+    width: 100%; height: 100vh;
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+    grid-template-columns: 1fr;
+    align-items: center;
+    justify-items: center;
+    padding: 24px;
+    gap: 0;
+  }
+
+  /* ── CLOCK ── */
+  #clock-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 32px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  #clock {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(56px, 10vw, 88px);
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -2px;
+    line-height: 1;
+    text-shadow: 0 2px 32px rgba(0,0,0,0.4);
+  }
+
+  #date {
+    margin-top: 10px;
+    font-size: clamp(13px, 2vw, 16px);
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  /* ── SEARCH ── */
+  #search-section {
+    width: 100%;
+    max-width: 580px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  #search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  #search {
+    width: 100%;
+    padding: 14px 52px 14px 20px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    outline: none;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  #search::placeholder { color: var(--text-muted); }
+  #search:focus {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.07);
+  }
+
+  #search-btn {
+    position: absolute; right: 14px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 18px;
+    transition: color 0.2s, transform 0.15s;
+    display: flex; align-items: center;
+  }
+  #search-btn:hover { color: var(--text); transform: scale(1.15); }
+
+  /* ── BOTTOM AREA ── */
+  #bottom {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    justify-content: flex-start;
+    padding-top: 28px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  /* ── BOOKMARKS ── */
+  #bookmarks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .bm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 300;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .bm:hover {
+    background: var(--glass-hover);
+    border-color: rgba(255,255,255,0.28);
+    transform: translateY(-2px);
+  }
+  .bm img {
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    object-fit: contain;
+  }
+  .bm-del {
+    margin-left: 4px;
+    opacity: 0;
+    color: rgba(255,100,100,0.7);
+    font-size: 11px;
+    transition: opacity 0.15s;
+    cursor: pointer;
+  }
+  .bm:hover .bm-del { opacity: 1; }
+
+  /* ── ADD BOOKMARK ── */
+  #add-bm-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  #add-bm-row input {
+    padding: 7px 14px;
+    background: var(--glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    outline: none;
+    width: 160px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  #add-bm-row input::placeholder { color: var(--text-muted); }
+  #add-bm-row input:focus {
+    background: var(--glass-hover);
+    border-color: rgba(255,255,255,0.3);
+  }
+  #add-bm-btn {
+    padding: 7px 16px;
+    background: rgba(255,255,255,0.13);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+  #add-bm-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
+
+  /* ── SETTINGS BUTTON ── */
+  #settings-btn {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+  }
+  #settings-btn:hover { background: var(--glass-hover); color: var(--text); transform: rotate(60deg); }
+
+  /* ── SETTINGS PANEL ── */
+  #settings-panel {
+    position: fixed;
+    bottom: 70px; right: 20px;
+    width: 300px;
+    background: rgba(20,20,30,0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 100;
+    animation: popIn 0.2s ease;
+  }
+  #settings-panel.open { display: flex; }
+
+  #settings-panel h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .setting-row label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+  .setting-row input[type=text], .setting-row input[type=url] {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .setting-row input:focus { border-color: rgba(255,255,255,0.3); }
+
+  .setting-row input[type=file] {
+    display: none;
+  }
+  .file-label {
+    display: inline-block;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.2s;
+  }
+  .file-label:hover { background: rgba(255,255,255,0.16); }
+
+  .setting-row button {
+    padding: 9px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .setting-row button:hover { background: rgba(255,255,255,0.2); }
+
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* Search engine selector */
+  .engine-row {
+    display: flex;
+    gap: 6px;
+  }
+  .engine-btn {
+    flex: 1;
+    padding: 7px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .engine-btn.active {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.3);
+    color: var(--text);
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Mobile tweak */
+  @media (max-width: 480px) {
+    #clock { font-size: 52px; }
+    #search { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<div id="app">
+  <!-- Clock -->
+  <section id="clock-section">
+    <div id="clock">00:00</div>
+    <div id="date">Senin, 1 Januari 2025</div>
+  </section>
+
+  <!-- Search -->
+  <section id="search-section">
+    <div id="search-wrap">
+      <input id="search" type="text" placeholder="Cari sesuatu..." autocomplete="off" spellcheck="false">
+      <button id="search-btn" title="Cari">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Bookmarks -->
+  <section id="bottom">
+    <div id="bookmarks"></div>
+    <div id="add-bm-row">
+      <input id="bm-name" type="text" placeholder="Nama">
+      <input id="bm-url"  type="text" placeholder="URL">
+      <button id="add-bm-btn">+ Tambah</button>
+    </div>
+  </section>
+</div>
+
+<!-- Settings -->
+<button id="settings-btn" title="Pengaturan">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</button>
+
+<div id="settings-panel">
+  <h3>⚙ Pengaturan</h3>
+
+  <div class="setting-row">
+    <label>Background dari URL (Moewalls/gambar)</label>
+    <input id="bg-url-input" type="url" placeholder="https://cdn.moewalls.com/...">
+    <button onclick="applyBgUrl()">Terapkan URL</button>
+  </div>
+
+  <div class="setting-row">
+    <label>Upload gambar lokal</label>
+    <label class="file-label" for="bg-file">📁 Pilih dari HP</label>
+    <input id="bg-file" type="file" accept="image/*">
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="setting-row">
+    <label>Mesin pencari</label>
+    <div class="engine-row">
+      <button class="engine-btn active" onclick="setEngine('google','https://www.google.com/search?q=',this)">Google</button>
+      <button class="engine-btn" onclick="setEngine('bing','https://www.bing.com/search?q=',this)">Bing</button>
+      <button class="engine-btn" onclick="setEngine('ddg','https://duckduckgo.com/?q=',this)">DDG</button>
+      <button class="engine-btn" onclick="setEngine('brave','https://search.brave.com/search?q=',this)">Brave</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="setting-row">
+    <button onclick="resetAll()" style="color:rgba(255,120,120,0.8);">🗑 Reset semua data</button>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let state = {
+  bgUrl: '',
+  bgLocal: '',
+  engine: 'https://www.google.com/search?q=',
+  bookmarks: [
+    { name: 'YouTube',  url: 'https://youtube.com',  icon: 'https://www.google.com/s2/favicons?sz=32&domain=youtube.com' },
+    { name: 'Gmail',    url: 'https://mail.google.com', icon: 'https://www.google.com/s2/favicons?sz=32&domain=mail.google.com' },
+    { name: 'Twitter',  url: 'https://x.com',        icon: 'https://www.google.com/s2/favicons?sz=32&domain=x.com' },
+  ]
+};
+
+// ── PERSIST ──
+function save() { localStorage.setItem('gntd', JSON.stringify(state)); }
+function load() {
+  const raw = localStorage.getItem('gntd');
+  if (raw) try { state = { ...state, ...JSON.parse(raw) }; } catch(e) {}
+}
+
+// ── CLOCK ──
+const DAYS_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${hh}:${mm}`;
+  document.getElementById('date').textContent =
+    `${DAYS_ID[now.getDay()]}, ${now.getDate()} ${MONTHS_ID[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── BACKGROUND ──
+function applyBackground() {
+  const bg = document.getElementById('bg');
+  const url = state.bgLocal || state.bgUrl;
+  if (url) bg.style.backgroundImage = `url('${url}')`;
+  else bg.style.backgroundImage = '';
+}
+
+function applyBgUrl() {
+  const val = document.getElementById('bg-url-input').value.trim();
+  if (!val) return;
+  state.bgUrl = val;
+  state.bgLocal = '';
+  applyBackground();
+  save();
+}
+
+document.getElementById('bg-file').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    state.bgLocal = ev.target.result;
+    state.bgUrl = '';
+    document.getElementById('bg-url-input').value = '';
+    applyBackground();
+    save();
+  };
+  reader.readAsDataURL(file);
+});
+
+// ── SEARCH ──
+let engineUrl = 'https://www.google.com/search?q=';
+
+function doSearch() {
+  const q = document.getElementById('search').value.trim();
+  if (!q) return;
+  // If it looks like a URL, navigate directly
+  if (/^https?:\/\//.test(q) || /^[\w-]+\.\w{2,}(\/|$)/.test(q)) {
+    window.location.href = q.startsWith('http') ? q : 'https://' + q;
+  } else {
+    window.location.href = engineUrl + encodeURIComponent(q);
+  }
+}
+
+document.getElementById('search').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+document.getElementById('search-btn').addEventListener('click', doSearch);
+
+function setEngine(name, url, btn) {
+  engineUrl = url;
+  state.engine = url;
+  document.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  save();
+}
+
+// ── BOOKMARKS ──
+function renderBookmarks() {
+  const wrap = document.getElementById('bookmarks');
+  wrap.innerHTML = '';
+  state.bookmarks.forEach((bm, i) => {
+    const a = document.createElement('a');
+    a.className = 'bm';
+    a.href = bm.url;
+    a.innerHTML = `
+      <img src="${bm.icon || `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(bm.url)}`}" 
+           onerror="this.style.display='none'">
+      <span>${bm.name}</span>
+      <span class="bm-del" data-i="${i}" title="Hapus">✕</span>
+    `;
+    a.addEventListener('click', e => {
+      if (e.target.classList.contains('bm-del')) {
+        e.preventDefault();
+        state.bookmarks.splice(i, 1);
+        save(); renderBookmarks();
+      }
+    });
+    wrap.appendChild(a);
+  });
+}
+
+document.getElementById('add-bm-btn').addEventListener('click', () => {
+  const name = document.getElementById('bm-name').value.trim();
+  let url  = document.getElementById('bm-url').value.trim();
+  if (!name || !url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  state.bookmarks.push({
+    name,
+    url,
+    icon: `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(url)}`
+  });
+  save(); renderBookmarks();
+  document.getElementById('bm-name').value = '';
+  document.getElementById('bm-url').value = '';
+});
+
+// Enter on bm inputs
+['bm-name','bm-url'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('add-bm-btn').click();
+  });
+});
+
+// ── SETTINGS PANEL ──
+document.getElementById('settings-btn').addEventListener('click', () => {
+  document.getElementById('settings-panel').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  const panel = document.getElementById('settings-panel');
+  const btn = document.getElementById('settings-btn');
+  if (!panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+  }
+});
+
+// ── RESET ──
+function resetAll() {
+  if (!confirm('Reset semua pengaturan dan bookmark?')) return;
+  localStorage.removeItem('gntd');
+  location.reload();
+}
+
+// ── INIT ──
+load();
+applyBackground();
+renderBookmarks();
+
+// Restore engine button
+if (state.engine) {
+  engineUrl = state.engine;
+  document.querySelectorAll('.engine-btn').forEach(btn => {
+    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(state.engine.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0,20))) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+// Restore bg url input
+if (state.bgUrl) document.getElementById('bg-url-input').value = state.bgUrl;
+
+// Auto-focus search
+document.getElementById('search').focus();
+</script>
+</body>
+</html>
