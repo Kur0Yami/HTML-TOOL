@@ -131,6 +131,20 @@ textarea.p-inp{resize:vertical;line-height:1.5}
 .preset-slot.filled .ps-label{color:rgba(255,255,255,0.9);font-size:9px;text-shadow:0 1px 4px rgba(0,0,0,0.9)}
 .preset-slot .ps-del{display:none;position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:rgba(200,50,50,0.9);color:white;font-size:8px;align-items:center;justify-content:center;cursor:pointer;border:none;z-index:2}
 .preset-slot.filled:hover .ps-del{display:flex}
+.preset-slot .ps-chk{display:none;position:absolute;bottom:2px;left:2px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);align-items:center;justify-content:center;font-size:8px;color:white;z-index:3;pointer-events:none}
+.preset-slot.filled .ps-chk{display:flex}
+.preset-slot.in-rot .ps-chk{background:rgba(var(--accent),0.6);border-color:white}
+.preset-slot.in-rot{outline:2px solid rgba(var(--accent),0.7);outline-offset:-2px}
+#ps-rot-bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;flex-wrap:wrap}
+#ps-rot-bar.active{border-color:rgba(var(--accent),0.35);background:rgba(var(--accent),0.08)}
+#ps-rot-prog{flex:1;min-width:60px;height:3px;background:rgba(var(--accent),0.15);border-radius:2px;overflow:hidden}
+#ps-rot-fill{height:100%;background:rgba(var(--accent),0.8);border-radius:2px;width:0%}
+.preset-slot .ps-check{display:none;position:absolute;bottom:2px;left:2px;width:14px;height:14px;border-radius:3px;background:rgba(var(--accent),0.3);border:1px solid rgba(var(--accent),0.5);align-items:center;justify-content:center;font-size:8px;color:white;z-index:3}
+.preset-slot.filled .ps-check{display:flex}
+#ps-rot-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(var(--accent),0.06);border:1px solid rgba(var(--accent),0.12);border-radius:10px;flex-wrap:wrap;gap:6px}
+#ps-rot-bar.active{border-color:rgba(var(--accent),0.3);background:rgba(var(--accent),0.1)}
+#ps-rot-prog{flex:1;min-width:80px;height:3px;background:rgba(var(--accent),0.15);border-radius:2px;overflow:hidden}
+#ps-rot-fill{height:100%;background:rgba(var(--accent),0.7);border-radius:2px;width:0%;transition:width 1s linear}
 #edit-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:48;padding:7px 16px;background:rgba(255,200,80,0.15);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,200,80,0.25);font-size:12px;color:rgba(255,220,100,0.9);text-align:center;letter-spacing:1px}
 body.edit-mode #edit-bar{display:block}
 #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:rgba(20,20,30,0.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 18px;color:var(--text);font-size:13px;z-index:99;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
@@ -234,6 +248,24 @@ body.edit-mode #edit-bar{display:block}
     <div class="p-row">
       <label>Preset (klik kosong = simpan, klik terisi = load)</label>
       <div class="preset-grid" id="preset-grid"></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">
+        <label style="font-size:12px;color:var(--muted)">Preset Slideshow — centang preset yang ikut rotasi</label>
+        <div id="ps-rot-bar">
+          <span id="ps-rot-status" style="font-size:11px;color:var(--muted);flex:1;min-width:60px">Pilih preset lalu Start</span>
+          <div id="ps-rot-prog"><div id="ps-rot-fill"></div></div>
+          <button class="loop-tog" id="ps-rot-btn" onclick="togglePresetRot()" style="font-size:11px;padding:3px 10px">▶ Start</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);flex:1">Interval per preset</span>
+          <input type="range" id="sl-psrot" min="5" max="300" value="30" style="flex:1;height:4px;appearance:none;background:rgba(255,255,255,0.15);border-radius:2px;outline:none;cursor:pointer">
+          <span id="sl-psrot-v" style="font-size:11px;color:var(--muted);min-width:34px;text-align:right">30s</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);flex:1">Urutan</span>
+          <button class="loop-tog" id="ps-order-btn" onclick="togglePsOrder()">Berurutan</button>
+        </div>
+      </div>
+
     </div>
   </div>
   <div class="hr"></div>
@@ -311,7 +343,7 @@ body.edit-mode #edit-bar{display:block}
 <div id="toast"></div>
 <audio id="bgm-audio"></audio>
 <script>
-const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Twitter',u:'https://x.com'},{n:'GitHub',u:'https://github.com'}],bmGrid:false,hidden:{},layout:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0};
+const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Twitter',u:'https://x.com'},{n:'GitHub',u:'https://github.com'}],bmGrid:false,hidden:{},layout:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,psRotActive:false,psRotInterval:30,psRotOrder:"seq",psRotSelected:[],bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0};
 let S=JSON.parse(JSON.stringify(DEF));
 try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
 S.hidden=S.hidden||{};S.layout=S.layout||{};
@@ -346,7 +378,69 @@ function syncBgSliders(){document.getElementById('sl-bgx').value=S.bgX;document.
 function setupBgSliders(){syncBgSliders();document.getElementById('sl-bgtrans').value=S.bgTransSec||10;document.getElementById('sl-bgtrans-v').textContent=(S.bgTransSec||10)+'s';document.getElementById('sl-bgfade').value=S.bgFadeSec||0.8;document.getElementById('sl-bgfade-v').textContent=(S.bgFadeSec||0.8).toFixed(1)+'s';document.getElementById('sl-bgx').addEventListener('input',function(){S.bgX=+this.value;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';applyBgStyle();save();});document.getElementById('sl-bgy').addEventListener('input',function(){S.bgY=+this.value;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';applyBgStyle();save();});document.getElementById('sl-bgz').addEventListener('input',function(){S.bgZ=+this.value;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';applyBgStyle();save();});}
 document.getElementById('sl-overlay').addEventListener('input',function(){S.overlay=+this.value;document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';save();});
 // PRESETS
-function renderPresets(){const grid=document.getElementById('preset-grid');grid.innerHTML='';for(let i=0;i<10;i++){const p=S.bgPresets[i];const slot=document.createElement('div');slot.className='preset-slot'+(p?' filled':'');if(p){const bg=document.createElement('div');bg.className='ps-bg';if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;slot.appendChild(bg);}const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);if(p){const del=document.createElement('button');del.className='ps-del';del.textContent='✕';del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;save();renderPresets();toast(`Preset ${i+1} dihapus`);};slot.appendChild(del);}slot.onclick=()=>{if(!S.bgPresets[i]){S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,overlay:S.overlay};save();renderPresets();toast(`Preset ${i+1} disimpan!`);}else{const p=S.bgPresets[i];S.bgUrls=p.bgUrls||[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';S.bgX=p.bgX||50;S.bgY=p.bgY||50;S.bgZ=p.bgZ||100;S.overlay=p.overlay||38;applyBg();applyBgStyle();syncBgSliders();document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');save();toast(`Preset ${i+1} dimuat!`);}};grid.appendChild(slot);}}
+// PRESET SLIDESHOW
+let psRotProgTimer=null,psRotIdx=0,psRotElapsed=0;
+function getRotList(){return(S.psRotSelected||[]).filter(i=>i<10&&S.bgPresets[i]);}
+function loadPresetFull(i){
+  const p=S.bgPresets[i];if(!p)return;
+  S.bgUrls=p.bgUrls?[...p.bgUrls]:[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';
+  S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ||100;S.overlay=p.overlay!=null?p.overlay:38;
+  applyBg();applyBgStyle();syncBgSliders();
+  document.getElementById('overlay').style.background='rgba(0,0,0,'+(S.overlay/100)+')';
+  document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
+  if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
+}
+function startPresetRot(){
+  const list=getRotList();
+  if(!list.length){toast('Centang minimal 1 preset!');return;}
+  stopPresetRot();
+  S.psRotActive=true;save();psRotIdx=0;psRotElapsed=0;
+  loadPresetFull(list[psRotIdx]);
+  updatePsRotUI();
+  const interval=S.psRotInterval||30;
+  document.getElementById('ps-rot-fill').style.transition='none';
+  document.getElementById('ps-rot-fill').style.width='0%';
+  psRotProgTimer=setInterval(()=>{
+    psRotElapsed++;
+    const pct=psRotElapsed/interval*100;
+    document.getElementById('ps-rot-fill').style.transition='width 1s linear';
+    document.getElementById('ps-rot-fill').style.width=Math.min(pct,100)+'%';
+    document.getElementById('ps-rot-status').textContent='P'+(list[psRotIdx]+1)+' — '+(interval-psRotElapsed)+'s';
+    if(psRotElapsed>=interval){
+      psRotElapsed=0;
+      document.getElementById('ps-rot-fill').style.transition='none';
+      document.getElementById('ps-rot-fill').style.width='0%';
+      if(S.psRotOrder==='shuffle')psRotIdx=Math.floor(Math.random()*list.length);
+      else psRotIdx=(psRotIdx+1)%list.length;
+      loadPresetFull(list[psRotIdx]);
+    }
+  },1000);
+}
+function stopPresetRot(){
+  clearInterval(psRotProgTimer);psRotProgTimer=null;psRotElapsed=0;
+  S.psRotActive=false;save();
+  document.getElementById('ps-rot-fill').style.width='0%';
+  document.getElementById('ps-rot-status').textContent='Stopped';
+  updatePsRotUI();
+}
+function togglePresetRot(){if(S.psRotActive)stopPresetRot();else startPresetRot();}
+function updatePsRotUI(){
+  const btn=document.getElementById('ps-rot-btn');
+  const bar=document.getElementById('ps-rot-bar');
+  if(S.psRotActive){btn.textContent='⏹ Stop';btn.classList.add('on');bar.classList.add('active');}
+  else{btn.textContent='▶ Start';btn.classList.remove('on');bar.classList.remove('active');}
+}
+function togglePsOrder(){
+  S.psRotOrder=S.psRotOrder==='shuffle'?'seq':'shuffle';save();
+  document.getElementById('ps-order-btn').textContent=S.psRotOrder==='shuffle'?'Acak':'Berurutan';
+}
+function togglePresetInRot(i){
+  const sel=S.psRotSelected||[];const idx=sel.indexOf(i);
+  if(idx>-1)sel.splice(idx,1);else sel.push(i);
+  sel.sort((a,b)=>a-b);S.psRotSelected=sel;save();renderPresets();
+}
+
+function renderPresets(){const grid=document.getElementById('preset-grid');grid.innerHTML='';for(let i=0;i<10;i++){const p=S.bgPresets[i];const slot=document.createElement('div');const inRot=(S.psRotSelected||[]).includes(i);slot.className='preset-slot'+(p?' filled':'')+(inRot?' in-rot':'');if(p){const bg=document.createElement('div');bg.className='ps-bg';if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;slot.appendChild(bg);}const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);if(p){const del=document.createElement('button');del.className='ps-del';del.textContent='✕';del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;save();renderPresets();toast(`Preset ${i+1} dihapus`);};slot.appendChild(del);const chk=document.createElement('div');chk.className='ps-chk';chk.textContent=inRot?'✔':'';slot.appendChild(chk);}let _psLongT=null;slot.addEventListener('pointerdown',e=>{if(e.target.classList.contains('ps-del'))return;_psLongT=setTimeout(()=>{_psLongT=null;togglePresetInRot(i);},500);});slot.addEventListener('pointerup',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.addEventListener('pointerleave',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.onclick=e=>{if(e.target.classList.contains('ps-del'))return;if(!_psLongT&&Date.now){}; if(!S.bgPresets[i]){S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,overlay:S.overlay};save();renderPresets();toast(`Preset ${i+1} disimpan!`);}else{const p=S.bgPresets[i];S.bgUrls=p.bgUrls||[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';S.bgX=p.bgX||50;S.bgY=p.bgY||50;S.bgZ=p.bgZ||100;S.overlay=p.overlay||38;applyBg();applyBgStyle();syncBgSliders();document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');save();toast(`Preset ${i+1} dimuat!`);}};grid.appendChild(slot);}}
 // APPEARANCE
 document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
 document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
@@ -454,7 +548,14 @@ function init(){
   document.getElementById('w-bookmarks').style.opacity=(S.opBm||100)/100;
   renderBM();
   if(Object.keys(S.layout).length)applyLayout();else setDefaultLayout();
+  // Preset rotation init
+  document.getElementById('sl-psrot').value=S.psRotInterval||30;
+  document.getElementById('sl-psrot-v').textContent=(S.psRotInterval||30)+'s';
+  document.getElementById('sl-psrot').addEventListener('input',function(){S.psRotInterval=+this.value;document.getElementById('sl-psrot-v').textContent=this.value+'s';save();if(S.psRotActive){stopPresetRot();startPresetRot();}});
+  document.getElementById('ps-order-btn').textContent=(S.psRotOrder==='shuffle')?'Acak':'Berurutan';
   renderPresets();
+  updatePsRotUI();
+  if(S.psRotActive)startPresetRot();
   bgmSetVol();
   document.getElementById('bgm-vol').value=S.bgmVol||70;
   document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);
