@@ -468,13 +468,36 @@ function toggleWidget(wid,togId){S.hidden[wid]=!S.hidden[wid];save();document.ge
 const audio=document.getElementById('bgm-audio');
 let bgmIdx=0,vizAnim=null,audioCtx=null,analyser=null,srcNode=null;
 function bgmSetVol(){audio.volume=(S.bgmVol||70)/100;}
-function bgmLoad(idx){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmIdx=((idx%S.bgmPlaylist.length)+S.bgmPlaylist.length)%S.bgmPlaylist.length;const t=S.bgmPlaylist[bgmIdx];audio.src=t.url;audio.load();document.getElementById('bgm-title').textContent=t.name||'Track '+(bgmIdx+1);document.getElementById('bgm-sub').textContent=(bgmIdx+1)+' / '+S.bgmPlaylist.length;renderBgmPlaylist();}
-function initAudioCtx(){if(audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=64;srcNode=audioCtx.createMediaElementSource(audio);srcNode.connect(analyser);analyser.connect(audioCtx.destination);}catch(e){}}
-function bgmPlay(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;if(!audio.src)bgmLoad(bgmIdx);initAudioCtx();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();audio.play().catch(()=>{});document.getElementById('bgm-play').textContent='⏸';document.getElementById('bgm-toggle').classList.add('playing');startViz();}
+function bgmLoad(idx){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmIdx=((idx%S.bgmPlaylist.length)+S.bgmPlaylist.length)%S.bgmPlaylist.length;const t=S.bgmPlaylist[bgmIdx];if(audio.src!==t.url){audio.src=t.url;}document.getElementById('bgm-title').textContent=t.name||'Track '+(bgmIdx+1);document.getElementById('bgm-sub').textContent=(bgmIdx+1)+' / '+S.bgmPlaylist.length;renderBgmPlaylist();}
+// AudioContext init moved inside bgmPlay
+function bgmPlay(){
+  if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;
+  if(!audio.src||audio.src==='about:blank')bgmLoad(bgmIdx);
+  bgmSetVol();
+  const playPromise=audio.play();
+  if(playPromise!==undefined){
+    playPromise.then(()=>{
+      document.getElementById('bgm-play').textContent='⏸';
+      document.getElementById('bgm-toggle').classList.add('playing');
+      // Init AudioContext only after successful play
+      if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=64;srcNode=audioCtx.createMediaElementSource(audio);srcNode.connect(analyser);analyser.connect(audioCtx.destination);}catch(e){audioCtx=null;}}
+      if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+      startViz();
+    }).catch(err=>{
+      toast('Autoplay diblokir — tap play lagi');
+      document.getElementById('bgm-play').textContent='▶';
+      document.getElementById('bgm-toggle').classList.remove('playing');
+    });
+  }else{
+    document.getElementById('bgm-play').textContent='⏸';
+    document.getElementById('bgm-toggle').classList.add('playing');
+    startViz();
+  }
+}
 function bgmPause(){audio.pause();document.getElementById('bgm-play').textContent='▶';document.getElementById('bgm-toggle').classList.remove('playing');stopViz();}
 function bgmTogglePlay(){if(audio.paused)bgmPlay();else bgmPause();}
-function bgmNext(){if(S.bgmShuffle)bgmLoad(Math.floor(Math.random()*S.bgmPlaylist.length));else bgmLoad(bgmIdx+1);bgmPlay();}
-function bgmPrev(){bgmLoad(bgmIdx-1);bgmPlay();}
+function bgmNext(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;if(S.bgmShuffle)bgmLoad(Math.floor(Math.random()*S.bgmPlaylist.length));else bgmLoad(bgmIdx+1);audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};}
+function bgmPrev(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmLoad(bgmIdx-1);audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};}
 function toggleLoop(){S.bgmLoop=!S.bgmLoop;save();document.getElementById('bgm-loop-btn').classList.toggle('on',S.bgmLoop);audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
 function toggleShuffle(){S.bgmShuffle=!S.bgmShuffle;save();document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);}
 function toggleLoopRange(){S.bgmLoopRange=!S.bgmLoopRange;save();const btn=document.getElementById('bgm-loop-range-btn');btn.classList.toggle('on',S.bgmLoopRange);btn.textContent=S.bgmLoopRange?'On':'Off';audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
@@ -490,9 +513,19 @@ function startViz(){if(vizAnim)return;const canvas=document.getElementById('bgm-
 function stopViz(){if(vizAnim){cancelAnimationFrame(vizAnim);vizAnim=null;const c=document.getElementById('bgm-viz');c.getContext('2d').clearRect(0,0,c.width,28);}}
 function bgmAddUrl(){const url=document.getElementById('bgm-url-inp').value.trim();const name=document.getElementById('bgm-name-inp').value.trim();if(!url)return toast('Masukkan URL musik!');S.bgmPlaylist.push({url,name:name||decodeURIComponent(url.split('/').pop()).replace(/%20/g,' ').replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();document.getElementById('bgm-url-inp').value='';document.getElementById('bgm-name-inp').value='';toast('Lagu ditambahkan!');if(S.bgmPlaylist.length===1)bgmLoad(0);}
 document.getElementById('bgm-file').addEventListener('change',function(e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{S.bgmPlaylist.push({url:ev.target.result,name:f.name.replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();toast(`${f.name} diupload!`);if(S.bgmPlaylist.length===1)bgmLoad(0);};r.readAsDataURL(f);});});
-function renderBgmPlaylist(){const list=document.getElementById('bgm-playlist-list');list.innerHTML='';(S.bgmPlaylist||[]).forEach((t,i)=>{const row=document.createElement('div');row.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;border:1px solid ${i===bgmIdx?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.07)'}`;row.innerHTML=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${i===bgmIdx?'▶':i+1}</span><span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||'Track '+(i+1)}</span><button style="background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:11px;flex-shrink:0;padding:0 2px">✕</button>`;row.querySelector('button').addEventListener('click',e=>{e.stopPropagation();S.bgmPlaylist.splice(i,1);if(bgmIdx>=S.bgmPlaylist.length)bgmIdx=0;save();renderBgmPlaylist();toast('Lagu dihapus!');});row.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;bgmLoad(i);bgmPlay();});list.appendChild(row);});}
+function renderBgmPlaylist(){const list=document.getElementById('bgm-playlist-list');list.innerHTML='';(S.bgmPlaylist||[]).forEach((t,i)=>{const row=document.createElement('div');row.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;border:1px solid ${i===bgmIdx?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.07)'}`;row.innerHTML=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${i===bgmIdx?'▶':i+1}</span><span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||'Track '+(i+1)}</span><button style="background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:11px;flex-shrink:0;padding:0 2px">✕</button>`;row.querySelector('button').addEventListener('click',e=>{e.stopPropagation();S.bgmPlaylist.splice(i,1);if(bgmIdx>=S.bgmPlaylist.length)bgmIdx=0;save();renderBgmPlaylist();toast('Lagu dihapus!');});row.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;bgmLoad(i);audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});list.appendChild(row);});}
 function bgmClearAll(){if(!confirm('Hapus semua lagu?'))return;S.bgmPlaylist=[];audio.src='';bgmPause();save();renderBgmPlaylist();document.getElementById('bgm-title').textContent='Tidak ada musik';document.getElementById('bgm-sub').textContent='—';}
-document.getElementById('bgm-toggle').addEventListener('click',()=>{const p=document.getElementById('bgm-player');p.classList.toggle('mini');if(!p.classList.contains('mini')&&S.bgmPlaylist&&S.bgmPlaylist.length&&!audio.src)bgmLoad(0);});
+document.getElementById('bgm-toggle').addEventListener('click',()=>{
+  const p=document.getElementById('bgm-player');
+  const wasShown=!p.classList.contains('mini');
+  p.classList.toggle('mini');
+  if(!p.classList.contains('mini')&&S.bgmPlaylist&&S.bgmPlaylist.length){
+    if(!audio.src||audio.src==='about:blank')bgmLoad(0);
+    if(audio.paused)bgmPlay();
+  }else if(wasShown&&!audio.paused){
+    // keep playing when minimized
+  }
+});
 // EDIT MODE
 let editMode=false;
 function toggleEditMode(){editMode=!editMode;document.body.classList.toggle('edit-mode',editMode);document.getElementById('tog-edit').classList.toggle('on',editMode);if(!editMode){saveLayout();toast('Layout disimpan!');}}
