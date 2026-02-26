@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Custom Homepage</title>
+<title>Glass New Tab</title>
 <link id="font-main-link" href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
 <link id="font-clock-link" href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
 <style>
@@ -207,3 +207,266 @@ body.edit-mode #edit-bar{display:block}
     <div class="toggle-row"><span>Clock</span><div class="tog on" id="tog-clock" onclick="toggleWidget('w-clock','tog-clock')"></div></div>
     <div class="toggle-row"><span>Search</span><div class="tog on" id="tog-search" onclick="toggleWidget('w-search','tog-search')"></div></div>
     <div class="toggle-row"><span>Bookmark</span><div class="tog on" id="tog-bm" onclick="toggleWidget('w-bookmarks','tog-bm')"></div></div>
+    <button class="p-btn" onclick="resetLayout()">↺ Reset posisi widget</button>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🖼 Background</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row">
+      <label>URL gambar/video (satu per baris = slideshow)</label>
+      <textarea id="bg-urls" class="p-inp" rows="3" placeholder="https://...&#10;https://... (multi = slideshow/shuffle)"></textarea>
+      <button class="p-btn" onclick="applyBgUrls()">Terapkan URL</button>
+    </div>
+    <div class="p-row">
+      <label>Upload file (gambar/video)</label>
+      <label class="p-btn" for="bg-file" style="cursor:pointer">📁 Pilih File</label>
+      <input id="bg-file" type="file" class="p-file" accept="image/*,video/*,.webm,.mp4,.mkv">
+    </div>
+    <div class="p-row"><label>Waktu slideshow (detik)</label><div class="slider-row"><input type="range" id="sl-bgtrans" min="3" max="120" value="10"><span class="slider-val" id="sl-bgtrans-v">10s</span></div></div>
+    <div class="p-row"><label>Durasi fade</label><div class="slider-row"><input type="range" id="sl-bgfade" min="0" max="3" step="0.1" value="0.8"><span class="slider-val" id="sl-bgfade-v">0.8s</span></div></div>
+    <div class="toggle-row"><span>Looping slideshow</span><div class="tog on" id="tog-bgloop" onclick="toggleBgLoop()"></div></div>
+    <div class="p-row"><label>Posisi Horizontal</label><div class="slider-row"><input type="range" id="sl-bgx" min="0" max="100" value="50"><span class="slider-val" id="sl-bgx-v">50%</span></div></div>
+    <div class="p-row"><label>Posisi Vertikal</label><div class="slider-row"><input type="range" id="sl-bgy" min="0" max="100" value="50"><span class="slider-val" id="sl-bgy-v">50%</span></div></div>
+    <div class="p-row"><label>Zoom / Scale</label><div class="slider-row"><input type="range" id="sl-bgz" min="100" max="200" value="100"><span class="slider-val" id="sl-bgz-v">100%</span></div></div>
+    <div class="p-row"><label>Opacity Overlay</label><div class="slider-row"><input type="range" id="sl-overlay" min="0" max="80" value="38"><span class="slider-val" id="sl-overlay-v">38%</span></div></div>
+    <button class="p-btn" onclick="resetBg()" style="color:rgba(255,150,150,.8)">↺ Reset background</button>
+    <div class="hr"></div>
+    <div class="p-row">
+      <label>Preset (klik kosong = simpan, klik terisi = load)</label>
+      <div class="preset-grid" id="preset-grid"></div>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🎨 Tampilan</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Accent Color</label><div class="swatches"><div class="swatch on" data-rgb="255,255,255" style="background:rgba(255,255,255,0.7)"></div><div class="swatch" data-rgb="147,197,253" style="background:#93c5fd"></div><div class="swatch" data-rgb="196,181,253" style="background:#c4b5fd"></div><div class="swatch" data-rgb="253,186,116" style="background:#fdba74"></div><div class="swatch" data-rgb="134,239,172" style="background:#86efac"></div><div class="swatch" data-rgb="249,168,212" style="background:#f9a8d4"></div><div class="swatch" data-rgb="103,232,249" style="background:#67e8f9"></div></div></div>
+    <div class="p-row"><label>Blur Glass</label><div class="slider-row"><input type="range" id="sl-blur" min="0" max="40" value="20"><span class="slider-val" id="sl-blur-v">20px</span></div></div>
+    <div class="p-row"><label>Ukuran Font UI</label><div class="slider-row"><input type="range" id="sl-fs-ui" min="10" max="22" value="15"><span class="slider-val" id="sl-fs-ui-v">15px</span></div></div>
+    <div class="p-row"><label>Ukuran Font Jam</label><div class="slider-row"><input type="range" id="sl-fs-clock" min="28" max="120" value="72"><span class="slider-val" id="sl-fs-clock-v">72px</span></div></div>
+    <div class="p-row">
+      <label>Font UI — paste &lt;link&gt; atau URL Google Fonts</label>
+      <textarea id="font-ui-input" class="p-inp" rows="2" placeholder="&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Poppins&quot;&gt;"></textarea>
+      <input id="font-ui-name" class="p-inp" type="text" placeholder="Nama font (otomatis terisi)" style="margin-top:6px">
+      <button class="p-btn" onclick="applyFontUI()" style="margin-top:6px">Terapkan Font UI</button>
+      <button class="p-btn" onclick="resetFontUI()" style="color:rgba(255,150,150,.8)">↺ Reset</button>
+    </div>
+    <div class="p-row">
+      <label>Font Jam — paste &lt;link&gt; atau URL Google Fonts</label>
+      <textarea id="font-clock-input" class="p-inp" rows="2" placeholder="&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Orbitron&quot;&gt;"></textarea>
+      <input id="font-clock-name" class="p-inp" type="text" placeholder="Nama font jam (otomatis terisi)" style="margin-top:6px">
+      <button class="p-btn" onclick="applyFontClock()" style="margin-top:6px">Terapkan Font Jam</button>
+      <button class="p-btn" onclick="resetFontClock()" style="color:rgba(255,150,150,.8)">↺ Reset</button>
+    </div>
+    <div class="toggle-row"><span>Bookmark Grid Mode</span><div class="tog" id="tog-grid" onclick="toggleBmGrid()"></div></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🕐 Jam & Greeting</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Greeting custom</label><input id="inp-greeting" class="p-inp" type="text" placeholder="Selamat datang, Yami ✦" oninput="S.greetingCustom=this.value;save();renderGreeting()"></div>
+    <div class="p-row"><label>Nama (greeting otomatis)</label><input id="inp-name" class="p-inp" type="text" placeholder="Yami" oninput="S.name=this.value;save();renderGreeting()"></div>
+    <div class="toggle-row"><span>Format 12 jam</span><div class="tog" id="tog-12h" onclick="toggle12h()"></div></div>
+    <div class="toggle-row"><span>Tampilkan detik</span><div class="tog" id="tog-sec" onclick="toggleSecs()"></div></div>
+    <div class="toggle-row"><span>Progress bar detik</span><div class="tog" id="tog-secbar" onclick="toggleSecBar()"></div></div>
+    <div class="toggle-row"><span>Card / blur jam</span><div class="tog" id="tog-card" onclick="toggleClockCard()"></div></div>
+    <div class="p-row"><label>Opacity Clock</label><div class="slider-row"><input type="range" id="sl-op-clock" min="10" max="100" value="100"><span class="slider-val" id="sl-op-clock-v">100%</span></div></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🔍 Search</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Placeholder text</label><input id="inp-placeholder" class="p-inp" type="text" placeholder="Cari atau ketik URL..." oninput="S.placeholder=this.value;save();document.getElementById('search').placeholder=this.value||'Cari atau ketik URL...'"></div>
+    <div class="p-row"><label>Opacity Search</label><div class="slider-row"><input type="range" id="sl-op-search" min="10" max="100" value="100"><span class="slider-val" id="sl-op-search-v">100%</span></div></div>
+    <div class="p-row"><label>Mesin Pencari</label><div class="eng-list"><div class="eng-item on" data-url="https://www.google.com/search?q="><div class="eng-dot"></div><span>Google</span></div><div class="eng-item" data-url="https://www.bing.com/search?q="><div class="eng-dot"></div><span>Bing</span></div><div class="eng-item" data-url="https://yandex.com/search/?text="><div class="eng-dot"></div><span>Yandex</span></div><div class="eng-item" data-url="https://duckduckgo.com/?q="><div class="eng-dot"></div><span>DuckDuckGo</span></div><div class="eng-item" data-url="https://search.brave.com/search?q="><div class="eng-dot"></div><span>Brave</span></div><div class="eng-item" data-url="https://search.yahoo.com/search?p="><div class="eng-dot"></div><span>Yahoo</span></div></div></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🔖 Bookmark</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Opacity Bookmark</label><div class="slider-row"><input type="range" id="sl-op-bm" min="10" max="100" value="100"><span class="slider-val" id="sl-op-bm-v">100%</span></div></div>
+    <div class="p-row"><input id="bm-n" class="p-inp" type="text" placeholder="Nama"><input id="bm-u" class="p-inp" type="text" placeholder="URL" style="margin-top:6px"><button class="p-btn" onclick="addBm()" style="margin-top:6px">+ Tambah Bookmark</button></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🎵 BGM Playlist</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row">
+      <label>Tambah URL musik (raw GitHub / direct link)</label>
+      <input id="bgm-url-inp" class="p-inp" type="url" placeholder="https://raw.githubusercontent.com/.../lagu.mp3">
+      <input id="bgm-name-inp" class="p-inp" type="text" placeholder="Nama lagu (opsional)" style="margin-top:6px">
+      <button class="p-btn" onclick="bgmAddUrl()" style="margin-top:6px">+ Tambah URL</button>
+    </div>
+    <div class="p-row">
+      <label>Upload MP3/OGG/WAV dari file manager</label>
+      <label class="p-btn" for="bgm-file" style="cursor:pointer">📁 Upload Musik</label>
+      <input id="bgm-file" type="file" class="p-file" accept="audio/*,.mp3,.ogg,.wav,.flac" multiple>
+    </div>
+    <div id="bgm-playlist-list" style="display:flex;flex-direction:column;gap:5px;max-height:150px;overflow-y:auto"></div>
+    <button class="p-btn" onclick="bgmClearAll()" style="color:rgba(255,100,100,.8)">🗑 Hapus semua lagu</button>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>💾 Backup & Restore</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <button class="p-btn" onclick="exportSettings()">⬇ Export JSON</button>
+    <div class="p-row"><label class="p-btn" for="import-file" style="cursor:pointer">⬆ Import JSON</label><input id="import-file" type="file" class="p-file" accept=".json"></div>
+    <button class="p-btn" onclick="resetAll()" style="color:rgba(255,100,100,.8)">🗑 Reset semua</button>
+  </div>
+</div>
+<div id="toast"></div>
+<audio id="bgm-audio"></audio>
+<script>
+const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Twitter',u:'https://x.com'},{n:'GitHub',u:'https://github.com'}],bmGrid:false,hidden:{},layout:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0};
+let S=JSON.parse(JSON.stringify(DEF));
+try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
+S.hidden=S.hidden||{};S.layout=S.layout||{};
+if(!S.bgPresets||S.bgPresets.length<10)S.bgPresets=new Array(10).fill(null);
+const save=()=>localStorage.setItem('gntd5',JSON.stringify(S));
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2300)}
+function parseFontInput(raw){raw=(raw||'').trim();const hm=raw.match(/href=["']([^"']+)["']/);if(hm){const url=hm[1];const fm=url.match(/family=([^&:]+)/);return{url,name:fm?decodeURIComponent(fm[1]).replace(/\+/g,' ').split(':')[0]:''};}if(raw.startsWith('http')){const fm=raw.match(/family=([^&:]+)/);return{url:raw,name:fm?decodeURIComponent(fm[1]).replace(/\+/g,' ').split(':')[0]:''};}return null;}
+// CLOCK
+const DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function renderGreeting(){const el=document.getElementById('greeting');if(S.greetingCustom){el.textContent=S.greetingCustom;return;}if(S.name){const h=new Date().getHours();el.textContent=`${h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam'}, ${S.name} ✦`;}else el.textContent='';}
+function tick(){const n=new Date();let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?' PM':' AM';hh=hh%12||12;}let str=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)str+=':'+String(ss).padStart(2,'0');if(suf)str+=suf;document.getElementById('clock').textContent=str;document.getElementById('date').textContent=`${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;renderGreeting();if(S.showSecBar)document.getElementById('sec-bar').style.width=(ss/59*100)+'%';}
+setInterval(tick,1000);tick();
+function toggle12h(){S.use12h=!S.use12h;save();document.getElementById('tog-12h').classList.toggle('on',S.use12h);}
+function toggleSecs(){S.showSecs=!S.showSecs;save();document.getElementById('tog-sec').classList.toggle('on',S.showSecs);}
+function toggleSecBar(){S.showSecBar=!S.showSecBar;save();document.getElementById('tog-secbar').classList.toggle('on',S.showSecBar);document.getElementById('sec-bar-wrap').classList.toggle('hidden-bar',!S.showSecBar);}
+function toggleClockCard(){S.clockCard=!S.clockCard;save();document.getElementById('tog-card').classList.toggle('on',S.clockCard);document.getElementById('clock-card').classList.toggle('card-on',S.clockCard);}
+// BACKGROUND
+const bgImg=document.getElementById('bg-img'),bgImg2=document.getElementById('bg-img2'),bgVid=document.getElementById('bg-video');
+let bgSlideIdx=0,bgSlideTimer=null;
+function applyBgStyle(){const pos=`${S.bgX}% ${S.bgY}%`;const sz=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.backgroundPosition=pos;bgImg.style.backgroundSize=sz;bgImg2.style.backgroundPosition=pos;bgImg2.style.backgroundSize=sz;bgVid.style.objectPosition=pos;bgVid.style.transform=S.bgZ>100?`scale(${S.bgZ/100})`:'none';}
+function showSlide(idx){const url=S.bgUrls[idx];if(!url)return;const isVid=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);if(isVid){bgVid.src=url;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';return;}const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
+function startSlideTimer(){clearInterval(bgSlideTimer);if(!S.bgUrls||S.bgUrls.length<=1)return;bgSlideTimer=setInterval(()=>{if(S.bgmShuffle)bgSlideIdx=Math.floor(Math.random()*S.bgUrls.length);else bgSlideIdx=(bgSlideIdx+1)%S.bgUrls.length;if(!S.bgLoop&&bgSlideIdx===0){clearInterval(bgSlideTimer);return;}showSlide(bgSlideIdx);},(S.bgTransSec||10)*1000);}
+function applyBg(){clearInterval(bgSlideTimer);if(S.bgLocal){const isVid=S.bgType==='video';if(isVid){bgVid.src=S.bgLocal;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';}else{bgImg.style.backgroundImage=`url('${S.bgLocal}')`;bgVid.style.display='none';bgVid.src='';}applyBgStyle();return;}if(!S.bgUrls||!S.bgUrls.length)return;bgSlideIdx=0;showSlide(bgSlideIdx);startSlideTimer();}
+function applyBgUrls(){const raw=document.getElementById('bg-urls').value.trim();const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;S.bgUrls=lines;S.bgLocal='';S.bgType=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(lines[0])?'video':'img';applyBg();save();toast('Background diterapkan!');}
+document.getElementById('bg-file').addEventListener('change',function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.bgLocal=ev.target.result;S.bgUrls=[];S.bgType=f.type.startsWith('video')?'video':'img';applyBg();save();toast('File diupload!');};r.readAsDataURL(f);});
+function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;clearInterval(bgSlideTimer);bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';syncBgSliders();save();toast('Background direset!');}
+function toggleBgLoop(){S.bgLoop=!S.bgLoop;save();document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop);}
+document.getElementById('sl-bgtrans').addEventListener('input',function(){S.bgTransSec=+this.value;document.getElementById('sl-bgtrans-v').textContent=this.value+'s';save();startSlideTimer();});
+document.getElementById('sl-bgfade').addEventListener('input',function(){S.bgFadeSec=+this.value;document.getElementById('sl-bgfade-v').textContent=(+this.value).toFixed(1)+'s';save();});
+function syncBgSliders(){document.getElementById('sl-bgx').value=S.bgX;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';document.getElementById('sl-bgy').value=S.bgY;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';document.getElementById('sl-bgz').value=S.bgZ;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';}
+function setupBgSliders(){syncBgSliders();document.getElementById('sl-bgtrans').value=S.bgTransSec||10;document.getElementById('sl-bgtrans-v').textContent=(S.bgTransSec||10)+'s';document.getElementById('sl-bgfade').value=S.bgFadeSec||0.8;document.getElementById('sl-bgfade-v').textContent=(S.bgFadeSec||0.8).toFixed(1)+'s';document.getElementById('sl-bgx').addEventListener('input',function(){S.bgX=+this.value;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';applyBgStyle();save();});document.getElementById('sl-bgy').addEventListener('input',function(){S.bgY=+this.value;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';applyBgStyle();save();});document.getElementById('sl-bgz').addEventListener('input',function(){S.bgZ=+this.value;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';applyBgStyle();save();});}
+document.getElementById('sl-overlay').addEventListener('input',function(){S.overlay=+this.value;document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';save();});
+// PRESETS
+function renderPresets(){const grid=document.getElementById('preset-grid');grid.innerHTML='';for(let i=0;i<10;i++){const p=S.bgPresets[i];const slot=document.createElement('div');slot.className='preset-slot'+(p?' filled':'');if(p){const bg=document.createElement('div');bg.className='ps-bg';if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;slot.appendChild(bg);}const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);if(p){const del=document.createElement('button');del.className='ps-del';del.textContent='✕';del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;save();renderPresets();toast(`Preset ${i+1} dihapus`);};slot.appendChild(del);}slot.onclick=()=>{if(!S.bgPresets[i]){S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,overlay:S.overlay};save();renderPresets();toast(`Preset ${i+1} disimpan!`);}else{const p=S.bgPresets[i];S.bgUrls=p.bgUrls||[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';S.bgX=p.bgX||50;S.bgY=p.bgY||50;S.bgZ=p.bgZ||100;S.overlay=p.overlay||38;applyBg();applyBgStyle();syncBgSliders();document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');save();toast(`Preset ${i+1} dimuat!`);}};grid.appendChild(slot);}}
+// APPEARANCE
+document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
+document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
+document.getElementById('sl-fs-ui').addEventListener('input',function(){S.fsUI=+this.value;document.documentElement.style.setProperty('--fs-ui',S.fsUI+'px');document.getElementById('sl-fs-ui-v').textContent=S.fsUI+'px';save();});
+document.getElementById('sl-fs-clock').addEventListener('input',function(){S.fsClock=+this.value;document.documentElement.style.setProperty('--fs-clock',S.fsClock+'px');document.getElementById('sl-fs-clock-v').textContent=S.fsClock+'px';save();});
+function applyFontUI(){const p=parseFontInput(document.getElementById('font-ui-input').value);const nf=document.getElementById('font-ui-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-ui-name').value=p.name;document.getElementById('font-main-link').href=url;document.documentElement.style.setProperty('--font-ui',`'${name}',sans-serif`);S.fontUIUrl=url;S.fontUIName=name;save();toast('Font UI diterapkan!');}
+function resetFontUI(){document.getElementById('font-main-link').href='https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap';document.documentElement.style.setProperty('--font-ui',"'Outfit',sans-serif");S.fontUIUrl='';S.fontUIName='';save();document.getElementById('font-ui-input').value='';document.getElementById('font-ui-name').value='';toast('Font UI direset');}
+function applyFontClock(){const p=parseFontInput(document.getElementById('font-clock-input').value);const nf=document.getElementById('font-clock-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-clock-name').value=p.name;document.getElementById('font-clock-link').href=url;document.documentElement.style.setProperty('--font-clock',`'${name}',monospace`);S.fontClockUrl=url;S.fontClockName=name;save();toast('Font jam diterapkan!');}
+function resetFontClock(){document.getElementById('font-clock-link').href='https://fonts.googleapis.com/css2?family=Space+Mono&display=swap';document.documentElement.style.setProperty('--font-clock',"'Space Mono',monospace");S.fontClockUrl='';S.fontClockName='';save();document.getElementById('font-clock-input').value='';document.getElementById('font-clock-name').value='';toast('Font jam direset');}
+function setupOpSliders(){[['sl-op-clock','opClock','w-clock'],['sl-op-search','opSearch','w-search'],['sl-op-bm','opBm','w-bookmarks']].forEach(([id,key,wid])=>{const sl=document.getElementById(id);sl.value=S[key]||100;document.getElementById(id+'-v').textContent=(S[key]||100)+'%';sl.addEventListener('input',()=>{S[key]=+sl.value;document.getElementById(wid).style.opacity=S[key]/100;document.getElementById(id+'-v').textContent=S[key]+'%';save();});});}
+// SEARCH
+function doSearch(){const q=document.getElementById('search').value.trim();if(!q)return;window.location.href=/^https?:\/\//.test(q)?q:/^[\w-]+\.\w{2,}(\/|$)/.test(q)?'https://'+q:S.engine+encodeURIComponent(q);}
+document.getElementById('search').addEventListener('keydown',e=>e.key==='Enter'&&doSearch());
+document.getElementById('search-btn').addEventListener('click',doSearch);
+document.querySelectorAll('.eng-item').forEach(item=>{item.addEventListener('click',()=>{S.engine=item.dataset.url;save();document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i===item));});});
+document.addEventListener('keydown',e=>{if(document.activeElement===document.getElementById('search'))return;if(e.key==='/')e.preventDefault(),document.getElementById('search').focus();if(e.key==='e'||e.key==='E')toggleEditMode();});
+// BOOKMARKS
+function getFavicon(u){try{return`https://www.google.com/s2/favicons?sz=64&domain=${new URL(u).hostname}`;}catch(e){return'';}}
+function renderBM(){const wrap=document.getElementById('bm-list');wrap.innerHTML='';wrap.className=S.bmGrid?'grid':'pill';S.bookmarks.forEach((bm,i)=>{const a=document.createElement('a');a.className='bm';a.href=bm.u;const ico=getFavicon(bm.u);if(S.bmGrid){a.innerHTML=`<div class="icon-wrap"><img src="${ico}" onerror="this.style.display='none'"></div><span class="label">${bm.n}</span><button class="bm-del">✕</button>`;}else{a.innerHTML=`<img src="${ico}" onerror="this.style.display='none'"><span class="label">${bm.n}</span><button class="bm-del">✕</button>`;}a.querySelector('.bm-del').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();S.bookmarks.splice(i,1);save();renderBM();});wrap.appendChild(a);});}
+function addBm(){const n=document.getElementById('bm-n').value.trim();let u=document.getElementById('bm-u').value.trim();if(!n||!u)return toast('Isi nama dan URL!');if(!/^https?:\/\//.test(u))u='https://'+u;S.bookmarks.push({n,u});save();renderBM();document.getElementById('bm-n').value='';document.getElementById('bm-u').value='';toast('Bookmark ditambahkan!');}
+['bm-n','bm-u'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>e.key==='Enter'&&addBm()));
+function toggleBmGrid(){S.bmGrid=!S.bmGrid;save();document.getElementById('tog-grid').classList.toggle('on',S.bmGrid);renderBM();}
+function toggleWidget(wid,togId){S.hidden[wid]=!S.hidden[wid];save();document.getElementById(wid).classList.toggle('hidden',!!S.hidden[wid]);document.getElementById(togId).classList.toggle('on',!S.hidden[wid]);}
+// BGM
+const audio=document.getElementById('bgm-audio');
+let bgmIdx=0,vizAnim=null,audioCtx=null,analyser=null,srcNode=null;
+function bgmSetVol(){audio.volume=(S.bgmVol||70)/100;}
+function bgmLoad(idx){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmIdx=((idx%S.bgmPlaylist.length)+S.bgmPlaylist.length)%S.bgmPlaylist.length;const t=S.bgmPlaylist[bgmIdx];audio.src=t.url;audio.load();document.getElementById('bgm-title').textContent=t.name||'Track '+(bgmIdx+1);document.getElementById('bgm-sub').textContent=(bgmIdx+1)+' / '+S.bgmPlaylist.length;renderBgmPlaylist();}
+function initAudioCtx(){if(audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=64;srcNode=audioCtx.createMediaElementSource(audio);srcNode.connect(analyser);analyser.connect(audioCtx.destination);}catch(e){}}
+function bgmPlay(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;if(!audio.src)bgmLoad(bgmIdx);initAudioCtx();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();audio.play().catch(()=>{});document.getElementById('bgm-play').textContent='⏸';document.getElementById('bgm-toggle').classList.add('playing');startViz();}
+function bgmPause(){audio.pause();document.getElementById('bgm-play').textContent='▶';document.getElementById('bgm-toggle').classList.remove('playing');stopViz();}
+function bgmTogglePlay(){if(audio.paused)bgmPlay();else bgmPause();}
+function bgmNext(){if(S.bgmShuffle)bgmLoad(Math.floor(Math.random()*S.bgmPlaylist.length));else bgmLoad(bgmIdx+1);bgmPlay();}
+function bgmPrev(){bgmLoad(bgmIdx-1);bgmPlay();}
+function toggleLoop(){S.bgmLoop=!S.bgmLoop;save();document.getElementById('bgm-loop-btn').classList.toggle('on',S.bgmLoop);audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
+function toggleShuffle(){S.bgmShuffle=!S.bgmShuffle;save();document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);}
+function toggleLoopRange(){S.bgmLoopRange=!S.bgmLoopRange;save();const btn=document.getElementById('bgm-loop-range-btn');btn.classList.toggle('on',S.bgmLoopRange);btn.textContent=S.bgmLoopRange?'On':'Off';audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
+document.getElementById('bgm-loop-start').addEventListener('change',function(){S.bgmLoopStart=+this.value||0;save();});
+document.getElementById('bgm-loop-end').addEventListener('change',function(){S.bgmLoopEnd=+this.value||0;save();});
+function fmt(s){s=Math.floor(s)||0;return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+audio.addEventListener('timeupdate',()=>{const cur=audio.currentTime,dur=audio.duration||0;if(S.bgmLoopRange&&S.bgmLoopEnd>0&&cur>=S.bgmLoopEnd)audio.currentTime=S.bgmLoopStart||0;document.getElementById('bgm-prog-fill').style.width=(dur?cur/dur*100:0)+'%';document.getElementById('bgm-cur').textContent=fmt(cur);document.getElementById('bgm-dur').textContent=fmt(dur);});
+audio.addEventListener('ended',()=>{if(S.bgmLoop&&!S.bgmLoopRange)return;bgmNext();});
+document.getElementById('bgm-prog-wrap').addEventListener('click',function(e){const r=this.getBoundingClientRect();audio.currentTime=(audio.duration||0)*((e.clientX-r.left)/r.width);});
+document.getElementById('bgm-vol').addEventListener('input',function(){S.bgmVol=+this.value;bgmSetVol();save();});
+// Visualizer
+function startViz(){if(vizAnim)return;const canvas=document.getElementById('bgm-viz');const ctx=canvas.getContext('2d');function frame(){vizAnim=requestAnimationFrame(frame);const W=canvas.width=canvas.offsetWidth||240,H=28;ctx.clearRect(0,0,W,H);if(analyser){const buf=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(buf);const bw=W/buf.length;for(let i=0;i<buf.length;i++){const h=Math.max(2,buf[i]/255*H);ctx.fillStyle=`rgba(${S.accent},${0.35+buf[i]/510})`;ctx.fillRect(i*bw,H-h,Math.max(1,bw-1),h);}}else{const n=24,bw=W/n;for(let i=0;i<n;i++){ctx.fillStyle=`rgba(${S.accent},0.25)`;ctx.fillRect(i*bw,H-4,Math.max(1,bw-1),4);}}}frame();}
+function stopViz(){if(vizAnim){cancelAnimationFrame(vizAnim);vizAnim=null;const c=document.getElementById('bgm-viz');c.getContext('2d').clearRect(0,0,c.width,28);}}
+function bgmAddUrl(){const url=document.getElementById('bgm-url-inp').value.trim();const name=document.getElementById('bgm-name-inp').value.trim();if(!url)return toast('Masukkan URL musik!');S.bgmPlaylist.push({url,name:name||decodeURIComponent(url.split('/').pop()).replace(/%20/g,' ').replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();document.getElementById('bgm-url-inp').value='';document.getElementById('bgm-name-inp').value='';toast('Lagu ditambahkan!');if(S.bgmPlaylist.length===1)bgmLoad(0);}
+document.getElementById('bgm-file').addEventListener('change',function(e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{S.bgmPlaylist.push({url:ev.target.result,name:f.name.replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();toast(`${f.name} diupload!`);if(S.bgmPlaylist.length===1)bgmLoad(0);};r.readAsDataURL(f);});});
+function renderBgmPlaylist(){const list=document.getElementById('bgm-playlist-list');list.innerHTML='';(S.bgmPlaylist||[]).forEach((t,i)=>{const row=document.createElement('div');row.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;border:1px solid ${i===bgmIdx?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.07)'}`;row.innerHTML=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${i===bgmIdx?'▶':i+1}</span><span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||'Track '+(i+1)}</span><button style="background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:11px;flex-shrink:0;padding:0 2px">✕</button>`;row.querySelector('button').addEventListener('click',e=>{e.stopPropagation();S.bgmPlaylist.splice(i,1);if(bgmIdx>=S.bgmPlaylist.length)bgmIdx=0;save();renderBgmPlaylist();toast('Lagu dihapus!');});row.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;bgmLoad(i);bgmPlay();});list.appendChild(row);});}
+function bgmClearAll(){if(!confirm('Hapus semua lagu?'))return;S.bgmPlaylist=[];audio.src='';bgmPause();save();renderBgmPlaylist();document.getElementById('bgm-title').textContent='Tidak ada musik';document.getElementById('bgm-sub').textContent='—';}
+document.getElementById('bgm-toggle').addEventListener('click',()=>{const p=document.getElementById('bgm-player');p.classList.toggle('mini');if(!p.classList.contains('mini')&&S.bgmPlaylist&&S.bgmPlaylist.length&&!audio.src)bgmLoad(0);});
+// EDIT MODE
+let editMode=false;
+function toggleEditMode(){editMode=!editMode;document.body.classList.toggle('edit-mode',editMode);document.getElementById('tog-edit').classList.toggle('on',editMode);if(!editMode){saveLayout();toast('Layout disimpan!');}}
+function saveLayout(){document.querySelectorAll('.widget').forEach(w=>{S.layout[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height,transform:w.style.transform};});save();}
+function applyLayout(){document.querySelectorAll('.widget').forEach(w=>{const l=S.layout[w.id];if(!l)return;if(l.left)w.style.left=l.left;if(l.top)w.style.top=l.top;if(l.width)w.style.width=l.width;if(l.height)w.style.height=l.height;if(l.transform!=null)w.style.transform=l.transform;});}
+function setDefaultLayout(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const cw=document.getElementById('w-clock'),sw=document.getElementById('w-search'),bw=document.getElementById('w-bookmarks');if(D&&L){cw.style.cssText='left:50%;top:8%;transform:translateX(-50%);width:420px;';sw.style.cssText='left:50%;top:52%;transform:translateX(-50%);width:600px;';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:700px;';}else if(L){cw.style.cssText='left:50%;top:4%;transform:translateX(-50%);width:280px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(460px,85vw);';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:min(520px,90vw);';}else{cw.style.cssText='left:50%;top:12%;transform:translateX(-50%);width:320px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(500px,90vw);';bw.style.cssText='left:50%;top:70%;transform:translateX(-50%);width:min(560px,94vw);';}}
+function resetLayout(){S.layout={};save();setDefaultLayout();toast('Layout direset!');}
+function centerWidget(wid){const w=document.getElementById(wid);const wr=w.getBoundingClientRect();w.style.transform='none';w.style.left=((window.innerWidth-wr.width)/2)+'px';saveLayout();toast('Widget dicenterin!');}
+const guideH=document.getElementById('guide-h'),guideV=document.getElementById('guide-v'),SNAP=12;
+(function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy;function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;}else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}}function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);dr.style.left=nx+'px';dr.style.top=ny+'px';}if(rs){e.preventDefault();rs.style.width=Math.max(100,ow+(p.x-ox))+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';}}function onE(){if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
+function checkOrientation(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const b=document.getElementById('orient-badge');b.textContent=D?(L?'🖥 Desktop Landscape':'🖥 Desktop Portrait'):(L?'📱 Landscape':'📱 Portrait');b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);if(!Object.keys(S.layout).length)setDefaultLayout();}
+window.addEventListener('resize',checkOrientation);
+window.addEventListener('orientationchange',()=>setTimeout(checkOrientation,300));
+const panel=document.getElementById('panel');
+document.getElementById('gear').addEventListener('click',e=>{e.stopPropagation();panel.classList.toggle('open');});
+document.addEventListener('click',e=>{if(!panel.contains(e.target)&&e.target!==document.getElementById('gear'))panel.classList.remove('open');});
+function toggleSec(head){head.classList.toggle('collapsed');head.nextElementSibling.classList.toggle('collapsed');}
+function exportSettings(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gntd-settings.json';a.click();toast('Settings diekspor!');}
+document.getElementById('import-file').addEventListener('change',function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{S={...DEF,...JSON.parse(ev.target.result)};localStorage.setItem('gntd5',JSON.stringify(S));toast('Diimport! Reload...');setTimeout(()=>location.reload(),1200);}catch(err){toast('File tidak valid!');}};r.readAsText(f);});
+function resetAll(){if(!confirm('Reset semua data?'))return;localStorage.removeItem('gntd5');location.reload();}
+// INIT
+function init(){
+  if(S.bgUrls&&S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
+  applyBg();setupBgSliders();
+  document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;
+  document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
+  document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop!==false);
+  document.documentElement.style.setProperty('--blur',S.blur+'px');
+  document.getElementById('sl-blur').value=S.blur;document.getElementById('sl-blur-v').textContent=S.blur+'px';
+  document.documentElement.style.setProperty('--accent',S.accent);
+  document.querySelectorAll('.swatch').forEach(sw=>sw.classList.toggle('on',sw.dataset.rgb===S.accent));
+  document.documentElement.style.setProperty('--fs-ui',(S.fsUI||15)+'px');
+  document.documentElement.style.setProperty('--fs-clock',(S.fsClock||72)+'px');
+  document.getElementById('sl-fs-ui').value=S.fsUI||15;document.getElementById('sl-fs-ui-v').textContent=(S.fsUI||15)+'px';
+  document.getElementById('sl-fs-clock').value=S.fsClock||72;document.getElementById('sl-fs-clock-v').textContent=(S.fsClock||72)+'px';
+  if(S.fontUIUrl&&S.fontUIName){document.getElementById('font-main-link').href=S.fontUIUrl;document.documentElement.style.setProperty('--font-ui',`'${S.fontUIName}',sans-serif`);document.getElementById('font-ui-name').value=S.fontUIName;}
+  if(S.fontClockUrl&&S.fontClockName){document.getElementById('font-clock-link').href=S.fontClockUrl;document.documentElement.style.setProperty('--font-clock',`'${S.fontClockName}',monospace`);document.getElementById('font-clock-name').value=S.fontClockName;}
+  document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i.dataset.url===S.engine));
+  document.getElementById('tog-12h').classList.toggle('on',S.use12h);
+  document.getElementById('tog-sec').classList.toggle('on',S.showSecs);
+  document.getElementById('tog-secbar').classList.toggle('on',S.showSecBar);
+  document.getElementById('sec-bar-wrap').classList.toggle('hidden-bar',!S.showSecBar);
+  document.getElementById('tog-card').classList.toggle('on',S.clockCard);
+  document.getElementById('clock-card').classList.toggle('card-on',S.clockCard);
+  if(S.greetingCustom)document.getElementById('inp-greeting').value=S.greetingCustom;
+  if(S.name)document.getElementById('inp-name').value=S.name;
+  if(S.placeholder){document.getElementById('search').placeholder=S.placeholder;document.getElementById('inp-placeholder').value=S.placeholder;}
+  document.getElementById('tog-grid').classList.toggle('on',S.bmGrid);
+  ['w-clock','w-search','w-bookmarks'].forEach((wid,i)=>{const tids=['tog-clock','tog-search','tog-bm'];if(S.hidden[wid])document.getElementById(wid).classList.add('hidden');document.getElementById(tids[i]).classList.toggle('on',!S.hidden[wid]);});
+  setupOpSliders();
+  document.getElementById('w-clock').style.opacity=(S.opClock||100)/100;
+  document.getElementById('w-search').style.opacity=(S.opSearch||100)/100;
+  document.getElementById('w-bookmarks').style.opacity=(S.opBm||100)/100;
+  renderBM();
+  if(Object.keys(S.layout).length)applyLayout();else setDefaultLayout();
+  renderPresets();
+  bgmSetVol();
+  document.getElementById('bgm-vol').value=S.bgmVol||70;
+  document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);
+  document.getElementById('bgm-loop-btn').classList.toggle('on',S.bgmLoop);
+  const lrBtn=document.getElementById('bgm-loop-range-btn');lrBtn.classList.toggle('on',S.bgmLoopRange);lrBtn.textContent=S.bgmLoopRange?'On':'Off';
+  document.getElementById('bgm-loop-start').value=S.bgmLoopStart||0;
+  document.getElementById('bgm-loop-end').value=S.bgmLoopEnd||0;
+  audio.loop=S.bgmLoop&&!S.bgmLoopRange;
+  if(S.bgmPlaylist&&S.bgmPlaylist.length){bgmLoad(0);renderBgmPlaylist();}
+  setTimeout(()=>document.getElementById('search').focus(),150);
+}
+init();
+</script>
+</body>
+</html>
