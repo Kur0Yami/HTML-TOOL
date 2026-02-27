@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0c0c10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>MTZ Editor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#0c0c10;--s1:#14141c;--s2:#1c1c28;--s3:#252535;
+  --b:#2a2a3e;--acc:#ff5a3c;--acc2:#ffd700;--acc3:#3cefff;
+  --t:#f0f0f8;--t2:#8888aa;--t3:#444466;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{background:linear-gradient(160deg,#180800,#200e00,#180a14);padding:calc(var(--safe-top) + 10px) 14px 0;border-bottom:1px solid var(--b);flex-shrink:0;}
+.hdr-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.hdr-t{font-size:16px;font-weight:800;}
+.hdr-s{font-size:10px;color:var(--t2);}
+.pill{margin-left:auto;background:rgba(255,90,60,.1);border:1px solid rgba(255,90,60,.25);color:var(--acc);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;}
+.tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--t2);border:none;background:transparent;border-bottom:2px solid transparent;transition:all .2s;}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc);}
+
+/* SCROLL AREA */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+
+/* PAGES */
+.page{display:none;padding:10px;}
+.page.active{display:block;}
+
+/* UPLOAD */
+#up{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;gap:14px;}
+.up-ico{width:86px;height:86px;background:linear-gradient(135deg,rgba(255,90,60,.1),rgba(255,215,0,.07));border:2px dashed rgba(255,90,60,.3);border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:32px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,90,60,.2);}50%{box-shadow:0 0 0 12px rgba(255,90,60,0);}}
+.up-t{font-size:20px;font-weight:800;}
+.up-s{font-size:13px;color:var(--t2);line-height:1.5;max-width:240px;}
+.btn-up{background:linear-gradient(135deg,var(--acc),#ff8c3c);color:#fff;border:none;padding:14px 0;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;width:100%;max-width:240px;box-shadow:0 8px 20px rgba(255,90,60,.3);}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--b);border-radius:14px;margin-bottom:8px;overflow:hidden;}
+.ch{display:flex;align-items:center;gap:9px;padding:12px 13px;cursor:pointer;}
+.ch-ico{font-size:16px;flex-shrink:0;}
+.ch-t{flex:1;}.ch-n{font-size:13px;font-weight:600;}.ch-c{font-size:10px;color:var(--t2);margin-top:1px;}
+.ch-arr{color:var(--t2);font-size:13px;transition:transform .22s;}
+.card.open .ch-arr{transform:rotate(180deg);}
+.cb{display:none;border-top:1px solid var(--b);}
+.card.open .cb{display:block;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
+.stat{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:10px 6px;text-align:center;}
+.sn{font-size:20px;font-weight:800;color:var(--acc);}
+.sl{font-size:10px;color:var(--t2);}
+
+/* SEARCH */
+.sw{padding:8px 10px 2px;}
+.si{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:8px 12px 8px 34px;color:var(--t);font-size:13px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236666aa' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center;}
+.si:focus{border-color:var(--acc);}
+
+/* COLOR ITEMS */
+.ci{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.04);}
+.ci:last-child{border-bottom:none;}
+.cs{width:32px;height:32px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);flex-shrink:0;position:relative;overflow:hidden;cursor:pointer;}
+.cs input[type=color]{position:absolute;inset:-5px;width:calc(100%+10px);height:calc(100%+10px);opacity:0;cursor:pointer;}
+.ci-info{flex:1;min-width:0;}.ci-n{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ci-v{font-size:9px;color:var(--t2);font-family:monospace;margin-top:1px;}
+.ci-btn{background:var(--s2);border:1px solid var(--b);color:var(--t2);padding:4px 9px;border-radius:6px;font-size:10px;cursor:pointer;flex-shrink:0;}
+
+/* IMAGE GRID */
+.ig{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px;}
+.ii{position:relative;border-radius:8px;overflow:hidden;background:var(--s2);border:1px solid var(--b);}
+.ii img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+.ii-n{font-size:8px;color:var(--t2);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(0,0,0,.6);position:absolute;bottom:0;left:0;right:0;}
+.ii-r{position:absolute;top:3px;right:3px;background:rgba(255,90,60,.9);color:#fff;border:none;border-radius:5px;width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.rdot{position:absolute;top:3px;left:3px;width:6px;height:6px;background:var(--acc);border-radius:50%;}
+
+/* ========= PREVIEW ========= */
+.ptabs{display:flex;gap:5px;padding:8px 10px 4px;overflow-x:auto;scrollbar-width:none;}
+.ptabs::-webkit-scrollbar{display:none;}
+.pt{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;background:var(--s2);border:1px solid var(--b);color:var(--t2);}
+.pt.active{background:var(--acc);color:#fff;border-color:var(--acc);}
+
+/* PHONE FRAME */
+.phone-wrap{display:flex;justify-content:center;padding:4px 10px 10px;}
+.phone{width:100%;max-width:280px;background:#000;border-radius:36px;border:2px solid #222233;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7);position:relative;}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#000;border-radius:0 0 14px 14px;z-index:20;}
+.screen{width:100%;position:relative;overflow:hidden;min-height:480px;}
+
+/* LOCKSCREEN PREVIEW */
+.ls-root{width:100%;position:relative;}
+.ls-wp{width:100%;display:block;object-fit:cover;min-height:480px;}
+.ls-wp-ph{width:100%;min-height:480px;background:linear-gradient(180deg,#080318 0%,#150830 40%,#0a1020 100%);}
+.ls-over{position:absolute;inset:0;display:flex;flex-direction:column;padding:28px 16px 18px;}
+
+/* STATUS BAR */
+.sb{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;height:22px;}
+.sb-r{display:flex;align-items:center;gap:4px;}
+.bat{display:flex;align-items:center;gap:1px;}
+.bat-b{width:18px;height:9px;border:1.5px solid currentColor;border-radius:2px;padding:1px;display:flex;align-items:center;}
+.bat-f{height:100%;border-radius:1px;background:currentColor;}
+.bat-t{width:2px;height:4px;background:currentColor;border-radius:0 1px 1px 0;}
+
+/* CLOCK DIGITS */
+.clock-row{display:flex;align-items:center;justify-content:flex-start;gap:0;margin-top:auto;padding-top:24px;}
+.digit-img{height:110px;width:auto;display:block;image-rendering:auto;}
+.digit-colon{width:18px;display:flex;align-items:center;justify-content:center;padding-bottom:6px;}
+.digit-dot{width:8px;height:8px;border-radius:50%;background:white;display:block;margin:3px 0;}
+.clock-text{font-size:82px;font-weight:900;color:#fff;line-height:1;letter-spacing:-2px;font-family:'Arial Black','Impact',sans-serif;}
+
+/* DATE */
+.ls-date-row{display:flex;align-items:center;gap:8px;margin-top:6px;margin-bottom:10px;}
+.ls-date-t{font-size:13px;font-weight:600;opacity:.75;}
+.ls-date-img{height:28px;width:auto;}
+
+/* NOTIF CARDS */
+.notif-list{display:flex;flex-direction:column;gap:5px;margin-top:auto;}
+.nc{display:flex;align-items:center;gap:8px;border-radius:12px;padding:9px 10px;backdrop-filter:blur(16px);}
+.nc-icon{width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;}
+.nc-body{flex:1;min-width:0;}
+.nc-t{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nc-s{font-size:10px;opacity:.55;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nc-time{font-size:9px;opacity:.4;flex-shrink:0;}
+
+/* SHORTCUT BAR */
+.ls-shortcuts{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;}
+.sc-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;font-size:16px;border:1px solid rgba(255,255,255,.1);}
+.ls-unlock{flex:1;text-align:center;font-size:11px;opacity:.4;}
+
+/* QS PREVIEW */
+.qs-root{width:100%;min-height:480px;position:relative;}
+.qs-bg-overlay{position:absolute;inset:0;}
+.qs-panel{position:relative;z-index:1;min-height:480px;display:flex;flex-direction:column;}
+.qs-head{padding:28px 14px 8px;display:flex;justify-content:space-between;align-items:flex-end;}
+.qs-time{font-size:38px;font-weight:800;line-height:1;letter-spacing:-1px;}
+.qs-date-s{font-size:11px;margin-top:2px;opacity:.55;}
+.qs-edit{font-size:10px;opacity:.4;}
+.qs-br{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:8px 12px;border-radius:14px;}
+.qs-br-ico{font-size:14px;opacity:.6;}
+.qs-br-wrap{flex:1;height:28px;border-radius:8px;overflow:hidden;position:relative;}
+.qs-br-fill{position:absolute;left:0;top:0;height:100%;width:65%;border-radius:8px;}
+.qs-br-thumb{position:absolute;top:50%;left:63%;transform:translateY(-50%);width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.9);box-shadow:0 2px 6px rgba(0,0,0,.3);}
+.qs-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 12px 8px;}
+.qs-tile{border-radius:12px;padding:10px 10px 8px;position:relative;overflow:hidden;cursor:pointer;}
+.qs-tile-ico-wrap{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:5px;overflow:hidden;}
+.qs-tile-ico-wrap img{width:24px;height:24px;object-fit:contain;}
+.qs-tile-name{font-size:11px;font-weight:600;}
+.qs-tile-sub{font-size:9px;opacity:.55;margin-top:1px;}
+.qs-div{height:1px;margin:2px 12px 8px;background:rgba(255,255,255,.08);}
+.qs-sliders{padding:0 12px 10px;display:flex;flex-direction:column;gap:7px;}
+.qs-sl{display:flex;align-items:center;gap:8px;}
+.qs-sl-ico{font-size:16px;width:20px;text-align:center;}
+.qs-sl-wrap{flex:1;height:26px;border-radius:8px;overflow:hidden;position:relative;}
+.qs-sl-bg{position:absolute;inset:0;border-radius:8px;}
+.qs-sl-fill{position:absolute;left:0;top:0;height:100%;border-radius:8px;}
+.qs-sl-thumb{position:absolute;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:6px;background:rgba(255,255,255,.9);box-shadow:0 2px 6px rgba(0,0,0,.3);}
+
+/* HOME SCREEN PREVIEW */
+.home-root{width:100%;min-height:480px;position:relative;}
+.home-wp-bg{position:absolute;inset:0;}
+.home-wp-img{width:100%;height:100%;object-fit:cover;}
+.home-overlay{position:absolute;inset:0;display:flex;flex-direction:column;}
+.home-grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:10px 8px 6px;align-content:start;}
+.h-icon{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;}
+.h-icon img{width:46px;height:46px;border-radius:13px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.h-icon-ph{width:46px;height:46px;border-radius:13px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.h-label{font-size:9px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:52px;}
+.home-search{margin:4px 10px 6px;height:34px;border-radius:10px;display:flex;align-items:center;padding:0 12px;gap:8px;}
+.home-search span{font-size:11px;opacity:.45;color:#fff;}
+.dock-wrap{padding:6px 12px calc(var(--safe-bot) + 8px);}
+.dock{border-radius:20px;padding:8px 10px;display:flex;justify-content:space-around;}
+.dock img{width:42px;height:42px;border-radius:12px;object-fit:cover;}
+.dock-ph{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;}
+
+/* NOTIF PANEL PREVIEW */
+.np-root{width:100%;min-height:480px;position:relative;}
+.np-bg-overlay{position:absolute;inset:0;}
+.np-panel{position:relative;z-index:1;min-height:480px;}
+.np-header{padding:28px 14px 10px;font-size:15px;font-weight:700;}
+.np-card{display:flex;align-items:flex-start;gap:8px;border-radius:12px;padding:10px 11px;margin:0 10px 6px;}
+.npc-icon{width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;}
+.npc-body{flex:1;min-width:0;}
+.npc-app{font-size:10px;opacity:.45;margin-bottom:1px;}
+.npc-title{font-size:12px;font-weight:600;}
+.npc-text{font-size:11px;opacity:.55;margin-top:1px;}
+.npc-actions{display:flex;gap:5px;margin-top:6px;}
+.npc-btn{padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;border:none;cursor:pointer;}
+.npc-time{font-size:9px;opacity:.35;flex-shrink:0;}
+
+/* VOLUME PANEL */
+.vol-root{width:100%;min-height:480px;position:relative;}
+.vol-sliders{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:7px;}
+.vol-strip{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.vol-pill{border-radius:100px;padding:10px;width:44px;display:flex;flex-direction:column;align-items:center;gap:7px;}
+.vol-ico{font-size:14px;}
+.vol-bar{width:5px;height:80px;border-radius:3px;position:relative;overflow:hidden;}
+.vol-fill{position:absolute;bottom:0;width:100%;border-radius:3px;}
+
+/* EXPORT */
+.exp-card{background:linear-gradient(135deg,rgba(60,239,255,.07),rgba(255,90,60,.07));border:1px solid rgba(60,239,255,.15);border-radius:14px;padding:20px;text-align:center;margin-bottom:8px;}
+.btn-exp{background:linear-gradient(135deg,var(--acc3),#38f9d7);color:#0a1a1a;border:none;padding:13px 0;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin-top:14px;}
+.btn-exp:disabled{background:var(--s2);color:var(--t2);}
+
+/* SECTION TITLE */
+.st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:12px 10px 4px;}
+
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;backdrop-filter:blur(8px);align-items:flex-end;}
+.ov.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--b);border-radius:20px 20px 0 0;padding:16px;width:100%;max-height:85vh;overflow-y:auto;padding-bottom:calc(var(--safe-bot) + 16px);animation:sup .28s cubic-bezier(.34,1.56,.64,1);}
+@keyframes sup{from{transform:translateY(100%)}}
+.mh{width:36px;height:4px;background:var(--b);border-radius:2px;margin:0 auto 12px;}
+.mt{font-size:14px;font-weight:700;margin-bottom:12px;}
+.mprev{width:100%;height:64px;border-radius:10px;margin-bottom:10px;}
+.mrow{display:flex;gap:7px;align-items:center;margin-bottom:10px;}
+.mhex{flex:1;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px;color:var(--t);font-size:14px;font-family:monospace;outline:none;text-transform:uppercase;}
+.mhex:focus{border-color:var(--acc);}
+input[type=color].mpick{width:46px;height:46px;border-radius:10px;border:2px solid var(--b);cursor:pointer;background:transparent;padding:2px;}
+.qcs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.qc{width:28px;height:28px;border-radius:7px;border:1.5px solid rgba(255,255,255,.1);cursor:pointer;}
+.albl{font-size:10px;color:var(--t2);margin-bottom:4px;}
+.aslide{width:100%;accent-color:var(--acc);}
+.mbtns{display:flex;gap:6px;margin-top:12px;}
+.btn-cancel{flex:1;background:var(--s2);border:1px solid var(--b);color:var(--t);padding:12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-ok{flex:2;background:var(--acc);border:none;color:#fff;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* LOADING */
+.loading{display:none;position:fixed;inset:0;background:rgba(10,10,16,.94);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:12px;backdrop-filter:blur(12px);}
+.loading.show{display:flex;}
+.spin{width:40px;height:40px;border:3px solid var(--b);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lt{font-size:12px;color:var(--t2);}
+.toast{position:fixed;bottom:calc(var(--safe-bot) + 16px);left:50%;transform:translateX(-50%) translateY(80px);background:var(--s2);border:1px solid var(--b);color:var(--t);padding:9px 16px;border-radius:50px;font-size:12px;z-index:999;transition:transform .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <div class="logo">🎨</div>
+    <div><div class="hdr-t">MTZ Editor</div><div class="hdr-s">HyperOS / MIUI Theme</div></div>
+    <div class="pill" id="pill">—</div>
+  </div>
+  <div class="tabs" id="tabs" style="display:none">
+    <div class="tab active" onclick="go('colors')">🎨 Warna</div>
+    <div class="tab" onclick="go('images')">🖼️ Gambar</div>
+    <div class="tab" onclick="go('preview')">📱 Preview</div>
+    <div class="tab" onclick="go('export')">📦 Export</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- UPLOAD -->
+  <div id="up">
+    <div class="up-ico">📂</div>
+    <div class="up-t">Buka File MTZ</div>
+    <div class="up-s">Pilih file tema MIUI/HyperOS dari file manager kamu</div>
+    <button class="btn-up" onclick="document.getElementById('fi').click()">📁 Pilih File MTZ</button>
+    <input type="file" id="fi" accept=".mtz,.zip" style="display:none" onchange="loadMTZ(this)">
+    <div style="font-size:10px;color:var(--t3)">MIUI 12/13 · HyperOS 1/2 · 52MB+</div>
+  </div>
+
+  <!-- COLORS -->
+  <div class="page" id="page-colors">
+    <div class="sw"><input type="text" class="si" id="csearch" placeholder="Cari nama warna..." oninput="filterColors(this.value)"></div>
+    <div class="st">📊 Ringkasan Tema</div>
+    <div class="stats">
+      <div class="stat"><div class="sn" id="sc">0</div><div class="sl">Warna</div></div>
+      <div class="stat"><div class="sn" id="si2">0</div><div class="sl">Gambar</div></div>
+      <div class="stat"><div class="sn" id="sp">0</div><div class="sl">Package</div></div>
+    </div>
+    <div class="st">🎨 Warna per Package</div>
+    <div id="cwrap"></div>
+  </div>
+
+  <!-- IMAGES -->
+  <div class="page" id="page-images">
+    <div class="sw"><input type="text" class="si" placeholder="Cari gambar..." oninput="filterImages(this.value)"></div>
+    <div class="st">🖼️ Asset Gambar</div>
+    <div id="iwrap"></div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="page" id="page-preview">
+    <div class="ptabs" id="ptabs">
+      <div class="pt active" onclick="switchPrev('lock')">🔒 Lock</div>
+      <div class="pt" onclick="switchPrev('qs')">🎛️ QS</div>
+      <div class="pt" onclick="switchPrev('home')">🏠 Home</div>
+      <div class="pt" onclick="switchPrev('notif')">🔔 Notif</div>
+      <div class="pt" onclick="switchPrev('volume')">🔊 Vol</div>
+    </div>
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen" id="screen"></div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:var(--t3);padding-bottom:12px;">Dirender dari aset tema asli</div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="page" id="page-export">
+    <div class="exp-card">
+      <div style="font-size:40px;margin-bottom:8px;">📦</div>
+      <div style="font-size:17px;font-weight:800;">Export Tema</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:5px;" id="exp-info">Semua perubahan akan tersimpan ke MTZ baru.</div>
+      <button class="btn-exp" id="btn-exp" onclick="exportMTZ()">💾 Download MTZ</button>
+    </div>
+    <div class="st">📝 Changelog</div>
+    <div class="card"><div class="cb" style="display:block;padding:10px 12px;"><div id="chlog" style="font-size:11px;color:var(--t2);line-height:1.9;">Belum ada perubahan.</div></div></div>
+    <div class="st">ℹ️ Info Tema</div>
+    <div class="card"><div class="cb" style="display:block;padding:12px;"><div id="tinfo" style="font-size:11px;color:var(--t2);line-height:1.9;"></div></div></div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- COLOR MODAL -->
+<div class="ov" id="cmodal">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt" id="mname">Edit Warna</div>
+    <div class="mprev" id="mprev"></div>
+    <div class="mrow">
+      <input type="color" class="mpick" id="mpick" oninput="sN(this.value)">
+      <input type="text" class="mhex" id="mhex" placeholder="#FF000000" oninput="sH(this.value)" maxlength="9">
+    </div>
+    <div class="qcs">
+      <div style="font-size:10px;color:var(--t2);width:100%">Quick Colors:</div>
+      <div class="qc" style="background:#fff" onclick="setMC('#ffffff')"></div>
+      <div class="qc" style="background:#000" onclick="setMC('#000000')"></div>
+      <div class="qc" style="background:#ff5a3c" onclick="setMC('#ff5a3c')"></div>
+      <div class="qc" style="background:#ffd700" onclick="setMC('#ffd700')"></div>
+      <div class="qc" style="background:#3cefff" onclick="setMC('#3cefff')"></div>
+      <div class="qc" style="background:#43e97b" onclick="setMC('#43e97b')"></div>
+      <div class="qc" style="background:#b172ff" onclick="setMC('#b172ff')"></div>
+      <div class="qc" style="background:#ff6b6b" onclick="setMC('#ff6b6b')"></div>
+    </div>
+    <div class="albl">Alpha: <span id="aval">100%</span></div>
+    <input type="range" class="aslide" id="aslide" min="0" max="255" value="255" oninput="sA(this.value)">
+    <div class="mbtns">
+      <button class="btn-cancel" onclick="closeM()">Batal</button>
+      <button class="btn-ok" onclick="applyC()">✓ Terapkan</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="img-fi" accept="image/*" style="display:none" onchange="handleImgR(this)">
+<input type="file" id="wp-fi" accept="image/*" style="display:none" onchange="handleWpR(this)">
+<div class="loading" id="loading"><div class="spin"></div><div class="lt" id="lt">Memuat...</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let Z=null,PKG={},CD={},ID={},WP={home:null,lock:null},A={},INFO={},CHG={colors:[],images:[]};
+let CUR_C=null,CUR_I=null,CUR_WP=null,PMODE='lock',totalI=0;
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const L=(t)=>{$('loading').classList.add('show');$('lt').textContent=t||'Memuat...';}
+const HL=()=>$('loading').classList.remove('show');
+function toast(m,d=2500){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+const m2h6=c=>c.length===9?'#'+c.slice(3):c;
+const m2ab=c=>c.length===9?c.slice(1,3):'ff';
+const m2ai=c=>parseInt(m2ab(c),16);
+const toM=(h,a)=>('#'+a+h.slice(1)).toUpperCase();
+function m2css(c){const h=m2h6(c),a=m2ai(c)/255,r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a.toFixed(2)})`;}
+function getC(name,fb='#ffffff'){for(const arr of Object.values(CD)){const c=arr.find(x=>x.name===name);if(c)return m2css(c.value);}return fb;}
+function assetUrl(pkg,path){return A[pkg+'/'+path]||'';}
+
+// ── LOAD MTZ ───────────────────────────────────────────────────────────────
+async function loadMTZ(inp){
+  if(!inp.files[0])return;
+  L('Membuka MTZ...');
+  Z=null;PKG={};CD={};ID={};WP={home:null,lock:null};A={};CHG={colors:[],images:[]};totalI=0;
+  try{
+    Z=await JSZip.loadAsync(inp.files[0]);
+    const df=Z.file('description.xml');
+    if(df)parseInfo(await df.async('string'));
+    L('Memuat wallpaper...');
+    for(const[k,p]of[['home','wallpaper/default_wallpaper.jpg'],['lock','wallpaper/default_lock_wallpaper.jpg']]){
+      const f=Z.file(p);if(f){const b=await f.async('blob');WP[k]={blob:b,url:URL.createObjectURL(b),path:p};}
+    }
+    const pkgs=['com.android.systemui','miui.systemui.plugin','com.miui.home','com.android.settings',
+      'com.android.contacts','com.android.mms','com.android.phone','framework-miui-res',
+      'icons','lockscreen','clock_2x4','miwallpaper'];
+    for(const pn of pkgs){
+      const pf=Z.file(pn);if(!pf)continue;
+      L(`Membaca ${pn}...`);
+      try{
+        const pz=await JSZip.loadAsync(await pf.async('arraybuffer'));
+        PKG[pn]=pz;CD[pn]=[];
+        for(const xf of['theme_values.xml','nightmode/theme_values.xml','theme_fallback.xml','nightmode/theme_fallback.xml']){
+          const xfile=pz.file(xf);if(xfile)CD[pn].push(...parseColors(await xfile.async('string'),xf,pn));
+        }
+        ID[pn]=[];
+        pz.forEach((rp,ze)=>{if(!ze.dir&&/\.(png|jpg|jpeg|webp)$/i.test(rp)){ID[pn].push({path:rp});totalI++;}});
+      }catch(e){console.warn('skip',pn,e);}
+    }
+    L('Memuat aset preview...');
+    await preload();
+    renderUI();
+    toast('✅ Tema berhasil dibuka!');
+  }catch(e){toast('❌ '+e.message);console.error(e);}
+  HL();
+}
+
+function parseInfo(xml){
+  const g=tag=>{const m=xml.match(new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([^\\]<]+?)(?:\\]\\]>)?</${tag}>`,'i'));return m?m[1].trim():'';};
+  INFO={title:g('title'),author:g('author'),designer:g('designer'),version:g('version'),uiVersion:g('uiVersion')};
+}
+function parseColors(xml,xf,pn){
+  const out=[];const re=/<color\s+name="([^"]+)"(?:\s+package="[^"]+")?\s*>\s*(#[0-9a-fA-F]{6,8})\s*<\/color>/gi;let m;
+  while((m=re.exec(xml))!==null)out.push({name:m[1],value:m[2].toUpperCase(),original:m[2].toUpperCase(),xmlFile:xf,pkg:pn});
+  return out;
+}
+
+async function preload(){
+  // Lockscreen digit PNGs — the key visual
+  const lsPkg=PKG['lockscreen'];
+  if(lsPkg){
+    for(let i=0;i<=9;i++){
+      for(const style of['0','1']){
+        const p=`advance/time/${style}/t_${i}.png`;
+        const f=lsPkg.file(p);
+        if(f){try{const b=await f.async('blob');A['lockscreen/'+p]=URL.createObjectURL(b);}catch(e){}}
+      }
+    }
+    // date separator images
+    for(const p of['advance/time/time_num_0.png','advance/time/time_num_1.png']){
+      const f=lsPkg.file(p);if(f){try{const b=await f.async('blob');A['lockscreen/'+p]=URL.createObjectURL(b);}catch(e){}}
+    }
+    // lockscreen wallpapers (built-in)
+    for(let i=0;i<=9;i++){
+      for(const ext of['.jpg','.png']){
+        const p=`advance/pic/bz_${i}${ext}`;
+        const f=lsPkg.file(p);
+        if(f){try{const b=await f.async('blob');A['lockscreen/'+p]=URL.createObjectURL(b);break;}catch(e){}}
+      }
+    }
+    // shortcuts icons
+    for(const p of['advance/home/camera_0.png','advance/home/flash_0.png','advance/icon_0.png']){
+      const f=lsPkg.file(p);if(f){try{const b=await f.async('blob');A['lockscreen/'+p]=URL.createObjectURL(b);}catch(e){}}
+    }
+  }
+  // App icons
+  const icPkg=PKG['icons'];
+  if(icPkg){
+    const icons=['com.android.contacts','com.android.mms','com.android.camera','com.android.gallery3d',
+      'com.android.settings','com.android.deskclock','com.android.calculator2','com.android.browser',
+      'com.android.fileexplorer','com.android.email','com.android.music','com.android.updater',
+      'com.android.thememanager','com.miui.securitycenter','com.miui.notes',
+      'com.android.soundrecorder','com.android.calendar','com.android.contacts.activities.TwelveKeyDialer',
+      'com.miui.player','com.miui.gallery'];
+    for(const ic of icons){
+      const p=`res/drawable-xxhdpi/${ic}.png`;
+      const f=icPkg.file(p);if(f){try{const b=await f.async('blob');A['icons/'+p]=URL.createObjectURL(b);}catch(e){}}
+    }
+  }
+  // QS assets
+  const qsPkg=PKG['miui.systemui.plugin'];
+  if(qsPkg){
+    for(const p of['res/drawable-xxhdpi/qs_background_enabled.png','res/drawable-xxhdpi/qs_background_disabled.png',
+        'res/drawable-nxhdpi/toggle_slider_progress_background.9.png','res/drawable-nxhdpi/toggle_slider_background.9.png']){
+      const f=qsPkg.file(p);if(f){try{const b=await f.async('blob');A['miui.systemui.plugin/'+p]=URL.createObjectURL(b);}catch(e){}}
+    }
+  }
+  // Systemui assets
+  const suiPkg=PKG['com.android.systemui'];
+  if(suiPkg){
+    for(const p of['res/drawable-xxhdpi/ic_cc_qs_bg_active_normal.png','res/drawable-xxhdpi/ic_cc_qs_bg_inactive.png']){
+      const f=suiPkg.file(p);if(f){try{const b=await f.async('blob');A['com.android.systemui/'+p]=URL.createObjectURL(b);}catch(e){}}
+    }
+  }
+  // Home assets
+  const homePkg=PKG['com.miui.home'];
+  if(homePkg){
+    for(const p of['res/drawable-xxhdpi/bg_search_bar_light.9.png','res/drawable-xxhdpi/bg_search_bar_dark.9.png',
+        'res/drawable-xxhdpi/btn_clear_all.png']){
+      const f=homePkg.file(p);if(f){try{const b=await f.async('blob');A['com.miui.home/'+p]=URL.createObjectURL(b);}catch(e){}}
+    }
+  }
+}
+
+// ── RENDER UI ──────────────────────────────────────────────────────────────
+function renderUI(){
+  $('up').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  $('tabs').style.display='flex';
+  const pill=$('pill');pill.textContent=INFO.title||'Theme';pill.style.display='block';
+  let tc=0;Object.values(CD).forEach(a=>tc+=a.length);
+  $('sc').textContent=tc;$('si2').textContent=totalI;$('sp').textContent=Object.keys(PKG).length;
+  $('tinfo').innerHTML=`<div>📛 <b style="color:var(--t)">${INFO.title||'?'}</b></div><div>👤 ${INFO.author||'?'} / ${INFO.designer||'?'}</div><div>🔢 v${INFO.version||'?'} · UI ${INFO.uiVersion||'?'}</div>`;
+  go('colors');
+  updateClock();setInterval(updateClock,1000);
+}
+
+// CLOCK
+function now(){const d=new Date();return{hh:d.getHours().toString().padStart(2,'0'),mm:d.getMinutes().toString().padStart(2,'0'),h:d.getHours(),m:d.getMinutes()};}
+const DAYS=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const MONTHS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function updateClock(){
+  const d=new Date(),n=now();
+  const ds=`${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  document.querySelectorAll('.lc').forEach(el=>el.textContent=n.hh+':'+n.mm);
+  document.querySelectorAll('.ld').forEach(el=>el.textContent=ds);
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function go(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['colors','images','preview','export'][i]===name));
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  const pg=$('page-'+name);if(pg){pg.style.display='block';}
+  if(name==='preview')renderPreview();
+}
+
+// ── COLORS ─────────────────────────────────────────────────────────────────
+const PKGICO={'com.android.systemui':'🔔','com.android.contacts':'📞','com.android.mms':'💬','com.android.settings':'⚙️','com.miui.home':'🏠','miui.systemui.plugin':'🎛️','com.android.phone':'📱','framework-miui-res':'🖼️','icons':'🎨','lockscreen':'🔒','clock_2x4':'🕐','miwallpaper':'🌅'};
+
+function renderColors(fl=''){
+  const wrap=$('cwrap');wrap.innerHTML='';
+  const fll=fl.toLowerCase();
+  for(const[pn,colors]of Object.entries(CD)){
+    const flt=fll?colors.filter(c=>c.name.toLowerCase().includes(fll)||c.value.toLowerCase().includes(fll)):colors;
+    if(!flt.length)continue;
+    const changed=flt.filter(c=>c.value!==c.original).length;
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`<div class="ch" onclick="this.parentElement.classList.toggle('open')"><div class="ch-ico">${PKGICO[pn]||'📦'}</div><div class="ch-t"><div class="ch-n">${pn}</div><div class="ch-c">${flt.length} warna${changed?` · <span style="color:var(--acc)">${changed} diubah</span>`:''}</div></div><div class="ch-arr">▼</div></div><div class="cb" id="cb-${pn.replace(/\./g,'_')}"></div>`;
+    wrap.appendChild(card);
+    const body=card.querySelector('.cb');
+    flt.forEach(c=>{
+      const h6=m2h6(c.value),ai=m2ai(c.value)/255,ri=colors.indexOf(c);
+      const item=document.createElement('div');item.className='ci';
+      item.innerHTML=`<div class="cs" style="background:${h6};opacity:${ai}"><input type="color" value="${h6}" onchange="quickC('${pn}',${ri},this.value)"></div><div class="ci-info"><div class="ci-n">${c.name}</div><div class="ci-v">${c.value}${c.value!==c.original?' <span style="color:var(--acc)">●</span>':''}</div></div><button class="ci-btn" onclick="openM('${pn}',${ri})">Edit</button>`;
+      body.appendChild(item);
+    });
+  }
+}
+function filterColors(v){renderColors(v);}
+function quickC(pn,idx,h6){
+  const c=CD[pn][idx];const ab=m2ab(c.value);c.value=toM(h6,ab);
+  logCHG('color',pn,c.name,c.original,c.value);renderColors($('csearch').value);renderPreview();toast('✅ Warna diperbarui');
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────────────
+function openM(pn,idx){
+  CUR_C={pn,idx};const c=CD[pn][idx];const h6=m2h6(c.value);const ai=m2ai(c.value);
+  $('mname').textContent=c.name;$('mpick').value=h6;$('mhex').value=c.value;
+  $('mprev').style.background=h6;$('aslide').value=ai;$('aval').textContent=Math.round(ai/255*100)+'%';
+  $('cmodal').classList.add('open');
+}
+function closeM(){$('cmodal').classList.remove('open');CUR_C=null;}
+function sN(h){const ab=parseInt($('aslide').value).toString(16).padStart(2,'0');$('mhex').value=toM(h,ab);$('mprev').style.background=h;}
+function sH(v){const c=v.trim();if(c.length===9&&c[0]==='#'){const a=parseInt(c.slice(1,3),16),rgb='#'+c.slice(3);$('mpick').value=rgb;$('mprev').style.background=rgb;$('aslide').value=a;$('aval').textContent=Math.round(a/255*100)+'%';}else if(c.length===7&&c[0]==='#'){$('mpick').value=c;$('mprev').style.background=c;}}
+function sA(v){$('aval').textContent=Math.round(v/255*100)+'%';$('mhex').value=toM($('mpick').value,parseInt(v).toString(16).padStart(2,'0')).toUpperCase();}
+function setMC(h){$('mpick').value=h;sN(h);}
+function applyC(){
+  if(!CUR_C)return;const c=CD[CUR_C.pn][CUR_C.idx];const nv=$('mhex').value.toUpperCase();
+  if(nv===c.value){closeM();return;}
+  logCHG('color',CUR_C.pn,c.name,c.value,nv);c.value=nv;closeM();
+  renderColors($('csearch').value);renderPreview();toast('✅ Warna diterapkan');
+}
+$('cmodal').addEventListener('click',e=>{if(e.target===$('cmodal'))closeM();});
+
+// ── IMAGES ─────────────────────────────────────────────────────────────────
+function renderImages(fl=''){
+  const wrap=$('iwrap');wrap.innerHTML='';
+  const fll=fl.toLowerCase();
+  for(const[pn,imgs]of Object.entries(ID)){
+    const flt=fll?imgs.filter(i=>i.path.toLowerCase().includes(fll)):imgs;
+    if(!flt.length)continue;
+    const changed=flt.filter(i=>i.replaced).length;
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`<div class="ch" onclick="this.parentElement.classList.toggle('open');loadIG('${pn}',this.parentElement)"><div class="ch-ico">${PKGICO[pn]||'📦'}</div><div class="ch-t"><div class="ch-n">${pn}</div><div class="ch-c">${flt.length} gambar${changed?` · <span style="color:var(--acc)">${changed} diganti</span>`:''}</div></div><div class="ch-arr">▼</div></div><div class="cb"><div class="ig" id="ig-${pn.replace(/\./g,'_')}"></div></div>`;
+    wrap.appendChild(card);
+  }
+}
+function filterImages(v){renderImages(v);}
+async function loadIG(pn,card){
+  const grid=$('ig-'+pn.replace(/\./g,'_'));
+  if(!grid||grid.children.length>0)return;
+  const pz=PKG[pn];if(!pz)return;
+  grid.innerHTML='<div style="padding:12px;color:var(--t2);font-size:11px;">Loading...</div>';
+  const imgs=ID[pn]||[];
+  for(const img of imgs){if(!img.url){try{const b=await pz.file(img.path).async('blob');img.blob=b;img.url=URL.createObjectURL(b);}catch(e){}}}
+  grid.innerHTML='';
+  imgs.forEach(img=>{
+    if(!img.url)return;
+    const sn=img.path.split('/').pop();
+    const d=document.createElement('div');d.className='ii';
+    d.innerHTML=`${img.replaced?'<div class="rdot"></div>':''}<img src="${img.url}" loading="lazy"><div class="ii-n">${sn}</div><button class="ii-r" onclick="startIR('${pn}','${img.path}')">✏️</button>`;
+    grid.appendChild(d);
+  });
+}
+function startIR(pn,path){CUR_I={pn,path};$('img-fi').click();}
+async function handleImgR(inp){
+  if(!inp.files[0]||!CUR_I)return;
+  L('Mengganti gambar...');
+  const{pn,path}=CUR_I;
+  try{
+    const buf=await inp.files[0].arrayBuffer();PKG[pn].file(path,buf);
+    const blob=new Blob([buf],{type:inp.files[0].type});
+    const entry=ID[pn].find(i=>i.path===path);
+    if(entry){entry.blob=blob;entry.url=URL.createObjectURL(blob);entry.replaced=true;}
+    const key=pn+'/'+path;if(A[key])URL.revokeObjectURL(A[key]);A[key]=URL.createObjectURL(blob);
+    logCHG('image',pn,path,'','replaced');
+    const grid=$('ig-'+pn.replace(/\./g,'_'));if(grid){grid.innerHTML='';await loadIG(pn,null);}
+    renderPreview();toast('✅ Gambar diganti!');
+  }catch(e){toast('❌ '+e.message);}
+  HL();inp.value='';
+}
+
+// ── PREVIEW ────────────────────────────────────────────────────────────────
+function switchPrev(mode){
+  PMODE=mode;
+  const modes=['lock','qs','home','notif','volume'];
+  document.querySelectorAll('.pt').forEach((t,i)=>t.classList.toggle('active',modes[i]===mode));
+  renderPreview();
+}
+
+function renderPreview(){
+  const scr=$('screen');
+  if(PMODE==='lock')scr.innerHTML=buildLock();
+  else if(PMODE==='qs')scr.innerHTML=buildQS();
+  else if(PMODE==='home')scr.innerHTML=buildHome();
+  else if(PMODE==='notif')scr.innerHTML=buildNotif();
+  else if(PMODE==='volume')scr.innerHTML=buildVol();
+  updateClock();
+}
+
+// ── LOCKSCREEN BUILD ───────────────────────────────────────────────────────
+function digitImg(d,style='0'){
+  const url=assetUrl('lockscreen',`advance/time/${style}/t_${d}.png`);
+  return url?`<img class="digit-img" src="${url}">`:`<span class="clock-text">${d}</span>`;
+}
+function buildClockRow(){
+  const n=now();
+  const d=n.hh.split('').concat([':']).concat(n.mm.split(''));
+  let html='<div class="clock-row">';
+  for(const ch of d){
+    if(ch===':'){
+      html+=`<div class="digit-colon"><div class="digit-dot"></div><div class="digit-dot"></div></div>`;
+    }else{
+      html+=digitImg(ch,'0');
+    }
+  }
+  html+='</div>';
+  return html;
+}
+
+function buildLock(){
+  const timeColor=getC('notification_panel_time_color','#ffffff');
+  const dateColor=getC('notification_panel_date_color','rgba(255,255,255,0.6)');
+  const notifBg=getC('notification_material_background_color','rgba(255,255,255,0.1)');
+  const notifTitle=getC('notification_primary_text_color_light','#ffffff');
+  const notifSub=getC('notification_secondary_text_color_light','rgba(255,255,255,0.5)');
+
+  // Use built-in lockscreen wallpaper bz_0 if available, else default
+  const lsWpUrl=assetUrl('lockscreen','advance/pic/bz_0.jpg')||assetUrl('lockscreen','advance/pic/bz_0.png')||(WP.lock?WP.lock.url:'');
+
+  const bgHtml=lsWpUrl
+    ?`<img class="ls-wp" src="${lsWpUrl}" style="width:100%;display:block;min-height:480px;object-fit:cover;">`
+    :`<div class="ls-wp-ph"></div>`;
+
+  const smsIcon=assetUrl('icons','res/drawable-xxhdpi/com.android.mms.png');
+  const calIcon=assetUrl('icons','res/drawable-xxhdpi/com.android.calendar.png');
+  const camIcon=assetUrl('lockscreen','advance/home/camera_0.png');
+  const flashIcon=assetUrl('lockscreen','advance/home/flash_0.png');
+
+  const n=now();const d=new Date();
+  const dateStr=`${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+
+  return `
+<div class="ls-root">
+  ${bgHtml}
+  <div class="ls-over">
+    <!-- STATUS BAR -->
+    <div class="sb" style="color:${timeColor}">
+      <span style="font-size:11px;font-weight:700" class="lc">${n.hh}:${n.mm}</span>
+      <div class="sb-r">
+        <span style="font-size:11px">📶</span>
+        <span style="font-size:10px">5G</span>
+        <div class="bat" style="color:${timeColor}">
+          <div class="bat-b"><div class="bat-f" style="width:75%"></div></div>
+          <div class="bat-t"></div>
+        </div>
+      </div>
+    </div>
+    <!-- BIG CLOCK DIGITS -->
+    ${buildClockRow()}
+    <!-- DATE -->
+    <div class="ls-date-row">
+      <span class="ls-date-t ld" style="color:${dateColor}">${dateStr}</span>
+    </div>
+    <!-- NOTIFICATIONS -->
+    <div class="notif-list">
+      <div class="nc" style="background:${notifBg}">
+        ${smsIcon?`<img class="nc-icon" src="${smsIcon}">`:`<div class="nc-icon" style="background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;">💬</div>`}
+        <div class="nc-body">
+          <div class="nc-t" style="color:${notifTitle}">Pesan Masuk</div>
+          <div class="nc-s" style="color:${notifSub}">Halo, ada update baru!</div>
+        </div>
+        <div class="nc-time" style="color:${notifSub}">2m</div>
+      </div>
+      <div class="nc" style="background:${notifBg}">
+        ${calIcon?`<img class="nc-icon" src="${calIcon}">`:`<div class="nc-icon" style="background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;">📅</div>`}
+        <div class="nc-body">
+          <div class="nc-t" style="color:${notifTitle}">Kalender</div>
+          <div class="nc-s" style="color:${notifSub}">Meeting pukul 14:00</div>
+        </div>
+        <div class="nc-time" style="color:${notifSub}">1h</div>
+      </div>
+    </div>
+    <!-- SHORTCUTS -->
+    <div class="ls-shortcuts">
+      <div class="sc-btn">${camIcon?`<img src="${camIcon}" style="width:18px;height:18px;">`:'📷'}</div>
+      <div class="ls-unlock" style="color:${timeColor}">↑ Geser buka</div>
+      <div class="sc-btn">${flashIcon?`<img src="${flashIcon}" style="width:18px;height:18px;">`:'🔦'}</div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── QS PANEL BUILD ─────────────────────────────────────────────────────────
+function buildQS(){
+  const panelBg=getC('qs_panel_background_color','rgba(20,20,30,0.95)');
+  const clockCol=getC('qs_control_header_clock_color','#ffffff');
+  const dateCol=getC('qs_control_header_date_color','rgba(255,255,255,0.5)');
+  const tileOnBg=getC('cc_qs_tile_icon_bg_color_active','#3d84ff');
+  const tileOffBg=getC('qs_tile_icon_bg_disabled_color','rgba(255,255,255,0.1)');
+  const tileOnIco=getC('cc_qs_tile_icon_color','#ffffff');
+  const tileOffIco=getC('cc_qs_tile_icon_color_off','rgba(255,255,255,0.5)');
+  const tileLbl=getC('qs_tile_label_text_color','rgba(255,255,255,0.7)');
+  const brBg=getC('qs_brightness_background_color','rgba(255,255,255,0.08)');
+  const brFill=getC('qs_brightness_progress_color','rgba(255,255,255,0.7)');
+  const divCol=getC('qs_divider_color','rgba(255,255,255,0.08)');
+
+  const qsBgOn=assetUrl('miui.systemui.plugin','res/drawable-xxhdpi/qs_background_enabled.png');
+  const qsBgOff=assetUrl('miui.systemui.plugin','res/drawable-xxhdpi/qs_background_disabled.png');
+  const slBg=assetUrl('miui.systemui.plugin','res/drawable-nxhdpi/toggle_slider_background.9.png');
+  const slProg=assetUrl('miui.systemui.plugin','res/drawable-nxhdpi/toggle_slider_progress_background.9.png');
+
+  const lsWpUrl=assetUrl('lockscreen','advance/pic/bz_0.jpg')||assetUrl('lockscreen','advance/pic/bz_0.png')||(WP.lock?WP.lock.url:'');
+
+  const tiles=[
+    {ico:'📶',name:'WiFi',sub:'Terhubung',on:true},
+    {ico:'📡',name:'Data',sub:'5G Aktif',on:true},
+    {ico:'🔵',name:'Bluetooth',sub:'On',on:true},
+    {ico:'✈️',name:'Airplane',sub:'Off',on:false},
+    {ico:'🔦',name:'Senter',sub:'Off',on:false},
+    {ico:'🌙',name:'Fokus',sub:'Off',on:false},
+  ];
+
+  const n=now();const d=new Date();const ds=`${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+
+  const tileHtml=tiles.map(t=>{
+    const bg=t.on?(qsBgOn?`background-image:url(${qsBgOn});background-size:cover;background-color:${tileOnBg}`:`background:${tileOnBg}`)
+                 :(qsBgOff?`background-image:url(${qsBgOff});background-size:cover;background-color:${tileOffBg}`:`background:${tileOffBg}`);
+    return `<div class="qs-tile" style="${bg}">
+      <div class="qs-tile-ico-wrap" style="color:${t.on?tileOnIco:tileOffIco}">${t.ico}</div>
+      <div class="qs-tile-name" style="color:${tileLbl}">${t.name}</div>
+      <div class="qs-tile-sub" style="color:${tileLbl}">${t.sub}</div>
+    </div>`;
+  }).join('');
+
+  return `
+<div class="qs-root">
+  ${lsWpUrl?`<div class="qs-bg-overlay"><img src="${lsWpUrl}" style="width:100%;height:100%;object-fit:cover;"></div>`:''}
+  <div class="qs-panel" style="background:${panelBg};backdrop-filter:blur(28px);">
+    <!-- STATUS BAR -->
+    <div style="padding:28px 14px 0;">
+      <div class="sb" style="color:${clockCol}">
+        <span class="lc" style="font-size:11px;font-weight:700">${n.hh}:${n.mm}</span>
+        <div class="sb-r">
+          <span>📶</span><span style="font-size:10px">5G</span>
+          <div class="bat" style="color:${clockCol}"><div class="bat-b"><div class="bat-f" style="width:75%"></div></div><div class="bat-t"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="qs-head">
+      <div>
+        <div class="qs-time lc" style="color:${clockCol}">${n.hh}:${n.mm}</div>
+        <div class="qs-date-s ld" style="color:${dateCol}">${ds}</div>
+      </div>
+      <div class="qs-edit" style="color:${dateCol}">✏️ Edit</div>
+    </div>
+    <!-- BRIGHTNESS -->
+    <div class="qs-br" style="background:${brBg}">
+      <span class="qs-br-ico" style="color:${clockCol}">🔆</span>
+      <div class="qs-br-wrap" style="${slBg?`background-image:url(${slBg});background-size:cover;`:''};background-color:${brBg}">
+        <div class="qs-br-fill" style="${slProg?`background-image:url(${slProg});background-size:cover;`:''};background-color:${brFill};width:65%;"></div>
+        <div class="qs-br-thumb"></div>
+      </div>
+      <span style="font-size:10px;color:${clockCol};opacity:.5">65%</span>
+    </div>
+    <div class="qs-div" style="background:${divCol}"></div>
+    <!-- TILES -->
+    <div class="qs-tiles">${tileHtml}</div>
+    <!-- VOLUME/MEDIA SLIDERS -->
+    <div class="qs-sliders">
+      ${[['🔊','75%','70%'],['🎵','45%','42%']].map(([ico,pct,left])=>`
+      <div class="qs-sl">
+        <span class="qs-sl-ico" style="color:${clockCol}">${ico}</span>
+        <div class="qs-sl-wrap">
+          <div class="qs-sl-bg" style="${slBg?`background-image:url(${slBg});background-size:cover;`:''};background-color:${brBg};"></div>
+          <div class="qs-sl-fill" style="${slProg?`background-image:url(${slProg});background-size:cover;`:''};background-color:${brFill};width:${pct};"></div>
+          <div class="qs-sl-thumb" style="left:${left}"></div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</div>`;
+}
+
+// ── HOME SCREEN BUILD ──────────────────────────────────────────────────────
+function buildHome(){
+  const searchBg=assetUrl('com.miui.home','res/drawable-xxhdpi/bg_search_bar_light.9.png');
+  const homeWpUrl=WP.home?WP.home.url:(assetUrl('lockscreen','advance/pic/bz_1.jpg')||assetUrl('lockscreen','advance/pic/bz_1.png')||'');
+
+  const iconDefs=[
+    ['com.android.contacts','Kontak'],['com.android.mms','Pesan'],
+    ['com.android.camera','Kamera'],['com.android.gallery3d','Galeri'],
+    ['com.android.settings','Setelan'],['com.android.deskclock','Jam'],
+    ['com.android.calculator2','Kalkul'],['com.android.browser','Browser'],
+    ['com.android.fileexplorer','File'],['com.android.email','Email'],
+    ['com.android.music','Musik'],['com.android.updater','Update'],
+  ];
+  const dockDefs=['com.android.contacts.activities.TwelveKeyDialer','com.android.mms','com.android.camera','com.android.settings'];
+
+  const iconsHtml=iconDefs.map(([pkg,lbl])=>{
+    const url=assetUrl('icons',`res/drawable-xxhdpi/${pkg}.png`);
+    return `<div class="h-icon">${url?`<img src="${url}">`:`<div class="h-icon-ph">📱</div>`}<div class="h-label">${lbl}</div></div>`;
+  }).join('');
+
+  const dockHtml=dockDefs.map(pkg=>{
+    const url=assetUrl('icons',`res/drawable-xxhdpi/${pkg}.png`)||assetUrl('icons',`res/drawable-xxhdpi/${pkg.split('.activities')[0]}.png`);
+    return url?`<img src="${url}">`:`<div class="dock-ph">📱</div>`;
+  }).join('');
+
+  const sbColor=getC('qs_control_header_clock_color','#ffffff');
+
+  return `
+<div class="home-root">
+  <div class="home-wp-bg">${homeWpUrl?`<img class="home-wp-img" src="${homeWpUrl}">`:`<div style="width:100%;height:100%;background:linear-gradient(160deg,#1a1a2e,#16213e,#0f3460);"></div>`}</div>
+  <div class="home-overlay">
+    <div class="sb home-sb" style="color:${sbColor};padding:28px 14px 0;">
+      <span class="lc" style="font-size:11px;font-weight:700">12:00</span>
+      <div class="sb-r"><span>📶</span><span style="font-size:10px">5G</span><div class="bat" style="color:${sbColor}"><div class="bat-b"><div class="bat-f" style="width:75%"></div></div><div class="bat-t"></div></div></div>
+    </div>
+    <div class="home-grid">${iconsHtml}</div>
+    <div class="home-search" style="${searchBg?`background-image:url(${searchBg});background-size:cover;`:''};background-color:rgba(255,255,255,0.12);backdrop-filter:blur(12px);">
+      <span style="font-size:13px;opacity:.5">🔍</span>
+      <span style="font-size:11px;opacity:.35;color:#fff">Cari aplikasi...</span>
+    </div>
+    <div class="dock-wrap">
+      <div class="dock" style="background:rgba(255,255,255,.12);backdrop-filter:blur(20px);">${dockHtml}</div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── NOTIF PANEL BUILD ──────────────────────────────────────────────────────
+function buildNotif(){
+  const panelBg=getC('qs_panel_background_color','rgba(15,15,25,0.95)');
+  const clockCol=getC('notification_panel_time_color','#ffffff');
+  const notifBg=getC('notification_material_background_color','rgba(255,255,255,0.06)');
+  const titleCol=getC('notification_primary_text_color_light','#ffffff');
+  const subCol=getC('notification_secondary_text_color_light','rgba(255,255,255,0.5)');
+  const actionCol=getC('notification_action_text_color','#0d84ff');
+  const actionBg=getC('notification_action_bg_color','rgba(255,255,255,0.08)');
+  const lsWpUrl=assetUrl('lockscreen','advance/pic/bz_0.jpg')||assetUrl('lockscreen','advance/pic/bz_0.png')||(WP.lock?WP.lock.url:'');
+
+  const notifs=[
+    {pkg:'com.android.mms',app:'Pesan',t:'1 pesan baru',s:'Halo gimana kabarnya?',time:'2m',ico:'💬'},
+    {pkg:'com.android.email',app:'Email',t:'Newsletter minggu ini',s:'Top 10 berita teknologi...',time:'15m',ico:'📧'},
+    {pkg:'com.android.calendar',app:'Kalender',t:'Meeting jam 14:00',s:'Di ruang konferensi B',time:'1j',ico:'📅'},
+  ];
+  const n=now();
+
+  const cards=notifs.map(n=>{
+    const ico=assetUrl('icons',`res/drawable-xxhdpi/${n.pkg}.png`);
+    return `<div class="np-card" style="background:${notifBg};">
+      ${ico?`<img class="npc-icon" src="${ico}">`:`<div class="npc-icon" style="background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:14px;">${n.ico}</div>`}
+      <div class="npc-body">
+        <div class="npc-app" style="color:${subCol}">${n.app}</div>
+        <div class="npc-title" style="color:${titleCol}">${n.t}</div>
+        <div class="npc-text" style="color:${subCol}">${n.s}</div>
+        <div class="npc-actions">
+          <button class="npc-btn" style="background:${actionBg};color:${actionCol}">Balas</button>
+          <button class="npc-btn" style="background:${actionBg};color:${subCol}">Tutup</button>
+        </div>
+      </div>
+      <div class="npc-time" style="color:${subCol}">${n.time}</div>
+    </div>`;
+  }).join('');
+
+  return `
+<div class="np-root">
+  ${lsWpUrl?`<div class="np-bg-overlay"><img src="${lsWpUrl}" style="width:100%;height:100%;object-fit:cover;"></div>`:''}
+  <div class="np-panel" style="background:${panelBg};backdrop-filter:blur(28px);">
+    <div style="padding:28px 14px 0;"><div class="sb" style="color:${clockCol}"><span class="lc" style="font-size:11px;font-weight:700">${n.hh}:${n.mm}</span><div class="sb-r"><span>📶</span><div class="bat" style="color:${clockCol}"><div class="bat-b"><div class="bat-f" style="width:75%"></div></div><div class="bat-t"></div></div></div></div></div>
+    <div class="np-header" style="color:${titleCol}">🔔 Notifikasi</div>
+    ${cards}
+  </div>
+</div>`;
+}
+
+// ── VOLUME PANEL BUILD ─────────────────────────────────────────────────────
+function buildVol(){
+  const volBg=getC('miui_volume_bg_color','rgba(30,30,40,0.95)');
+  const accent=getC('miui_volume_color_accent','#f5325d');
+  const tint=getC('miui_volume_tint_light','rgba(255,255,255,0.9)');
+  const homeWpUrl=WP.home?WP.home.url:(assetUrl('lockscreen','advance/pic/bz_1.jpg')||'');
+
+  return `
+<div class="vol-root">
+  <div style="position:absolute;inset:0;">${homeWpUrl?`<img src="${homeWpUrl}" style="width:100%;height:100%;object-fit:cover;">`:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);"></div>`}</div>
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.3);"><!-- bg dim --></div>
+  <div class="vol-sliders">
+    ${[['🔊',68,accent],['🎵',42,tint],['📳',80,tint]].map(([ico,pct,color])=>`
+    <div class="vol-strip">
+      <div class="vol-pill" style="background:${volBg};backdrop-filter:blur(20px);">
+        <span class="vol-ico" style="color:${color}">${ico}</span>
+        <div class="vol-bar" style="background:rgba(255,255,255,.1);">
+          <div class="vol-fill" style="background:${color};height:${pct}%;"></div>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>
+</div>`;
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────
+async function exportMTZ(){
+  $('btn-exp').disabled=true;$('btn-exp').textContent='⏳ Memproses...';
+  L('Menyimpan warna ke XML...');
+  try{
+    for(const[pn,colors]of Object.entries(CD)){
+      const pz=PKG[pn];if(!pz)continue;
+      const byXml={};colors.forEach(c=>{if(!byXml[c.xmlFile])byXml[c.xmlFile]=[];byXml[c.xmlFile].push(c);});
+      for(const[xf,xcol]of Object.entries(byXml)){
+        const changed=xcol.filter(c=>c.value!==c.original);if(!changed.length)continue;
+        const xfile=pz.file(xf);if(!xfile)continue;
+        let xml=await xfile.async('string');
+        changed.forEach(c=>{
+          const en=c.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+          xml=xml.replace(new RegExp(`(<color\\s+name="${en}"(?:\\s+package="[^"]+")?>\\s*)(#[0-9a-fA-F]{6,8})(\\s*<\\/color>)`,'i'),`$1${c.value}$3`);
+        });
+        pz.file(xf,xml);
+      }
+    }
+    L('Merakit package...');
+    for(const[pn,pz]of Object.entries(PKG))Z.file(pn,await pz.generateAsync({type:'arraybuffer',compression:'STORE'}));
+    L('Membuat file MTZ...');
+    const blob=await Z.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const fn=(INFO.title||'theme').replace(/\s+/g,'_')+'_edited.mtz';
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();
+    toast('🎉 MTZ berhasil di-download!',4000);
+  }catch(e){toast('❌ '+e.message);console.error(e);}
+  HL();$('btn-exp').disabled=false;$('btn-exp').textContent='💾 Download MTZ';
+}
+
+// ── CHANGELOG ──────────────────────────────────────────────────────────────
+function logCHG(type,pkg,name,from,to){
+  if(type==='color'){const ex=CHG.colors.find(c=>c.pkg===pkg&&c.name===name);if(ex)ex.to=to;else CHG.colors.push({pkg,name,from,to});}
+  else{if(!CHG.images.find(i=>i.pkg===pkg&&i.path===name))CHG.images.push({pkg,path:name});}
+  const all=[];
+  CHG.colors.forEach(c=>all.push(`🎨 <b>${c.pkg.split('.').pop()}</b> · ${c.name}<br>&nbsp;<span style="color:var(--t2)">${c.from}</span>→<b style="color:var(--acc)">${c.to}</b>`));
+  CHG.images.forEach(i=>all.push(`🖼️ <b>${i.pkg}</b> · ${i.path.split('/').pop()}`));
+  $('chlog').innerHTML=all.length?all.join('<br>'):'Belum ada perubahan.';
+  $('exp-info').innerHTML=all.length?`<b style="color:var(--acc3)">${all.length} perubahan</b> siap di-export.`:'Semua perubahan akan tersimpan ke MTZ baru.';
+}
+
+// ── SERVICE WORKER ─────────────────────────────────────────────────────────
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').then(()=>console.log('SW registered')).catch(()=>{});
+  });
+}
+
+// ── INSTALL PROMPT ─────────────────────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  // Show install banner after 3 sec if not installed
+  setTimeout(()=>{
+    if(deferredPrompt){
+      const banner=document.createElement('div');
+      banner.style.cssText='position:fixed;bottom:calc(env(safe-area-inset-bottom)+60px);left:50%;transform:translateX(-50%);background:#1e1e2e;border:1px solid #3cefff44;color:#fff;padding:10px 16px;border-radius:50px;font-size:12px;z-index:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.5);white-space:nowrap;';
+      banner.innerHTML='<span>🎨</span><span>Tambah ke Home Screen?</span><button onclick="installPWA()" style="background:#3cefff;color:#000;border:none;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;">Install</button><button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:rgba(255,255,255,.4);font-size:16px;cursor:pointer;">✕</button>';
+      document.body.appendChild(banner);
+    }
+  },3000);
+});
+async function installPWA(){if(deferredPrompt){deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;deferredPrompt=null;document.querySelector('[onclick="installPWA()"]')?.closest('div')?.remove();}}
+</script>
+</body>
+</html>
