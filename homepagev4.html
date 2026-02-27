@@ -11,9 +11,10 @@
 :root{--accent:255,255,255;--blur:20px;--text:rgba(255,255,255,0.93);--muted:rgba(255,255,255,0.45);--font-ui:'Outfit',sans-serif;--font-clock:'Space Mono',monospace;--fs-ui:15px;--fs-clock:72px;}
 html,body{width:100%;height:100%;overflow:hidden;background:#080810}
 body{font-family:var(--font-ui);font-size:var(--fs-ui)}
-#bg-img{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;transition:opacity .8s ease}
-#bg-img2{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;opacity:0;transition:opacity .8s ease}
-#bg-video{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:none}
+#bg-wrap{position:fixed;inset:0;z-index:0;overflow:hidden}
+#bg-img{position:absolute;inset:-30%;width:160%;height:160%;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;transition:opacity .8s ease}
+#bg-img2{position:absolute;inset:-30%;width:160%;height:160%;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;opacity:0;transition:opacity .8s ease}
+#bg-video{position:absolute;inset:-30%;width:160%;height:160%;object-fit:cover;object-position:50% 50%;display:none}
 #overlay{position:fixed;inset:0;z-index:1;pointer-events:none;background:rgba(0,0,0,0.38)}
 #canvas{position:relative;z-index:2;width:100vw;height:100dvh}
 .guide{position:fixed;z-index:45;pointer-events:none;opacity:0;transition:opacity .15s}
@@ -129,9 +130,11 @@ body.edit-mode #edit-bar{display:block}
 </style>
 </head>
 <body>
-<div id="bg-img"></div>
-<div id="bg-img2"></div>
-<video id="bg-video" autoplay muted loop playsinline></video>
+<div id="bg-wrap">
+  <div id="bg-img"></div>
+  <div id="bg-img2"></div>
+  <video id="bg-video" autoplay muted loop playsinline></video>
+</div>
 <div id="overlay"></div>
 <div class="guide h" id="guide-h"></div>
 <div class="guide v" id="guide-v"></div>
@@ -338,20 +341,17 @@ let bgSlideIdx=0,bgSlideTimer=null;
 
 function applyBgStyle(){
   const pos=`${S.bgX}% ${S.bgY}%`;
-  const z=S.bgZ;
-  // For negative zoom: use scale transform with mirror
-  const scaleVal=Math.abs(z)/100;
+  const z=S.bgZ; // -100 to 200
+  // scale: 100% = 1.0, 200% = 2.0, -100% = mirror scale(-1)
+  const scaleAbs=Math.max(0.01, Math.abs(z)/100);
   const flipX=z<0?-1:1;
   const rot=S.bgR||0;
-  const transform=`rotate(${rot}deg) scale(${flipX*scaleVal}, ${scaleVal})`;
-  bgImg.style.backgroundPosition=pos;
-  bgImg.style.backgroundSize='cover';
-  bgImg.style.transform=transform;
-  bgImg.style.transformOrigin='center center';
-  bgImg2.style.backgroundPosition=pos;
-  bgImg2.style.backgroundSize='cover';
-  bgImg2.style.transform=transform;
-  bgImg2.style.transformOrigin='center center';
+  const transform=`rotate(${rot}deg) scale(${flipX*scaleAbs}, ${scaleAbs})`;
+  [bgImg,bgImg2].forEach(el=>{
+    el.style.backgroundPosition=pos;
+    el.style.transform=transform;
+    el.style.transformOrigin='center center';
+  });
   bgVid.style.objectPosition=pos;
   bgVid.style.transform=transform;
   bgVid.style.transformOrigin='center center';
@@ -440,7 +440,6 @@ function resetBg(){
   S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;S.bgR=0;
   clearInterval(bgSlideTimer);
   bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';
-  bgImg.style.transform='';bgImg2.style.transform='';bgVid.style.transform='';
   bgVid.style.display='none';bgVid.src='';
   document.getElementById('bg-urls').value='';
   syncBgSliders();save();toast('Background direset!');
