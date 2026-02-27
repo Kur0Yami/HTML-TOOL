@@ -12,9 +12,9 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#080810}
 body{font-family:var(--font-ui);font-size:var(--fs-ui)}
 #bg-wrap{position:fixed;inset:0;z-index:0;overflow:hidden}
-#bg-img{position:absolute;inset:-30%;width:160%;height:160%;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;transition:opacity .8s ease}
-#bg-img2{position:absolute;inset:-30%;width:160%;height:160%;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;opacity:0;transition:opacity .8s ease}
-#bg-video{position:absolute;inset:-30%;width:160%;height:160%;object-fit:cover;object-position:50% 50%;display:none}
+#bg-img{position:absolute;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;transition:opacity .8s ease}
+#bg-img2{position:absolute;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;opacity:0;transition:opacity .8s ease}
+#bg-video{position:absolute;object-fit:cover;object-position:50% 50%;display:none}
 #overlay{position:fixed;inset:0;z-index:1;pointer-events:none;background:rgba(0,0,0,0.38)}
 #canvas{position:relative;z-index:2;width:100vw;height:100dvh}
 .guide{position:fixed;z-index:45;pointer-events:none;opacity:0;transition:opacity .15s}
@@ -341,19 +341,45 @@ let bgSlideIdx=0,bgSlideTimer=null;
 
 function applyBgStyle(){
   const pos=`${S.bgX}% ${S.bgY}%`;
-  const z=S.bgZ; // -100 to 200
-  // scale: 100% = 1.0, 200% = 2.0, -100% = mirror scale(-1)
+  const z=S.bgZ;
   const scaleAbs=Math.max(0.01, Math.abs(z)/100);
   const flipX=z<0?-1:1;
   const rot=S.bgR||0;
-  const transform=`rotate(${rot}deg) scale(${flipX*scaleAbs}, ${scaleAbs})`;
+
+  // Calculate how much extra space we need so rotation never crops.
+  // At any angle, the rotated rectangle must fully cover viewport.
+  // Worst case is 45°: diagonal = sqrt(2) ≈ 1.414x the side.
+  // Extra padding needed = (diagonal - 1) / 2 per side.
+  // We also account for zoom-out (scaleAbs < 1 needs more space).
+  const rad=rot*Math.PI/180;
+  const absCos=Math.abs(Math.cos(rad));
+  const absSin=Math.abs(Math.sin(rad));
+  // Required size multiplier to cover viewport after rotation
+  const rotMult=absCos+absSin; // max at 45° = sqrt(2)
+  // Required size multiplier to cover viewport after zoom-out
+  const zoomMult=scaleAbs<1?1/scaleAbs:1;
+  // Combined: element must be this many times larger than viewport
+  const totalMult=rotMult*zoomMult;
+  // Convert to padding percentage (each side)
+  const padPct=Math.ceil((totalMult-1)/2*100)+5; // +5 safety margin
+  const sizePct=100+padPct*2;
+
+  const insetPx=`-${padPct}%`;
+  const sizeCss=`${sizePct}%`;
+
   [bgImg,bgImg2].forEach(el=>{
+    el.style.inset=insetPx;
+    el.style.width=sizeCss;
+    el.style.height=sizeCss;
     el.style.backgroundPosition=pos;
-    el.style.transform=transform;
+    el.style.transform=`rotate(${rot}deg) scale(${flipX*scaleAbs}, ${scaleAbs})`;
     el.style.transformOrigin='center center';
   });
+  bgVid.style.inset=insetPx;
+  bgVid.style.width=sizeCss;
+  bgVid.style.height=sizeCss;
   bgVid.style.objectPosition=pos;
-  bgVid.style.transform=transform;
+  bgVid.style.transform=`rotate(${rot}deg) scale(${flipX*scaleAbs}, ${scaleAbs})`;
   bgVid.style.transformOrigin='center center';
 }
 
