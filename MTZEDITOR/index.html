@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" id="manifest-link">
 <title>MTZ Editor</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -984,11 +984,17 @@ function logCHG(type,pkg,name,from,to){
   $('exp-info').innerHTML=all.length?`<b style="color:var(--acc3)">${all.length} perubahan</b> siap di-export.`:'Semua perubahan akan tersimpan ke MTZ baru.';
 }
 
-// ── SERVICE WORKER ─────────────────────────────────────────────────────────
-if('serviceWorker'in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').then(()=>console.log('SW registered')).catch(()=>{});
-  });
+// INLINE MANIFEST + SW
+(function(){
+  var m={name:'MTZ Theme Editor',short_name:'MTZ Editor',start_url:location.href,display:'standalone',orientation:'portrait',background_color:'#0c0c10',theme_color:'#0c0c10',icons:[{src:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22><rect width=%22192%22 height=%22192%22 rx=%2236%22 fill=%22%23ff5a3c%22/><text x=%2296%22 y=%22130%22 font-size=%2296%22 text-anchor=%22middle%22>P</text></svg>',sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'}]};
+  var b=new Blob([JSON.stringify(m)],{type:'application/json'});
+  var link=document.getElementById('manifest-link');
+  if(link)link.href=URL.createObjectURL(b);
+})();
+if('serviceWorker' in navigator){
+  var code="const C='mtz-v3';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{self.clients.claim();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>new Response('')));});";
+  var url=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));
+  navigator.serviceWorker.register(url,{scope:'./'}).then(function(r){console.log('SW ok');}).catch(function(e){console.warn('SW fail',e);});
 }
 
 // ── INSTALL PROMPT ─────────────────────────────────────────────────────────
