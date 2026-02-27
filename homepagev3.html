@@ -348,6 +348,22 @@ let S=JSON.parse(JSON.stringify(DEF));
 try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
 S.hidden=S.hidden||{};S.layout=S.layout||{};
 if(!S.bgPresets||S.bgPresets.length<10)S.bgPresets=new Array(10).fill(null);
+
+// ── IndexedDB for large files ──
+let _idb=null;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    if(_idb)return res(_idb);
+    const req=indexedDB.open('gntd_files',1);
+    req.onupgradeneeded=e=>e.target.result.createObjectStore('files');
+    req.onsuccess=e=>{_idb=e.target.result;res(_idb);};
+    req.onerror=e=>rej(e);
+  });
+}
+function idbSet(key,val){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put(val,key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e);}));}
+function idbGet(key){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readonly');const req=tx.objectStore('files').get(key);req.onsuccess=()=>res(req.result);req.onerror=e=>rej(e);}));}
+function idbDel(key){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e);}));}
+
 const save=()=>localStorage.setItem('gntd5',JSON.stringify(S));
 let toastT;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2300)}
@@ -367,10 +383,35 @@ let bgSlideIdx=0,bgSlideTimer=null;
 function applyBgStyle(){const pos=`${S.bgX}% ${S.bgY}%`;const sz=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.backgroundPosition=pos;bgImg.style.backgroundSize=sz;bgImg2.style.backgroundPosition=pos;bgImg2.style.backgroundSize=sz;bgVid.style.objectPosition=pos;bgVid.style.transform=S.bgZ>100?`scale(${S.bgZ/100})`:'none';}
 function showSlide(idx){const url=S.bgUrls[idx];if(!url)return;const isVid=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);if(isVid){bgVid.src=url;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';return;}const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
 function startSlideTimer(){clearInterval(bgSlideTimer);if(!S.bgUrls||S.bgUrls.length<=1)return;bgSlideTimer=setInterval(()=>{if(S.bgmShuffle)bgSlideIdx=Math.floor(Math.random()*S.bgUrls.length);else bgSlideIdx=(bgSlideIdx+1)%S.bgUrls.length;if(!S.bgLoop&&bgSlideIdx===0){clearInterval(bgSlideTimer);return;}showSlide(bgSlideIdx);},(S.bgTransSec||10)*1000);}
-function applyBg(){clearInterval(bgSlideTimer);if(S.bgLocal){const isVid=S.bgType==='video';if(isVid){bgVid.src=S.bgLocal;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';}else{bgImg.style.backgroundImage=`url('${S.bgLocal}')`;bgVid.style.display='none';bgVid.src='';}applyBgStyle();return;}if(!S.bgUrls||!S.bgUrls.length)return;bgSlideIdx=0;showSlide(bgSlideIdx);startSlideTimer();}
+let _bgLocalData=''; // runtime cache for IDB bg data
+function applyBgData(data,isVid){if(isVid){bgVid.src=data;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';}else{bgImg.style.backgroundImage=`url('${data}')`;bgVid.style.display='none';bgVid.src='';}applyBgStyle();}
+function applyBg(){
+  clearInterval(bgSlideTimer);
+  if(S.bgLocal){
+    const isVid=S.bgType==='video';
+    if(S.bgLocal==='idb:bg'){
+      if(_bgLocalData){applyBgData(_bgLocalData,isVid);}
+      else{idbGet('bg').then(data=>{if(data){_bgLocalData=data;applyBgData(data,isVid);}});}
+    }else{applyBgData(S.bgLocal,isVid);}
+    return;
+  }
+  if(!S.bgUrls||!S.bgUrls.length)return;
+  bgSlideIdx=0;showSlide(bgSlideIdx);startSlideTimer();
+}
 function applyBgUrls(){const raw=document.getElementById('bg-urls').value.trim();const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;S.bgUrls=lines;S.bgLocal='';S.bgType=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(lines[0])?'video':'img';applyBg();save();toast('Background diterapkan!');}
-document.getElementById('bg-file').addEventListener('change',function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.bgLocal=ev.target.result;S.bgUrls=[];S.bgType=f.type.startsWith('video')?'video':'img';applyBg();save();toast('File diupload!');};r.readAsDataURL(f);});
-function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;clearInterval(bgSlideTimer);bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';syncBgSliders();save();toast('Background direset!');}
+document.getElementById('bg-file').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    idbSet('bg',ev.target.result).then(()=>{
+      S.bgLocal='idb:bg';S.bgUrls=[];S.bgType=f.type.startsWith('video')?'video':'img';
+      _bgLocalData=ev.target.result;
+      applyBg();save();toast('File disimpan!');
+    });
+  };
+  r.readAsDataURL(f);
+});
+function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;_bgLocalData='';clearInterval(bgSlideTimer);bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';syncBgSliders();idbDel('bg');save();toast('Background direset!');}
 function toggleBgLoop(){S.bgLoop=!S.bgLoop;save();document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop);}
 document.getElementById('sl-bgtrans').addEventListener('input',function(){S.bgTransSec=+this.value;document.getElementById('sl-bgtrans-v').textContent=this.value+'s';save();startSlideTimer();});
 document.getElementById('sl-bgfade').addEventListener('input',function(){S.bgFadeSec=+this.value;document.getElementById('sl-bgfade-v').textContent=(+this.value).toFixed(1)+'s';save();});
@@ -468,7 +509,21 @@ function toggleWidget(wid,togId){S.hidden[wid]=!S.hidden[wid];save();document.ge
 const audio=document.getElementById('bgm-audio');
 let bgmIdx=0,vizAnim=null,audioCtx=null,analyser=null,srcNode=null;
 function bgmSetVol(){audio.volume=(S.bgmVol||70)/100;}
-function bgmLoad(idx){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmIdx=((idx%S.bgmPlaylist.length)+S.bgmPlaylist.length)%S.bgmPlaylist.length;const t=S.bgmPlaylist[bgmIdx];if(audio.src!==t.url){audio.src=t.url;}document.getElementById('bgm-title').textContent=t.name||'Track '+(bgmIdx+1);document.getElementById('bgm-sub').textContent=(bgmIdx+1)+' / '+S.bgmPlaylist.length;renderBgmPlaylist();}
+function bgmLoad(idx,cb){
+  if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;
+  bgmIdx=((idx%S.bgmPlaylist.length)+S.bgmPlaylist.length)%S.bgmPlaylist.length;
+  const t=S.bgmPlaylist[bgmIdx];
+  document.getElementById('bgm-title').textContent=t.name||'Track '+(bgmIdx+1);
+  document.getElementById('bgm-sub').textContent=(bgmIdx+1)+' / '+S.bgmPlaylist.length;
+  renderBgmPlaylist();
+  function setAudioSrc(src){if(audio.src!==src)audio.src=src;if(cb)cb();}
+  if(t.url&&t.url.startsWith('idb:')){
+    idbGet(t.url.slice(4)).then(data=>{
+      if(data)setAudioSrc(data);
+      else toast('File tidak ditemukan di storage');
+    });
+  }else{setAudioSrc(t.url);}
+}
 // AudioContext init moved inside bgmPlay
 function bgmPlay(){
   if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;
@@ -496,8 +551,8 @@ function bgmPlay(){
 }
 function bgmPause(){audio.pause();document.getElementById('bgm-play').textContent='▶';document.getElementById('bgm-toggle').classList.remove('playing');stopViz();}
 function bgmTogglePlay(){if(audio.paused)bgmPlay();else bgmPause();}
-function bgmNext(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;if(S.bgmShuffle)bgmLoad(Math.floor(Math.random()*S.bgmPlaylist.length));else bgmLoad(bgmIdx+1);audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};}
-function bgmPrev(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmLoad(bgmIdx-1);audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};}
+function bgmNext(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;const ni=S.bgmShuffle?Math.floor(Math.random()*S.bgmPlaylist.length):bgmIdx+1;bgmLoad(ni,()=>{audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});}
+function bgmPrev(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmLoad(bgmIdx-1,()=>{audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});}
 function toggleLoop(){S.bgmLoop=!S.bgmLoop;save();document.getElementById('bgm-loop-btn').classList.toggle('on',S.bgmLoop);audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
 function toggleShuffle(){S.bgmShuffle=!S.bgmShuffle;save();document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);}
 function toggleLoopRange(){S.bgmLoopRange=!S.bgmLoopRange;save();const btn=document.getElementById('bgm-loop-range-btn');btn.classList.toggle('on',S.bgmLoopRange);btn.textContent=S.bgmLoopRange?'On':'Off';audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
@@ -512,15 +567,32 @@ document.getElementById('bgm-vol').addEventListener('input',function(){S.bgmVol=
 function startViz(){if(vizAnim)return;const canvas=document.getElementById('bgm-viz');const ctx=canvas.getContext('2d');function frame(){vizAnim=requestAnimationFrame(frame);const W=canvas.width=canvas.offsetWidth||240,H=28;ctx.clearRect(0,0,W,H);if(analyser){const buf=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(buf);const bw=W/buf.length;for(let i=0;i<buf.length;i++){const h=Math.max(2,buf[i]/255*H);ctx.fillStyle=`rgba(${S.accent},${0.35+buf[i]/510})`;ctx.fillRect(i*bw,H-h,Math.max(1,bw-1),h);}}else{const n=24,bw=W/n;for(let i=0;i<n;i++){ctx.fillStyle=`rgba(${S.accent},0.25)`;ctx.fillRect(i*bw,H-4,Math.max(1,bw-1),4);}}}frame();}
 function stopViz(){if(vizAnim){cancelAnimationFrame(vizAnim);vizAnim=null;const c=document.getElementById('bgm-viz');c.getContext('2d').clearRect(0,0,c.width,28);}}
 function bgmAddUrl(){const url=document.getElementById('bgm-url-inp').value.trim();const name=document.getElementById('bgm-name-inp').value.trim();if(!url)return toast('Masukkan URL musik!');S.bgmPlaylist.push({url,name:name||decodeURIComponent(url.split('/').pop()).replace(/%20/g,' ').replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();document.getElementById('bgm-url-inp').value='';document.getElementById('bgm-name-inp').value='';toast('Lagu ditambahkan!');if(S.bgmPlaylist.length===1)bgmLoad(0);}
-document.getElementById('bgm-file').addEventListener('change',function(e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{S.bgmPlaylist.push({url:ev.target.result,name:f.name.replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();toast(`${f.name} diupload!`);if(S.bgmPlaylist.length===1)bgmLoad(0);};r.readAsDataURL(f);});});
-function renderBgmPlaylist(){const list=document.getElementById('bgm-playlist-list');list.innerHTML='';(S.bgmPlaylist||[]).forEach((t,i)=>{const row=document.createElement('div');row.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;border:1px solid ${i===bgmIdx?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.07)'}`;row.innerHTML=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${i===bgmIdx?'▶':i+1}</span><span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||'Track '+(i+1)}</span><button style="background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:11px;flex-shrink:0;padding:0 2px">✕</button>`;row.querySelector('button').addEventListener('click',e=>{e.stopPropagation();S.bgmPlaylist.splice(i,1);if(bgmIdx>=S.bgmPlaylist.length)bgmIdx=0;save();renderBgmPlaylist();toast('Lagu dihapus!');});row.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;bgmLoad(i);audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});list.appendChild(row);});}
-function bgmClearAll(){if(!confirm('Hapus semua lagu?'))return;S.bgmPlaylist=[];audio.src='';bgmPause();save();renderBgmPlaylist();document.getElementById('bgm-title').textContent='Tidak ada musik';document.getElementById('bgm-sub').textContent='—';}
+document.getElementById('bgm-file').addEventListener('change',function(e){
+  Array.from(e.target.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      const idbKey='bgm_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      idbSet(idbKey,ev.target.result).then(()=>{
+        const track={url:'idb:'+idbKey,name:f.name.replace(/\.[^.]+$/,'')};
+        S.bgmPlaylist.push(track);
+        save();renderBgmPlaylist();toast(f.name+' disimpan!');
+        if(S.bgmPlaylist.length===1)bgmLoad(0);
+      });
+    };
+    r.readAsDataURL(f);
+  });
+});
+function renderBgmPlaylist(){const list=document.getElementById('bgm-playlist-list');list.innerHTML='';(S.bgmPlaylist||[]).forEach((t,i)=>{const row=document.createElement('div');row.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;border:1px solid ${i===bgmIdx?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.07)'}`;row.innerHTML=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${i===bgmIdx?'▶':i+1}</span><span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||'Track '+(i+1)}</span><button style="background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:11px;flex-shrink:0;padding:0 2px">✕</button>`;row.querySelector('button').addEventListener('click',e=>{e.stopPropagation();const t=S.bgmPlaylist[i];if(t&&t.url&&t.url.startsWith('idb:'))idbDel(t.url.slice(4));S.bgmPlaylist.splice(i,1);if(bgmIdx>=S.bgmPlaylist.length)bgmIdx=0;save();renderBgmPlaylist();toast('Lagu dihapus!');});row.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;bgmLoad(i,()=>{audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});});list.appendChild(row);});}
+function bgmClearAll(){if(!confirm('Hapus semua lagu?'))return;
+  (S.bgmPlaylist||[]).forEach(t=>{if(t.url&&t.url.startsWith('idb:'))idbDel(t.url.slice(4));});
+  S.bgmPlaylist=[];audio.src='';bgmPause();save();renderBgmPlaylist();
+  document.getElementById('bgm-title').textContent='Tidak ada musik';document.getElementById('bgm-sub').textContent='—';}
 document.getElementById('bgm-toggle').addEventListener('click',()=>{
   const p=document.getElementById('bgm-player');
   const wasShown=!p.classList.contains('mini');
   p.classList.toggle('mini');
   if(!p.classList.contains('mini')&&S.bgmPlaylist&&S.bgmPlaylist.length){
-    if(!audio.src||audio.src==='about:blank')bgmLoad(0);
+    if(!audio.src||audio.src==='about:blank'||audio.src===window.location.href)bgmLoad(0,()=>{});
     if(audio.paused)bgmPlay();
   }else if(wasShown&&!audio.paused){
     // keep playing when minimized
@@ -549,7 +621,11 @@ function resetAll(){if(!confirm('Reset semua data?'))return;localStorage.removeI
 // INIT
 function init(){
   if(S.bgUrls&&S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
-  applyBg();setupBgSliders();
+  // Load IDB bg first, then applyBg
+  if(S.bgLocal==='idb:bg'){
+    idbGet('bg').then(data=>{if(data){_bgLocalData=data;}applyBg();}).catch(()=>applyBg());
+  }else{applyBg();}
+  setupBgSliders();
   document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;
   document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
   document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop!==false);
@@ -597,7 +673,7 @@ function init(){
   document.getElementById('bgm-loop-start').value=S.bgmLoopStart||0;
   document.getElementById('bgm-loop-end').value=S.bgmLoopEnd||0;
   audio.loop=S.bgmLoop&&!S.bgmLoopRange;
-  if(S.bgmPlaylist&&S.bgmPlaylist.length){bgmLoad(0);renderBgmPlaylist();}
+  if(S.bgmPlaylist&&S.bgmPlaylist.length){bgmLoad(0,()=>{});renderBgmPlaylist();}
   setTimeout(()=>document.getElementById('search').focus(),150);
 }
 init();
