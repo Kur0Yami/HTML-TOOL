@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Glass New Tab</title>
+<link id="font-main-link" href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
+<link id="font-clock-link" href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:255,255,255;--blur:20px;--text:rgba(255,255,255,0.93);--muted:rgba(255,255,255,0.45);--font-ui:'Outfit',sans-serif;--font-clock:'Space Mono',monospace;--fs-ui:15px;--fs-clock:72px;}
+html,body{width:100%;height:100%;overflow:hidden;background:#080810}
+body{font-family:var(--font-ui);font-size:var(--fs-ui)}
+#bg-img{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;transition:opacity .8s ease}
+#bg-img2{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;opacity:0;transition:opacity .8s ease}
+#bg-video{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:none}
+#overlay{position:fixed;inset:0;z-index:1;pointer-events:none;background:rgba(0,0,0,0.38)}
+#canvas{position:relative;z-index:2;width:100vw;height:100dvh}
+.guide{position:fixed;z-index:45;pointer-events:none;opacity:0;transition:opacity .15s}
+.guide.h{left:0;right:0;height:1px;background:rgba(100,200,255,0.6);top:50%}
+.guide.v{top:0;bottom:0;width:1px;background:rgba(100,200,255,0.6);left:50%}
+.guide.show{opacity:1}
+.widget{position:absolute;user-select:none;touch-action:none}
+.widget.hidden{display:none!important}
+body.edit-mode .widget>*:not(.edit-handle){pointer-events:none}
+body.edit-mode .bm-del{pointer-events:all!important}
+body.edit-mode .widget{cursor:move}
+.edit-handle{display:none;position:absolute;inset:-2px;border:2px dashed rgba(var(--accent),0.45);border-radius:inherit;z-index:10;pointer-events:none}
+.edit-handle .res,.edit-handle .cen{pointer-events:all}
+.edit-handle .res{position:absolute;bottom:-1px;right:-1px;width:24px;height:24px;background:rgba(var(--accent),0.3);backdrop-filter:blur(8px);border-radius:6px 0 6px 0;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:se-resize;color:white}
+.edit-handle .cen{position:absolute;top:-1px;right:-1px;width:24px;height:24px;background:rgba(100,200,255,0.3);backdrop-filter:blur(8px);border-radius:0 6px 0 6px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:white}
+body.edit-mode .edit-handle{display:block}
+#w-clock{display:flex;flex-direction:column;align-items:center;gap:4px}
+#clock-card{padding:12px 24px;border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background .3s,border .3s}
+#clock-card.card-on{background:rgba(var(--accent),0.08);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(var(--accent),0.15)}
+#greeting{font-size:var(--fs-ui);color:var(--muted);font-weight:300;letter-spacing:1px;text-align:center}
+#clock{font-family:var(--font-clock);font-size:var(--fs-clock);color:var(--text);letter-spacing:-3px;line-height:1;text-shadow:0 4px 40px rgba(0,0,0,0.5);white-space:nowrap}
+#date{font-size:calc(var(--fs-ui) * 0.8);color:var(--muted);letter-spacing:4px;text-transform:uppercase;font-weight:300}
+#sec-bar-wrap{width:100%;height:3px;background:rgba(var(--accent),0.12);border-radius:2px;overflow:hidden;margin-top:2px}
+#sec-bar{height:100%;background:rgba(var(--accent),0.6);border-radius:2px;width:0%;transition:width .95s linear}
+#sec-bar-wrap.hidden-bar{display:none}
+#w-search{display:flex;flex-direction:column;gap:0}
+#search-row{display:flex;align-items:center;background:rgba(var(--accent),0.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(var(--accent),0.2);border-radius:18px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+#search-row:focus-within{border-color:rgba(var(--accent),0.4);box-shadow:0 0 0 3px rgba(var(--accent),0.07)}
+#search{flex:1;padding:14px 18px;background:none;border:none;color:var(--text);font-family:var(--font-ui);font-size:var(--fs-ui);font-weight:300;outline:none;min-width:0}
+#search::placeholder{color:var(--muted)}
+#search-btn{padding:0 16px;background:none;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;transition:color .2s;flex-shrink:0}
+#search-btn:hover{color:var(--text)}
+#w-bookmarks{display:flex;flex-direction:column;align-items:center;gap:10px}
+#bm-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+#bm-list.pill .bm{display:flex;align-items:center;gap:7px;padding:7px 14px;background:rgba(var(--accent),0.09);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(var(--accent),0.15);border-radius:12px;color:var(--text);text-decoration:none;font-size:var(--fs-ui);font-weight:300;transition:background .2s,transform .15s;position:relative}
+#bm-list.pill .bm:hover{background:rgba(var(--accent),0.16);transform:translateY(-2px)}
+#bm-list.pill .bm img{width:15px;height:15px;object-fit:contain;border-radius:3px;flex-shrink:0}
+#bm-list.grid{gap:14px}
+#bm-list.grid .bm{display:flex;flex-direction:column;align-items:center;gap:6px;width:72px;background:none;border:none;text-decoration:none;color:var(--text);position:relative;transition:transform .15s}
+#bm-list.grid .bm:hover{transform:translateY(-3px)}
+#bm-list.grid .bm .icon-wrap{width:52px;height:52px;background:rgba(var(--accent),0.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(var(--accent),0.18);border-radius:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+#bm-list.grid .bm:hover .icon-wrap{background:rgba(var(--accent),0.18)}
+#bm-list.grid .bm img{width:26px;height:26px;object-fit:contain}
+#bm-list.grid .bm span.label{font-size:11px;color:var(--muted);text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bm-del{display:none;position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;background:rgba(220,60,60,0.9);color:#fff;font-size:9px;align-items:center;justify-content:center;cursor:pointer;border:none;z-index:5}
+.bm:hover .bm-del{display:flex}
+#gear{position:fixed;bottom:18px;right:18px;z-index:50;width:40px;height:40px;border-radius:50%;background:rgba(var(--accent),0.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(var(--accent),0.18);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .2s,transform .3s}
+#gear:hover{color:var(--text);transform:rotate(70deg)}
+body.edit-mode #gear{background:rgba(255,200,80,0.2);border-color:rgba(255,200,80,0.4);color:rgba(255,200,80,0.9);transform:none!important}
+#panel{position:fixed;bottom:66px;right:16px;z-index:49;width:min(320px,calc(100vw - 24px));max-height:calc(100dvh - 90px);overflow-y:auto;background:rgba(12,12,20,0.9);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:18px;display:none;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.1) transparent}
+#panel.open{display:flex;animation:pop .2s ease}
+#panel h3{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase}
+.p-row{display:flex;flex-direction:column;gap:6px}
+.p-row label{font-size:12px;color:var(--muted)}
+.p-inp{width:100%;padding:8px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.11);border-radius:10px;color:var(--text);font-family:var(--font-ui);font-size:12px;outline:none;transition:border-color .2s}
+.p-inp:focus{border-color:rgba(255,255,255,0.28)}
+textarea.p-inp{resize:vertical;line-height:1.5}
+.p-btn{padding:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:var(--text);font-family:var(--font-ui);font-size:12px;cursor:pointer;transition:background .2s;text-align:center}
+.p-btn:hover{background:rgba(255,255,255,0.18)}
+.p-file{display:none}
+.hr{height:1px;background:rgba(255,255,255,0.07);flex-shrink:0}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type=range]{flex:1;height:4px;appearance:none;background:rgba(var(--accent),0.2);border-radius:2px;outline:none;cursor:pointer}
+.slider-row input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.9);cursor:pointer}
+.slider-val{font-size:11px;color:var(--muted);min-width:38px;text-align:right}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.toggle-row span{font-size:12px;color:var(--muted);flex:1}
+.tog{width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.15);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tog.on{background:rgba(var(--accent),0.4)}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:white;transition:left .2s}
+.tog.on::after{left:18px}
+.swatches{display:flex;gap:7px;flex-wrap:wrap}
+.swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s}
+.swatch.on{border-color:white;transform:scale(1.15)}
+.sec-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:2px 0}
+.sec-head .arr{font-size:10px;color:var(--muted);transition:transform .2s}
+.sec-head.collapsed .arr{transform:rotate(-90deg)}
+.sec-body{display:flex;flex-direction:column;gap:10px}
+.sec-body.collapsed{display:none}
+.eng-list{display:flex;flex-direction:column;gap:6px}
+.eng-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;transition:background .15s}
+.eng-item.on{background:rgba(var(--accent),0.15);border-color:rgba(var(--accent),0.3)}
+.eng-item span{font-size:12px;color:var(--text);flex:1}
+.eng-item .eng-dot{width:8px;height:8px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);flex-shrink:0}
+.eng-item.on .eng-dot{background:white;border-color:white}
+.preset-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.preset-slot{height:44px;border-radius:8px;border:1px dashed rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
+.preset-slot.filled{border-style:solid;border-color:rgba(255,255,255,0.2)}
+.preset-slot.filled:hover{border-color:rgba(255,255,255,0.4)}
+.preset-slot .ps-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0.6}
+.preset-slot .ps-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);font-family:var(--font-ui)}
+.preset-slot.filled .ps-label{color:rgba(255,255,255,0.9);font-size:9px;text-shadow:0 1px 4px rgba(0,0,0,0.9)}
+.preset-slot .ps-del{display:none;position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:rgba(200,50,50,0.9);color:white;font-size:8px;align-items:center;justify-content:center;cursor:pointer;border:none;z-index:2}
+.preset-slot.filled:hover .ps-del{display:flex}
+.preset-slot .ps-chk{display:none;position:absolute;bottom:2px;left:2px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);align-items:center;justify-content:center;font-size:8px;color:white;z-index:3;pointer-events:none}
+.preset-slot.filled .ps-chk{display:flex}
+.preset-slot.in-rot .ps-chk{background:rgba(var(--accent),0.6);border-color:white}
+.preset-slot.in-rot{outline:2px solid rgba(var(--accent),0.7);outline-offset:-2px}
+#ps-rot-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(var(--accent),0.06);border:1px solid rgba(var(--accent),0.12);border-radius:10px;flex-wrap:wrap}
+#ps-rot-bar.active{border-color:rgba(var(--accent),0.3);background:rgba(var(--accent),0.1)}
+#ps-rot-prog{flex:1;min-width:80px;height:3px;background:rgba(var(--accent),0.15);border-radius:2px;overflow:hidden}
+#ps-rot-fill{height:100%;background:rgba(var(--accent),0.7);border-radius:2px;width:0%;transition:width 1s linear}
+#edit-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:48;padding:7px 16px;background:rgba(255,200,80,0.15);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,200,80,0.25);font-size:12px;color:rgba(255,220,100,0.9);text-align:center;letter-spacing:1px}
+body.edit-mode #edit-bar{display:block}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:rgba(20,20,30,0.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 18px;color:var(--text);font-size:13px;z-index:99;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+#toast.show{opacity:1}
+#orient-badge{position:fixed;top:10px;left:12px;z-index:47;font-size:10px;color:var(--muted);letter-spacing:1px;opacity:0;transition:opacity .5s}
+#orient-badge.show{opacity:1}
+.upload-warn{font-size:11px;padding:6px 10px;border-radius:8px;margin-top:4px;display:none}
+.upload-warn.warn{display:block;background:rgba(255,180,0,0.12);border:1px solid rgba(255,180,0,0.3);color:rgba(255,200,80,0.9)}
+.upload-warn.err{display:block;background:rgba(255,60,60,0.12);border:1px solid rgba(255,60,60,0.3);color:rgba(255,120,120,0.9)}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+</style>
+</head>
+<body>
+<div id="bg-img"></div>
+<div id="bg-img2"></div>
+<video id="bg-video" autoplay muted loop playsinline></video>
+<div id="overlay"></div>
+<div class="guide h" id="guide-h"></div>
+<div class="guide v" id="guide-v"></div>
+<div id="edit-bar">✦ EDIT MODE — Drag · ⤡ resize · ⊕ center · Tap ⚙ selesai</div>
+<div id="orient-badge"></div>
+<div id="canvas">
+  <div class="widget" id="w-clock">
+    <div class="edit-handle"><div class="res">⤡</div><div class="cen" onclick="centerWidget('w-clock')">⊕</div></div>
+    <div id="clock-card">
+      <div id="greeting"></div>
+      <div id="clock">00:00</div>
+      <div id="date">—</div>
+      <div id="sec-bar-wrap" class="hidden-bar"><div id="sec-bar"></div></div>
+    </div>
+  </div>
+  <div class="widget" id="w-search">
+    <div class="edit-handle"><div class="res">⤡</div><div class="cen" onclick="centerWidget('w-search')">⊕</div></div>
+    <div id="search-row">
+      <input id="search" type="text" placeholder="Cari atau ketik URL..." autocomplete="off" spellcheck="false">
+      <button id="search-btn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    </div>
+  </div>
+  <div class="widget" id="w-bookmarks">
+    <div class="edit-handle"><div class="res">⤡</div><div class="cen" onclick="centerWidget('w-bookmarks')">⊕</div></div>
+    <div id="bm-list" class="pill"></div>
+  </div>
+</div>
+<button id="gear"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+<div id="panel">
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🖱 Layout & Widget</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="toggle-row"><span>Edit Mode</span><div class="tog" id="tog-edit" onclick="toggleEditMode()"></div></div>
+    <div class="toggle-row"><span>Clock</span><div class="tog on" id="tog-clock" onclick="toggleWidget('w-clock','tog-clock')"></div></div>
+    <div class="toggle-row"><span>Search</span><div class="tog on" id="tog-search" onclick="toggleWidget('w-search','tog-search')"></div></div>
+    <div class="toggle-row"><span>Bookmark</span><div class="tog on" id="tog-bm" onclick="toggleWidget('w-bookmarks','tog-bm')"></div></div>
+    <button class="p-btn" onclick="resetLayout()">↺ Reset posisi widget</button>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🖼 Background</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row">
+      <label>URL gambar/video (satu per baris = slideshow)</label>
+      <textarea id="bg-urls" class="p-inp" rows="3" placeholder="https://...&#10;https://... (multi = slideshow/shuffle)"></textarea>
+      <button class="p-btn" onclick="applyBgUrls()">Terapkan URL</button>
+    </div>
+    <div class="p-row">
+      <label>Upload file gambar (max 5MB, gunakan URL untuk video)</label>
+      <label class="p-btn" for="bg-file" style="cursor:pointer">📁 Pilih File</label>
+      <input id="bg-file" type="file" class="p-file" accept="image/*">
+      <div id="bg-file-warn" class="upload-warn"></div>
+    </div>
+    <div class="p-row"><label>Waktu slideshow (detik)</label><div class="slider-row"><input type="range" id="sl-bgtrans" min="3" max="120" value="10"><span class="slider-val" id="sl-bgtrans-v">10s</span></div></div>
+    <div class="p-row"><label>Durasi fade</label><div class="slider-row"><input type="range" id="sl-bgfade" min="0" max="3" step="0.1" value="0.8"><span class="slider-val" id="sl-bgfade-v">0.8s</span></div></div>
+    <div class="toggle-row"><span>Looping slideshow</span><div class="tog on" id="tog-bgloop" onclick="toggleBgLoop()"></div></div>
+    <div class="p-row"><label>Posisi Horizontal</label><div class="slider-row"><input type="range" id="sl-bgx" min="0" max="100" value="50"><span class="slider-val" id="sl-bgx-v">50%</span></div></div>
+    <div class="p-row"><label>Posisi Vertikal</label><div class="slider-row"><input type="range" id="sl-bgy" min="0" max="100" value="50"><span class="slider-val" id="sl-bgy-v">50%</span></div></div>
+    <div class="p-row"><label>Zoom / Scale</label><div class="slider-row"><input type="range" id="sl-bgz" min="-100" max="200" value="100"><span class="slider-val" id="sl-bgz-v">100%</span></div></div>
+    <div class="p-row"><label>Rotasi Background</label><div class="slider-row"><input type="range" id="sl-bgr" min="0" max="360" value="0"><span class="slider-val" id="sl-bgr-v">0°</span></div></div>
+    <div class="p-row"><label>Opacity Overlay</label><div class="slider-row"><input type="range" id="sl-overlay" min="0" max="80" value="38"><span class="slider-val" id="sl-overlay-v">38%</span></div></div>
+    <button class="p-btn" onclick="resetBg()" style="color:rgba(255,150,150,.8)">↺ Reset background</button>
+    <div class="hr"></div>
+    <div class="p-row">
+      <label>Preset (klik kosong = simpan, klik terisi = load)</label>
+      <div class="preset-grid" id="preset-grid"></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">
+        <label style="font-size:12px;color:var(--muted)">Preset Slideshow — tahan lama preset untuk toggle rotasi</label>
+        <div id="ps-rot-bar">
+          <span id="ps-rot-status" style="font-size:11px;color:var(--muted);flex:1;min-width:60px">Pilih preset lalu Start</span>
+          <div id="ps-rot-prog"><div id="ps-rot-fill"></div></div>
+          <button class="loop-tog" id="ps-rot-btn" onclick="togglePresetRot()" style="font-size:11px;padding:3px 10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--muted);cursor:pointer;white-space:nowrap">▶ Start</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);flex:1">Interval per preset</span>
+          <input type="range" id="sl-psrot" min="5" max="300" value="30" style="flex:1;height:4px;appearance:none;background:rgba(255,255,255,0.15);border-radius:2px;outline:none;cursor:pointer">
+          <span id="sl-psrot-v" style="font-size:11px;color:var(--muted);min-width:34px;text-align:right">30s</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);flex:1">Urutan</span>
+          <button class="loop-tog" id="ps-order-btn" onclick="togglePsOrder()" style="font-size:10px;padding:2px 8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--muted);cursor:pointer;white-space:nowrap">Berurutan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🎨 Tampilan</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Accent Color</label><div class="swatches"><div class="swatch on" data-rgb="255,255,255" style="background:rgba(255,255,255,0.7)"></div><div class="swatch" data-rgb="147,197,253" style="background:#93c5fd"></div><div class="swatch" data-rgb="196,181,253" style="background:#c4b5fd"></div><div class="swatch" data-rgb="253,186,116" style="background:#fdba74"></div><div class="swatch" data-rgb="134,239,172" style="background:#86efac"></div><div class="swatch" data-rgb="249,168,212" style="background:#f9a8d4"></div><div class="swatch" data-rgb="103,232,249" style="background:#67e8f9"></div></div></div>
+    <div class="p-row"><label>Blur Glass</label><div class="slider-row"><input type="range" id="sl-blur" min="0" max="40" value="20"><span class="slider-val" id="sl-blur-v">20px</span></div></div>
+    <div class="p-row"><label>Ukuran Font UI</label><div class="slider-row"><input type="range" id="sl-fs-ui" min="10" max="22" value="15"><span class="slider-val" id="sl-fs-ui-v">15px</span></div></div>
+    <div class="p-row"><label>Ukuran Font Jam</label><div class="slider-row"><input type="range" id="sl-fs-clock" min="28" max="120" value="72"><span class="slider-val" id="sl-fs-clock-v">72px</span></div></div>
+    <div class="p-row">
+      <label>Font UI — paste &lt;link&gt; atau URL Google Fonts</label>
+      <textarea id="font-ui-input" class="p-inp" rows="2" placeholder="&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Poppins&quot;&gt;"></textarea>
+      <input id="font-ui-name" class="p-inp" type="text" placeholder="Nama font (otomatis terisi)" style="margin-top:6px">
+      <button class="p-btn" onclick="applyFontUI()" style="margin-top:6px">Terapkan Font UI</button>
+      <button class="p-btn" onclick="resetFontUI()" style="color:rgba(255,150,150,.8)">↺ Reset</button>
+    </div>
+    <div class="p-row">
+      <label>Font Jam — paste &lt;link&gt; atau URL Google Fonts</label>
+      <textarea id="font-clock-input" class="p-inp" rows="2" placeholder="&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Orbitron&quot;&gt;"></textarea>
+      <input id="font-clock-name" class="p-inp" type="text" placeholder="Nama font jam (otomatis terisi)" style="margin-top:6px">
+      <button class="p-btn" onclick="applyFontClock()" style="margin-top:6px">Terapkan Font Jam</button>
+      <button class="p-btn" onclick="resetFontClock()" style="color:rgba(255,150,150,.8)">↺ Reset</button>
+    </div>
+    <div class="toggle-row"><span>Bookmark Grid Mode</span><div class="tog" id="tog-grid" onclick="toggleBmGrid()"></div></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🕐 Jam & Greeting</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Greeting custom</label><input id="inp-greeting" class="p-inp" type="text" placeholder="Selamat datang, Yami ✦" oninput="S.greetingCustom=this.value;save();renderGreeting()"></div>
+    <div class="p-row"><label>Nama (greeting otomatis)</label><input id="inp-name" class="p-inp" type="text" placeholder="Yami" oninput="S.name=this.value;save();renderGreeting()"></div>
+    <div class="toggle-row"><span>Format 12 jam</span><div class="tog" id="tog-12h" onclick="toggle12h()"></div></div>
+    <div class="toggle-row"><span>Tampilkan detik</span><div class="tog" id="tog-sec" onclick="toggleSecs()"></div></div>
+    <div class="toggle-row"><span>Progress bar detik</span><div class="tog" id="tog-secbar" onclick="toggleSecBar()"></div></div>
+    <div class="toggle-row"><span>Card / blur jam</span><div class="tog" id="tog-card" onclick="toggleClockCard()"></div></div>
+    <div class="p-row"><label>Opacity Clock</label><div class="slider-row"><input type="range" id="sl-op-clock" min="10" max="100" value="100"><span class="slider-val" id="sl-op-clock-v">100%</span></div></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🔍 Search</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Placeholder text</label><input id="inp-placeholder" class="p-inp" type="text" placeholder="Cari atau ketik URL..." oninput="S.placeholder=this.value;save();document.getElementById('search').placeholder=this.value||'Cari atau ketik URL...'"></div>
+    <div class="p-row"><label>Opacity Search</label><div class="slider-row"><input type="range" id="sl-op-search" min="10" max="100" value="100"><span class="slider-val" id="sl-op-search-v">100%</span></div></div>
+    <div class="p-row"><label>Mesin Pencari</label><div class="eng-list"><div class="eng-item on" data-url="https://www.google.com/search?q="><div class="eng-dot"></div><span>Google</span></div><div class="eng-item" data-url="https://www.bing.com/search?q="><div class="eng-dot"></div><span>Bing</span></div><div class="eng-item" data-url="https://yandex.com/search/?text="><div class="eng-dot"></div><span>Yandex</span></div><div class="eng-item" data-url="https://duckduckgo.com/?q="><div class="eng-dot"></div><span>DuckDuckGo</span></div><div class="eng-item" data-url="https://search.brave.com/search?q="><div class="eng-dot"></div><span>Brave</span></div><div class="eng-item" data-url="https://search.yahoo.com/search?p="><div class="eng-dot"></div><span>Yahoo</span></div></div></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>🔖 Bookmark</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <div class="p-row"><label>Opacity Bookmark</label><div class="slider-row"><input type="range" id="sl-op-bm" min="10" max="100" value="100"><span class="slider-val" id="sl-op-bm-v">100%</span></div></div>
+    <div class="p-row"><input id="bm-n" class="p-inp" type="text" placeholder="Nama"><input id="bm-u" class="p-inp" type="text" placeholder="URL" style="margin-top:6px"><button class="p-btn" onclick="addBm()" style="margin-top:6px">+ Tambah Bookmark</button></div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec-head" onclick="toggleSec(this)"><h3>💾 Backup & Restore</h3><span class="arr">▼</span></div>
+  <div class="sec-body">
+    <button class="p-btn" onclick="exportSettings()">⬇ Export JSON</button>
+    <div class="p-row"><label class="p-btn" for="import-file" style="cursor:pointer">⬆ Import JSON</label><input id="import-file" type="file" class="p-file" accept=".json"></div>
+    <button class="p-btn" onclick="resetAll()" style="color:rgba(255,100,100,.8)">🗑 Reset semua</button>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const DEF={
+  bgUrls:[],bgLocal:'',bgType:'img',
+  bgX:50,bgY:50,bgZ:100,bgR:0,
+  bgTransSec:10,bgFadeSec:0.8,bgLoop:true,
+  bgPresets:new Array(10).fill(null),
+  overlay:38,blur:20,accent:'255,255,255',
+  fsUI:15,fsClock:72,
+  engine:'https://www.google.com/search?q=',
+  bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Twitter',u:'https://x.com'},{n:'GitHub',u:'https://github.com'}],
+  bmGrid:false,hidden:{},layout:{},
+  name:'',greetingCustom:'',
+  use12h:false,showSecs:false,showSecBar:false,clockCard:false,
+  placeholder:'',
+  fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',
+  opClock:100,opSearch:100,opBm:100,
+  psRotActive:false,psRotInterval:30,psRotOrder:'seq',psRotSelected:[]
+};
+let S=JSON.parse(JSON.stringify(DEF));
+try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
+S.hidden=S.hidden||{};
+S.layout=S.layout||{};
+S.bgR=S.bgR||0;
+if(!S.bgPresets||S.bgPresets.length<10)S.bgPresets=new Array(10).fill(null);
+const save=()=>{try{localStorage.setItem('gntd5',JSON.stringify(S));}catch(e){toast('⚠ Storage penuh! Hapus file upload atau kurangi data.');}};
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
+function sanitizeUrl(url){url=(url||'').trim();if(!url)return '';try{const u=new URL(url);if(u.protocol==='http:'||u.protocol==='https:')return url;}catch(e){}return '';}
+function parseFontInput(raw){raw=(raw||'').trim();const hm=raw.match(/href=["']([^"']+)["']/);if(hm){const url=hm[1];const fm=url.match(/family=([^&:]+)/);return{url,name:fm?decodeURIComponent(fm[1]).replace(/\+/g,' ').split(':')[0]:''};}if(raw.startsWith('http')){const fm=raw.match(/family=([^&:]+)/);return{url:raw,name:fm?decodeURIComponent(fm[1]).replace(/\+/g,' ').split(':')[0]:''};}return null;}
+
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+const DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function renderGreeting(){
+  const el=document.getElementById('greeting');
+  if(S.greetingCustom){el.textContent=S.greetingCustom;return;}
+  if(S.name){const h=new Date().getHours();el.textContent=`${h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam'}, ${S.name} ✦`;}
+  else el.textContent='';
+}
+function tick(){
+  const n=new Date();
+  let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();
+  let suf='';
+  if(S.use12h){suf=hh>=12?' PM':' AM';hh=hh%12||12;}
+  let str=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  if(S.showSecs)str+=':'+String(ss).padStart(2,'0');
+  if(suf)str+=suf;
+  document.getElementById('clock').textContent=str;
+  document.getElementById('date').textContent=`${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;
+  renderGreeting();
+  if(S.showSecBar)document.getElementById('sec-bar').style.width=(ss/59*100)+'%';
+}
+setInterval(tick,1000);tick();
+function toggle12h(){S.use12h=!S.use12h;save();document.getElementById('tog-12h').classList.toggle('on',S.use12h);}
+function toggleSecs(){S.showSecs=!S.showSecs;save();document.getElementById('tog-sec').classList.toggle('on',S.showSecs);}
+function toggleSecBar(){S.showSecBar=!S.showSecBar;save();document.getElementById('tog-secbar').classList.toggle('on',S.showSecBar);document.getElementById('sec-bar-wrap').classList.toggle('hidden-bar',!S.showSecBar);}
+function toggleClockCard(){S.clockCard=!S.clockCard;save();document.getElementById('tog-card').classList.toggle('on',S.clockCard);document.getElementById('clock-card').classList.toggle('card-on',S.clockCard);}
+
+// ─── BACKGROUND ──────────────────────────────────────────────────────────────
+const bgImg=document.getElementById('bg-img'),bgImg2=document.getElementById('bg-img2'),bgVid=document.getElementById('bg-video');
+let bgSlideIdx=0,bgSlideTimer=null;
+
+function applyBgStyle(){
+  const pos=`${S.bgX}% ${S.bgY}%`;
+  const z=S.bgZ;
+  // For negative zoom: use scale transform with mirror
+  const scaleVal=Math.abs(z)/100;
+  const flipX=z<0?-1:1;
+  const rot=S.bgR||0;
+  const transform=`rotate(${rot}deg) scale(${flipX*scaleVal}, ${scaleVal})`;
+  bgImg.style.backgroundPosition=pos;
+  bgImg.style.backgroundSize='cover';
+  bgImg.style.transform=transform;
+  bgImg.style.transformOrigin='center center';
+  bgImg2.style.backgroundPosition=pos;
+  bgImg2.style.backgroundSize='cover';
+  bgImg2.style.transform=transform;
+  bgImg2.style.transformOrigin='center center';
+  bgVid.style.objectPosition=pos;
+  bgVid.style.transform=transform;
+  bgVid.style.transformOrigin='center center';
+}
+
+function showSlide(idx){
+  const url=sanitizeUrl(S.bgUrls[idx]);
+  if(!url)return;
+  const isVid=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);
+  if(isVid){bgVid.src=url;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';return;}
+  const fd=S.bgFadeSec||0.8;
+  bgImg2.style.transition=`opacity ${fd}s ease`;
+  bgImg.style.transition=`opacity ${fd}s ease`;
+  const cur=bgImg.style.backgroundImage;
+  if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){
+    bgImg2.style.backgroundImage=`url('${url}')`;
+    bgImg2.style.opacity='1';
+    setTimeout(()=>{
+      bgImg.style.opacity='0';
+      setTimeout(()=>{
+        bgImg.style.backgroundImage=`url('${url}')`;
+        bgImg.style.opacity='1';
+        bgImg2.style.opacity='0';
+      },fd*1000);
+    },50);
+  }else{
+    bgImg.style.backgroundImage=`url('${url}')`;
+    bgImg.style.opacity='1';
+    bgImg2.style.opacity='0';
+  }
+  bgVid.style.display='none';bgVid.src='';
+  applyBgStyle();
+}
+
+function startSlideTimer(){
+  clearInterval(bgSlideTimer);
+  if(!S.bgUrls||S.bgUrls.length<=1)return;
+  bgSlideTimer=setInterval(()=>{
+    if(S.bgShuffle)bgSlideIdx=Math.floor(Math.random()*S.bgUrls.length);
+    else bgSlideIdx=(bgSlideIdx+1)%S.bgUrls.length;
+    if(!S.bgLoop&&bgSlideIdx===0){clearInterval(bgSlideTimer);return;}
+    showSlide(bgSlideIdx);
+  },(S.bgTransSec||10)*1000);
+}
+
+function applyBg(){
+  clearInterval(bgSlideTimer);
+  if(S.bgLocal){
+    if(S.bgType==='video'){bgVid.src=S.bgLocal;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';}
+    else{bgImg.style.backgroundImage=`url('${S.bgLocal}')`;bgVid.style.display='none';bgVid.src='';}
+    applyBgStyle();return;
+  }
+  if(!S.bgUrls||!S.bgUrls.length)return;
+  bgSlideIdx=0;showSlide(bgSlideIdx);startSlideTimer();
+}
+
+function applyBgUrls(){
+  const raw=document.getElementById('bg-urls').value.trim();
+  const lines=raw.split('\n').map(l=>sanitizeUrl(l)).filter(Boolean);
+  if(!lines.length){toast('URL tidak valid!');return;}
+  S.bgUrls=lines;S.bgLocal='';
+  S.bgType=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(lines[0])?'video':'img';
+  applyBg();save();toast('Background diterapkan!');
+}
+
+const MAX_UPLOAD_BYTES=5*1024*1024; // 5MB
+document.getElementById('bg-file').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const warn=document.getElementById('bg-file-warn');
+  warn.className='upload-warn';warn.textContent='';
+  if(f.size>MAX_UPLOAD_BYTES){
+    warn.className='upload-warn err';
+    warn.textContent=`❌ File terlalu besar (${(f.size/1024/1024).toFixed(1)}MB). Max 5MB.`;
+    this.value='';return;
+  }
+  if(f.size>2*1024*1024){
+    warn.className='upload-warn warn';
+    warn.textContent=`⚠ File cukup besar (${(f.size/1024/1024).toFixed(1)}MB), bisa memenuhi storage.`;
+  }
+  const r=new FileReader();
+  r.onload=ev=>{S.bgLocal=ev.target.result;S.bgUrls=[];S.bgType='img';applyBg();save();toast('File diupload!');};
+  r.readAsDataURL(f);
+});
+
+function resetBg(){
+  S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;S.bgR=0;
+  clearInterval(bgSlideTimer);
+  bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';
+  bgImg.style.transform='';bgImg2.style.transform='';bgVid.style.transform='';
+  bgVid.style.display='none';bgVid.src='';
+  document.getElementById('bg-urls').value='';
+  syncBgSliders();save();toast('Background direset!');
+}
+
+function toggleBgLoop(){S.bgLoop=!S.bgLoop;save();document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop);}
+
+document.getElementById('sl-bgtrans').addEventListener('input',function(){S.bgTransSec=+this.value;document.getElementById('sl-bgtrans-v').textContent=this.value+'s';save();startSlideTimer();});
+document.getElementById('sl-bgfade').addEventListener('input',function(){S.bgFadeSec=+this.value;document.getElementById('sl-bgfade-v').textContent=(+this.value).toFixed(1)+'s';save();});
+
+function syncBgSliders(){
+  document.getElementById('sl-bgx').value=S.bgX;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';
+  document.getElementById('sl-bgy').value=S.bgY;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';
+  document.getElementById('sl-bgz').value=S.bgZ;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';
+  document.getElementById('sl-bgr').value=S.bgR||0;document.getElementById('sl-bgr-v').textContent=(S.bgR||0)+'°';
+}
+
+function setupBgSliders(){
+  syncBgSliders();
+  document.getElementById('sl-bgtrans').value=S.bgTransSec||10;
+  document.getElementById('sl-bgtrans-v').textContent=(S.bgTransSec||10)+'s';
+  document.getElementById('sl-bgfade').value=S.bgFadeSec||0.8;
+  document.getElementById('sl-bgfade-v').textContent=(S.bgFadeSec||0.8).toFixed(1)+'s';
+  document.getElementById('sl-bgx').addEventListener('input',function(){S.bgX=+this.value;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';applyBgStyle();save();});
+  document.getElementById('sl-bgy').addEventListener('input',function(){S.bgY=+this.value;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';applyBgStyle();save();});
+  document.getElementById('sl-bgz').addEventListener('input',function(){
+    S.bgZ=+this.value;
+    const label=S.bgZ<0?`${S.bgZ}% 🔄`:`${S.bgZ}%`;
+    document.getElementById('sl-bgz-v').textContent=label;
+    applyBgStyle();save();
+  });
+  document.getElementById('sl-bgr').addEventListener('input',function(){
+    S.bgR=+this.value;
+    document.getElementById('sl-bgr-v').textContent=S.bgR+'°';
+    applyBgStyle();save();
+  });
+}
+
+document.getElementById('sl-overlay').addEventListener('input',function(){
+  S.overlay=+this.value;
+  document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;
+  document.getElementById('sl-overlay-v').textContent=S.overlay+'%';save();
+});
+
+// ─── PRESETS ─────────────────────────────────────────────────────────────────
+let psRotProgTimer=null,psRotIdx=0,psRotElapsed=0;
+function getRotList(){return(S.psRotSelected||[]).filter(i=>i<10&&S.bgPresets[i]);}
+
+function loadPresetFull(i){
+  const p=S.bgPresets[i];if(!p)return;
+  S.bgUrls=p.bgUrls?[...p.bgUrls]:[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';
+  S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ||100;S.bgR=p.bgR||0;S.overlay=p.overlay!=null?p.overlay:38;
+  applyBg();applyBgStyle();syncBgSliders();
+  document.getElementById('overlay').style.background='rgba(0,0,0,'+(S.overlay/100)+')';
+  document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
+  if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
+}
+
+function startPresetRot(){
+  const list=getRotList();
+  if(!list.length){toast('Tahan lama preset untuk pilih rotasi!');return;}
+  stopPresetRot();
+  S.psRotActive=true;save();psRotIdx=0;psRotElapsed=0;
+  loadPresetFull(list[psRotIdx]);
+  updatePsRotUI();
+  const interval=S.psRotInterval||30;
+  document.getElementById('ps-rot-fill').style.transition='none';
+  document.getElementById('ps-rot-fill').style.width='0%';
+  psRotProgTimer=setInterval(()=>{
+    psRotElapsed++;
+    const pct=psRotElapsed/interval*100;
+    document.getElementById('ps-rot-fill').style.transition='width 1s linear';
+    document.getElementById('ps-rot-fill').style.width=Math.min(pct,100)+'%';
+    document.getElementById('ps-rot-status').textContent='P'+(list[psRotIdx]+1)+' — '+(interval-psRotElapsed)+'s';
+    if(psRotElapsed>=interval){
+      psRotElapsed=0;
+      document.getElementById('ps-rot-fill').style.transition='none';
+      document.getElementById('ps-rot-fill').style.width='0%';
+      if(S.psRotOrder==='shuffle')psRotIdx=Math.floor(Math.random()*list.length);
+      else psRotIdx=(psRotIdx+1)%list.length;
+      loadPresetFull(list[psRotIdx]);
+    }
+  },1000);
+}
+
+function stopPresetRot(){
+  clearInterval(psRotProgTimer);psRotProgTimer=null;psRotElapsed=0;
+  S.psRotActive=false;save();
+  document.getElementById('ps-rot-fill').style.width='0%';
+  document.getElementById('ps-rot-status').textContent='Stopped';
+  updatePsRotUI();
+}
+
+function togglePresetRot(){if(S.psRotActive)stopPresetRot();else startPresetRot();}
+
+function updatePsRotUI(){
+  const btn=document.getElementById('ps-rot-btn');
+  const bar=document.getElementById('ps-rot-bar');
+  if(S.psRotActive){btn.textContent='⏹ Stop';btn.style.color='var(--text)';bar.classList.add('active');}
+  else{btn.textContent='▶ Start';btn.style.color='';bar.classList.remove('active');}
+}
+
+function togglePsOrder(){
+  S.psRotOrder=S.psRotOrder==='shuffle'?'seq':'shuffle';save();
+  document.getElementById('ps-order-btn').textContent=S.psRotOrder==='shuffle'?'Acak':'Berurutan';
+}
+
+function togglePresetInRot(i){
+  const sel=S.psRotSelected||[];const idx=sel.indexOf(i);
+  if(idx>-1)sel.splice(idx,1);else sel.push(i);
+  sel.sort((a,b)=>a-b);S.psRotSelected=sel;save();renderPresets();
+  toast(sel.includes(i)?`P${i+1} masuk rotasi`:`P${i+1} keluar rotasi`);
+}
+
+function renderPresets(){
+  const grid=document.getElementById('preset-grid');grid.innerHTML='';
+  for(let i=0;i<10;i++){
+    const p=S.bgPresets[i];
+    const inRot=(S.psRotSelected||[]).includes(i);
+    const slot=document.createElement('div');
+    slot.className='preset-slot'+(p?' filled':'')+(inRot?' in-rot':'');
+    if(p){
+      const bg=document.createElement('div');bg.className='ps-bg';
+      if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;
+      slot.appendChild(bg);
+    }
+    const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);
+    if(p){
+      const del=document.createElement('button');del.className='ps-del';del.textContent='✕';
+      del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;const si=S.psRotSelected.indexOf(i);if(si>-1)S.psRotSelected.splice(si,1);save();renderPresets();toast(`Preset ${i+1} dihapus`);};
+      slot.appendChild(del);
+      const chk=document.createElement('div');chk.className='ps-chk';chk.textContent=inRot?'✔':'';slot.appendChild(chk);
+    }
+    // Long press = toggle rotation, short click = save/load
+    let _longT=null,_longFired=false;
+    slot.addEventListener('pointerdown',e=>{
+      if(e.target.classList.contains('ps-del'))return;
+      _longFired=false;
+      _longT=setTimeout(()=>{_longFired=true;if(p)togglePresetInRot(i);else toast('Simpan preset dulu!');},500);
+    });
+    slot.addEventListener('pointerup',()=>clearTimeout(_longT));
+    slot.addEventListener('pointerleave',()=>clearTimeout(_longT));
+    slot.addEventListener('click',e=>{
+      if(e.target.classList.contains('ps-del')||_longFired)return;
+      if(!S.bgPresets[i]){
+        S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,bgR:S.bgR||0,overlay:S.overlay};
+        save();renderPresets();toast(`Preset ${i+1} disimpan!`);
+      }else{
+        loadPresetFull(i);save();toast(`Preset ${i+1} dimuat!`);
+      }
+    });
+    grid.appendChild(slot);
+  }
+}
+
+// ─── APPEARANCE ──────────────────────────────────────────────────────────────
+document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
+document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
+document.getElementById('sl-fs-ui').addEventListener('input',function(){S.fsUI=+this.value;document.documentElement.style.setProperty('--fs-ui',S.fsUI+'px');document.getElementById('sl-fs-ui-v').textContent=S.fsUI+'px';save();});
+document.getElementById('sl-fs-clock').addEventListener('input',function(){S.fsClock=+this.value;document.documentElement.style.setProperty('--fs-clock',S.fsClock+'px');document.getElementById('sl-fs-clock-v').textContent=S.fsClock+'px';save();});
+function applyFontUI(){const p=parseFontInput(document.getElementById('font-ui-input').value);const nf=document.getElementById('font-ui-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-ui-name').value=p.name;document.getElementById('font-main-link').href=url;document.documentElement.style.setProperty('--font-ui',`'${name}',sans-serif`);S.fontUIUrl=url;S.fontUIName=name;save();toast('Font UI diterapkan!');}
+function resetFontUI(){document.getElementById('font-main-link').href='https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap';document.documentElement.style.setProperty('--font-ui',"'Outfit',sans-serif");S.fontUIUrl='';S.fontUIName='';save();document.getElementById('font-ui-input').value='';document.getElementById('font-ui-name').value='';toast('Font UI direset');}
+function applyFontClock(){const p=parseFontInput(document.getElementById('font-clock-input').value);const nf=document.getElementById('font-clock-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-clock-name').value=p.name;document.getElementById('font-clock-link').href=url;document.documentElement.style.setProperty('--font-clock',`'${name}',monospace`);S.fontClockUrl=url;S.fontClockName=name;save();toast('Font jam diterapkan!');}
+function resetFontClock(){document.getElementById('font-clock-link').href='https://fonts.googleapis.com/css2?family=Space+Mono&display=swap';document.documentElement.style.setProperty('--font-clock',"'Space Mono',monospace");S.fontClockUrl='';S.fontClockName='';save();document.getElementById('font-clock-input').value='';document.getElementById('font-clock-name').value='';toast('Font jam direset');}
+function setupOpSliders(){
+  [['sl-op-clock','opClock','w-clock'],['sl-op-search','opSearch','w-search'],['sl-op-bm','opBm','w-bookmarks']].forEach(([id,key,wid])=>{
+    const sl=document.getElementById(id);sl.value=S[key]||100;document.getElementById(id+'-v').textContent=(S[key]||100)+'%';
+    sl.addEventListener('input',()=>{S[key]=+sl.value;document.getElementById(wid).style.opacity=S[key]/100;document.getElementById(id+'-v').textContent=S[key]+'%';save();});
+  });
+}
+
+// ─── SEARCH ──────────────────────────────────────────────────────────────────
+function doSearch(){
+  const q=document.getElementById('search').value.trim();if(!q)return;
+  window.location.href=/^https?:\/\//.test(q)?q:/^[\w-]+\.\w{2,}(\/|$)/.test(q)?'https://'+q:S.engine+encodeURIComponent(q);
+}
+document.getElementById('search').addEventListener('keydown',e=>e.key==='Enter'&&doSearch());
+document.getElementById('search-btn').addEventListener('click',doSearch);
+document.querySelectorAll('.eng-item').forEach(item=>{item.addEventListener('click',()=>{S.engine=item.dataset.url;save();document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i===item));});});
+document.addEventListener('keydown',e=>{
+  if(document.activeElement===document.getElementById('search'))return;
+  if(e.key==='/')e.preventDefault(),document.getElementById('search').focus();
+  if(e.key==='e'||e.key==='E')toggleEditMode();
+});
+
+// ─── BOOKMARKS ───────────────────────────────────────────────────────────────
+function getFavicon(u){try{return`https://www.google.com/s2/favicons?sz=64&domain=${new URL(u).hostname}`;}catch(e){return '';}}
+function renderBM(){
+  const wrap=document.getElementById('bm-list');wrap.innerHTML='';wrap.className=S.bmGrid?'grid':'pill';
+  S.bookmarks.forEach((bm,i)=>{
+    const a=document.createElement('a');a.className='bm';
+    // Sanitize bookmark URL before rendering
+    const safeUrl=sanitizeUrl(bm.u);
+    a.href=safeUrl||'#';
+    const ico=safeUrl?getFavicon(safeUrl):'';
+    if(S.bmGrid){
+      const iw=document.createElement('div');iw.className='icon-wrap';
+      const img=document.createElement('img');img.src=ico;img.onerror=()=>img.style.display='none';
+      iw.appendChild(img);
+      const lbl=document.createElement('span');lbl.className='label';lbl.textContent=bm.n;
+      const del=document.createElement('button');del.className='bm-del';del.textContent='✕';
+      a.appendChild(iw);a.appendChild(lbl);a.appendChild(del);
+    }else{
+      const img=document.createElement('img');img.src=ico;img.onerror=()=>img.style.display='none';
+      const lbl=document.createElement('span');lbl.className='label';lbl.textContent=bm.n;
+      const del=document.createElement('button');del.className='bm-del';del.textContent='✕';
+      a.appendChild(img);a.appendChild(lbl);a.appendChild(del);
+    }
+    a.querySelector('.bm-del').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();S.bookmarks.splice(i,1);save();renderBM();});
+    wrap.appendChild(a);
+  });
+}
+function addBm(){
+  const n=document.getElementById('bm-n').value.trim();
+  let u=document.getElementById('bm-u').value.trim();
+  if(!n||!u)return toast('Isi nama dan URL!');
+  if(!/^https?:\/\//.test(u))u='https://'+u;
+  const safe=sanitizeUrl(u);
+  if(!safe)return toast('URL tidak valid!');
+  S.bookmarks.push({n,u:safe});save();renderBM();
+  document.getElementById('bm-n').value='';document.getElementById('bm-u').value='';
+  toast('Bookmark ditambahkan!');
+}
+['bm-n','bm-u'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>e.key==='Enter'&&addBm()));
+function toggleBmGrid(){S.bmGrid=!S.bmGrid;save();document.getElementById('tog-grid').classList.toggle('on',S.bmGrid);renderBM();}
+function toggleWidget(wid,togId){S.hidden[wid]=!S.hidden[wid];save();document.getElementById(wid).classList.toggle('hidden',!!S.hidden[wid]);document.getElementById(togId).classList.toggle('on',!S.hidden[wid]);}
+
+// ─── EDIT MODE ───────────────────────────────────────────────────────────────
+let editMode=false;
+function toggleEditMode(){editMode=!editMode;document.body.classList.toggle('edit-mode',editMode);document.getElementById('tog-edit').classList.toggle('on',editMode);if(!editMode){saveLayout();toast('Layout disimpan!');}}
+function saveLayout(){document.querySelectorAll('.widget').forEach(w=>{S.layout[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height,transform:w.style.transform};});save();}
+function applyLayout(){document.querySelectorAll('.widget').forEach(w=>{const l=S.layout[w.id];if(!l)return;if(l.left)w.style.left=l.left;if(l.top)w.style.top=l.top;if(l.width)w.style.width=l.width;if(l.height)w.style.height=l.height;if(l.transform!=null)w.style.transform=l.transform;});}
+function setDefaultLayout(){
+  const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;
+  const cw=document.getElementById('w-clock'),sw=document.getElementById('w-search'),bw=document.getElementById('w-bookmarks');
+  if(D&&L){cw.style.cssText='left:50%;top:8%;transform:translateX(-50%);width:420px;';sw.style.cssText='left:50%;top:52%;transform:translateX(-50%);width:600px;';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:700px;';}
+  else if(L){cw.style.cssText='left:50%;top:4%;transform:translateX(-50%);width:280px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(460px,85vw);';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:min(520px,90vw);';}
+  else{cw.style.cssText='left:50%;top:12%;transform:translateX(-50%);width:320px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(500px,90vw);';bw.style.cssText='left:50%;top:70%;transform:translateX(-50%);width:min(560px,94vw);';}
+}
+function resetLayout(){S.layout={};save();setDefaultLayout();toast('Layout direset!');}
+function centerWidget(wid){const w=document.getElementById(wid);const wr=w.getBoundingClientRect();w.style.transform='none';w.style.left=((window.innerWidth-wr.width)/2)+'px';saveLayout();toast('Widget dicenterin!');}
+
+// Drag & Resize
+const guideH=document.getElementById('guide-h'),guideV=document.getElementById('guide-v'),SNAP=12;
+(function(){
+  let dr=null,rs=null,ox,oy,ow,oh,wx,wy;
+  function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}
+  function onS(e,w){
+    if(!editMode)return;
+    if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;
+    const r=w.getBoundingClientRect(),p=gP(e);
+    e.preventDefault();e.stopPropagation();
+    w.style.transform='none';
+    if(p.x>r.right-32&&p.y>r.bottom-32){rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;}
+    else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}
+  }
+  function onM(e){
+    const p=gP(e);
+    if(dr){
+      e.preventDefault();
+      let nx=wx+(p.x-ox),ny=wy+(p.y-oy);
+      const r=dr.getBoundingClientRect();
+      const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;
+      let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;
+      if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;
+      guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);
+      dr.style.left=nx+'px';dr.style.top=ny+'px';
+    }
+    if(rs){e.preventDefault();rs.style.width=Math.max(100,ow+(p.x-ox))+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';}
+  }
+  function onE(){if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}
+  document.querySelectorAll('.widget').forEach(w=>{
+    w.addEventListener('mousedown',e=>onS(e,w));
+    w.addEventListener('touchstart',e=>onS(e,w),{passive:false});
+  });
+  document.addEventListener('mousemove',onM);
+  document.addEventListener('touchmove',onM,{passive:false});
+  document.addEventListener('mouseup',onE);
+  document.addEventListener('touchend',onE);
+})();
+
+function checkOrientation(){
+  const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;
+  const b=document.getElementById('orient-badge');
+  b.textContent=D?(L?'🖥 Desktop Landscape':'🖥 Desktop Portrait'):(L?'📱 Landscape':'📱 Portrait');
+  b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);
+  if(!Object.keys(S.layout).length)setDefaultLayout();
+}
+window.addEventListener('resize',checkOrientation);
+window.addEventListener('orientationchange',()=>setTimeout(checkOrientation,300));
+
+// ─── PANEL ───────────────────────────────────────────────────────────────────
+const panel=document.getElementById('panel');
+document.getElementById('gear').addEventListener('click',e=>{e.stopPropagation();panel.classList.toggle('open');});
+document.addEventListener('click',e=>{if(!panel.contains(e.target)&&e.target!==document.getElementById('gear'))panel.classList.remove('open');});
+function toggleSec(head){head.classList.toggle('collapsed');head.nextElementSibling.classList.toggle('collapsed');}
+
+// ─── BACKUP ──────────────────────────────────────────────────────────────────
+function exportSettings(){
+  // Exclude large base64 local files from export to keep JSON small
+  const exp={...S,bgLocal:''};
+  const blob=new Blob([JSON.stringify(exp,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gntd-settings.json';a.click();
+  toast('Settings diekspor!');
+}
+document.getElementById('import-file').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const parsed=JSON.parse(ev.target.result);
+      S={...DEF,...parsed};
+      S.hidden=S.hidden||{};S.layout=S.layout||{};S.bgR=S.bgR||0;
+      if(!S.bgPresets||S.bgPresets.length<10)S.bgPresets=new Array(10).fill(null);
+      save();toast('Diimport! Reload...');setTimeout(()=>location.reload(),1200);
+    }catch(err){toast('File tidak valid!');}
+  };
+  r.readAsText(f);
+});
+function resetAll(){if(!confirm('Reset semua data?'))return;localStorage.removeItem('gntd5');location.reload();}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init(){
+  if(S.bgUrls&&S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
+  applyBg();setupBgSliders();
+  document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;
+  document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
+  document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop!==false);
+  document.documentElement.style.setProperty('--blur',S.blur+'px');
+  document.getElementById('sl-blur').value=S.blur;document.getElementById('sl-blur-v').textContent=S.blur+'px';
+  document.documentElement.style.setProperty('--accent',S.accent);
+  document.querySelectorAll('.swatch').forEach(sw=>sw.classList.toggle('on',sw.dataset.rgb===S.accent));
+  document.documentElement.style.setProperty('--fs-ui',(S.fsUI||15)+'px');
+  document.documentElement.style.setProperty('--fs-clock',(S.fsClock||72)+'px');
+  document.getElementById('sl-fs-ui').value=S.fsUI||15;document.getElementById('sl-fs-ui-v').textContent=(S.fsUI||15)+'px';
+  document.getElementById('sl-fs-clock').value=S.fsClock||72;document.getElementById('sl-fs-clock-v').textContent=(S.fsClock||72)+'px';
+  if(S.fontUIUrl&&S.fontUIName){document.getElementById('font-main-link').href=S.fontUIUrl;document.documentElement.style.setProperty('--font-ui',`'${S.fontUIName}',sans-serif`);document.getElementById('font-ui-name').value=S.fontUIName;}
+  if(S.fontClockUrl&&S.fontClockName){document.getElementById('font-clock-link').href=S.fontClockUrl;document.documentElement.style.setProperty('--font-clock',`'${S.fontClockName}',monospace`);document.getElementById('font-clock-name').value=S.fontClockName;}
+  document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i.dataset.url===S.engine));
+  document.getElementById('tog-12h').classList.toggle('on',S.use12h);
+  document.getElementById('tog-sec').classList.toggle('on',S.showSecs);
+  document.getElementById('tog-secbar').classList.toggle('on',S.showSecBar);
+  document.getElementById('sec-bar-wrap').classList.toggle('hidden-bar',!S.showSecBar);
+  document.getElementById('tog-card').classList.toggle('on',S.clockCard);
+  document.getElementById('clock-card').classList.toggle('card-on',S.clockCard);
+  if(S.greetingCustom)document.getElementById('inp-greeting').value=S.greetingCustom;
+  if(S.name)document.getElementById('inp-name').value=S.name;
+  if(S.placeholder){document.getElementById('search').placeholder=S.placeholder;document.getElementById('inp-placeholder').value=S.placeholder;}
+  document.getElementById('tog-grid').classList.toggle('on',S.bmGrid);
+  ['w-clock','w-search','w-bookmarks'].forEach((wid,i)=>{
+    const tids=['tog-clock','tog-search','tog-bm'];
+    if(S.hidden[wid])document.getElementById(wid).classList.add('hidden');
+    document.getElementById(tids[i]).classList.toggle('on',!S.hidden[wid]);
+  });
+  setupOpSliders();
+  document.getElementById('w-clock').style.opacity=(S.opClock||100)/100;
+  document.getElementById('w-search').style.opacity=(S.opSearch||100)/100;
+  document.getElementById('w-bookmarks').style.opacity=(S.opBm||100)/100;
+  renderBM();
+  if(Object.keys(S.layout).length)applyLayout();else setDefaultLayout();
+  document.getElementById('sl-psrot').value=S.psRotInterval||30;
+  document.getElementById('sl-psrot-v').textContent=(S.psRotInterval||30)+'s';
+  document.getElementById('sl-psrot').addEventListener('input',function(){S.psRotInterval=+this.value;document.getElementById('sl-psrot-v').textContent=this.value+'s';save();if(S.psRotActive){stopPresetRot();startPresetRot();}});
+  document.getElementById('ps-order-btn').textContent=(S.psRotOrder==='shuffle')?'Acak':'Berurutan';
+  renderPresets();
+  updatePsRotUI();
+  if(S.psRotActive)startPresetRot();
+  setTimeout(()=>document.getElementById('search').focus(),150);
+}
+init();
+</script>
+</body>
+</html>
