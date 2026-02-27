@@ -3,7 +3,7 @@
   "short_name": "Homepage",
   "start_url": "./homepagev2.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#080810",
   "theme_color": "#080810",
   "orientation": "portrait",
