@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MTZ Theme Editor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #e8e8f0;
+    --text2: #9999bb;
+    --text3: #5555777;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .logo {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .theme-badge {
+    margin-left: auto;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.3);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* ===== TABS ===== */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text2);
+    background: transparent;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .tab:not(.active):active { background: var(--surface2); }
+
+  /* ===== UPLOAD ZONE ===== */
+  #upload-zone {
+    min-height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+    gap: 16px;
+  }
+  .upload-icon {
+    width: 90px; height: 90px;
+    background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(255,101,132,0.1));
+    border: 2px dashed rgba(108,99,255,0.4);
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.2); }
+    50% { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
+  }
+  .upload-title { font-size: 20px; font-weight: 700; }
+  .upload-sub { font-size: 14px; color: var(--text2); line-height: 1.5; max-width: 280px; }
+  .btn-upload {
+    background: linear-gradient(135deg, var(--accent), #a855f7);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 24px rgba(108,99,255,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    width: 100%;
+    max-width: 280px;
+  }
+  .btn-upload:active { transform: scale(0.97); box-shadow: 0 4px 12px rgba(108,99,255,0.3); }
+  #file-input { display: none; }
+  .upload-hint { font-size: 12px; color: var(--text3); }
+
+  /* ===== MAIN CONTENT ===== */
+  #main-content { display: none; }
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header-icon { font-size: 18px; flex-shrink: 0; }
+  .card-header-text { flex: 1; }
+  .card-header-name { font-size: 14px; font-weight: 600; }
+  .card-header-count { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .card-chevron {
+    color: var(--text2);
+    transition: transform 0.25s;
+    font-size: 16px;
+  }
+  .card.expanded .card-chevron { transform: rotate(180deg); }
+  .card-body {
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  .card.expanded .card-body { display: block; }
+
+  /* ===== COLOR ITEMS ===== */
+  .color-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .color-item:last-child { border-bottom: none; }
+  .color-swatch {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .color-swatch input[type=color] {
+    position: absolute;
+    inset: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+  }
+  .color-info { flex: 1; min-width: 0; }
+  .color-name {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+  .color-hex { font-size: 11px; color: var(--text2); font-family: monospace; margin-top: 2px; }
+  .color-edit-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ===== IMAGE GRID ===== */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+  .img-item {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .img-item:active { transform: scale(0.97); }
+  .img-item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+  }
+  .img-item-name {
+    font-size: 9px;
+    color: var(--text2);
+    padding: 4px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(0,0,0,0.5);
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+  }
+  .img-replace-btn {
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(108,99,255,0.9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 24px; height: 24px;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ===== PREVIEW ===== */
+  .preview-container {
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .preview-device {
+    background: #1a1a2e;
+    border-radius: 20px;
+    margin: 16px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    position: relative;
+  }
+  .preview-statusbar {
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: white;
+    background: rgba(0,0,0,0.3);
+  }
+  .preview-wallpaper {
+    width: 100%;
+    aspect-ratio: 9/16;
+    object-fit: cover;
+    display: block;
+  }
+  .preview-wallpaper-placeholder {
+    width: 100%;
+    aspect-ratio: 9/16;
+    background: linear-gradient(135deg, #1a1a3e, #2d1b69, #11101d);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .preview-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+  }
+  .preview-clock { font-size: 52px; font-weight: 700; color: white; line-height: 1; }
+  .preview-date { font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px; margin-bottom: 24px; }
+  .preview-unlock {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 16px;
+  }
+
+  /* ===== ICONS PREVIEW ===== */
+  .icon-row {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 64px;
+  }
+  .icon-img {
+    width: 54px; height: 54px;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .icon-label { font-size: 10px; color: var(--text2); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+
+  /* ===== EXPORT ===== */
+  .export-card {
+    background: linear-gradient(135deg, rgba(67,233,123,0.1), rgba(108,99,255,0.1));
+    border: 1px solid rgba(67,233,123,0.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .export-icon { font-size: 48px; margin-bottom: 12px; }
+  .export-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .export-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+  .btn-export {
+    background: linear-gradient(135deg, var(--accent3), #38f9d7);
+    color: #0a1a0f;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 8px 24px rgba(67,233,123,0.3);
+    transition: transform 0.15s;
+  }
+  .btn-export:active { transform: scale(0.97); }
+  .btn-export:disabled {
+    background: var(--surface2);
+    color: var(--text2);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* ===== STATS ===== */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0 16px 16px;
+  }
+  .stat-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ===== SEARCH ===== */
+  .search-wrap {
+    padding: 12px 16px 4px;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px 10px 38px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236666aa' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    backdrop-filter: blur(4px);
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } }
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .color-picker-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .color-big-preview {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    transition: background 0.2s;
+  }
+  .color-input-row { display: flex; gap: 8px; align-items: center; }
+  .hex-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: monospace;
+    outline: none;
+    text-transform: uppercase;
+  }
+  .hex-input:focus { border-color: var(--accent); }
+  input[type=color].big-picker {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    background: transparent;
+    padding: 2px;
+  }
+  .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-cancel {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-apply {
+    flex: 2;
+    background: var(--accent);
+    border: none;
+    color: white;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ===== LOADING ===== */
+  .loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.9);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(8px);
+  }
+  .loading.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--text2); }
+
+  /* ===== SECTION TITLE ===== */
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    padding: 16px 16px 8px;
+  }
+
+  /* CHANGED INDICATOR */
+  .changed-dot {
+    width: 8px; height: 8px;
+    background: var(--accent2);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: none;
+  }
+  .changed .changed-dot { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header" id="header">
+  <div class="header-top">
+    <div class="logo">🎨</div>
+    <div>
+      <div class="header-title">MTZ Editor</div>
+      <div class="header-sub">MIUI Theme Editor</div>
+    </div>
+    <div class="theme-badge" id="theme-badge" style="display:none">No Theme</div>
+  </div>
+  <div class="tabs" id="tabs" style="display:none">
+    <div class="tab active" onclick="switchTab('colors')">🎨 Warna</div>
+    <div class="tab" onclick="switchTab('images')">🖼️ Gambar</div>
+    <div class="tab" onclick="switchTab('preview')">👁️ Preview</div>
+    <div class="tab" onclick="switchTab('export')">📦 Export</div>
+  </div>
+</div>
+
+<!-- Upload Zone -->
+<div id="upload-zone">
+  <div class="upload-icon">📂</div>
+  <div class="upload-title">Buka File MTZ</div>
+  <div class="upload-sub">Pilih file tema MIUI (.mtz) dari file manager lo untuk mulai edit</div>
+  <button class="btn-upload" onclick="document.getElementById('file-input').click()">
+    📁 Pilih File MTZ
+  </button>
+  <input type="file" id="file-input" accept=".mtz,.zip" onchange="loadMTZ(this)">
+  <div class="upload-hint">Mendukung MIUI 12/12.5/13 · HyperOS</div>
+</div>
+
+<!-- Main Content -->
+<div id="main-content">
+
+  <!-- COLORS PAGE -->
+  <div class="page active" id="page-colors">
+    <div class="search-wrap">
+      <input type="text" class="search-input" placeholder="Cari nama warna..." oninput="filterColors(this.value)" id="color-search">
+    </div>
+    <div class="section-title">📊 Ringkasan Tema</div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-item"><div class="stat-num" id="stat-colors">0</div><div class="stat-label">Warna</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-images">0</div><div class="stat-label">Gambar</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-packages">0</div><div class="stat-label">Package</div></div>
+    </div>
+    <div class="section-title">🎨 Edit Warna</div>
+    <div id="colors-container"></div>
+  </div>
+
+  <!-- IMAGES PAGE -->
+  <div class="page" id="page-images">
+    <div class="search-wrap">
+      <input type="text" class="search-input" placeholder="Cari nama file..." oninput="filterImages(this.value)">
+    </div>
+    <div class="section-title">🖼️ Asset Gambar</div>
+    <div id="images-container"></div>
+  </div>
+
+  <!-- PREVIEW PAGE -->
+  <div class="page" id="page-preview">
+    <div class="section-title">🔒 Lockscreen Preview</div>
+    <div class="preview-container">
+      <div class="preview-device">
+        <div id="preview-lockscreen-wrap">
+          <div class="preview-wallpaper-placeholder" id="preview-wallpaper-placeholder">
+            <span>🌌 Wallpaper</span>
+          </div>
+        </div>
+        <div class="preview-overlay">
+          <div class="preview-clock" id="preview-clock">12:00</div>
+          <div class="preview-date" id="preview-date">Jumat, 27 Feb</div>
+          <div class="preview-unlock">↑ Geser untuk membuka</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">📱 Icon Preview</div>
+    <div class="preview-container">
+      <div class="icon-row" id="icon-preview-row">
+        <div style="color:var(--text2); font-size:13px; padding:16px; text-align:center; width:100%">Loading icons...</div>
+      </div>
+    </div>
+
+    <div class="section-title">🏠 Wallpaper</div>
+    <div class="preview-container">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px;">
+        <div>
+          <div style="font-size:11px; color:var(--text2); margin-bottom:6px;">Home</div>
+          <img id="preview-home-wp" style="width:100%; border-radius:10px; display:none; border:1px solid var(--border)">
+          <div id="preview-home-wp-ph" style="width:100%; aspect-ratio:9/16; background:var(--surface2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px;">🌄</div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--text2); margin-bottom:6px;">Lockscreen</div>
+          <img id="preview-lock-wp" style="width:100%; border-radius:10px; display:none; border:1px solid var(--border)">
+          <div id="preview-lock-wp-ph" style="width:100%; aspect-ratio:9/16; background:var(--surface2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px;">🔒</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 12px;">
+        <button class="color-edit-btn" style="width:100%; padding:10px;" onclick="replaceWallpaper('home')">🔄 Ganti Home WP</button>
+        <button class="color-edit-btn" style="width:100%; padding:10px;" onclick="replaceWallpaper('lock')">🔄 Ganti Lock WP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT PAGE -->
+  <div class="page" id="page-export">
+    <div class="export-card">
+      <div class="export-icon">📦</div>
+      <div class="export-title">Export Tema</div>
+      <div class="export-sub" id="export-info">Tema siap untuk di-export.<br>Semua perubahan warna dan gambar akan tersimpan dalam file MTZ baru.</div>
+      <button class="btn-export" id="btn-export" onclick="exportMTZ()">
+        💾 Download MTZ
+      </button>
+    </div>
+
+    <div class="section-title">📝 Changelog</div>
+    <div class="card" id="changelog-card">
+      <div class="card-body" style="display:block; padding:12px 16px;">
+        <div id="changelog-list" style="font-size:13px; color:var(--text2); line-height:1.8;">
+          Belum ada perubahan.
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">ℹ️ Info Tema</div>
+    <div class="card">
+      <div class="card-body" style="display:block; padding:16px;">
+        <div id="theme-info-display" style="font-size:13px; line-height:2; color:var(--text2);"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Color Edit Modal -->
+<div class="modal-overlay" id="color-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-color-name">Edit Warna</div>
+    <div class="color-picker-row">
+      <div class="color-big-preview" id="modal-color-preview"></div>
+      <div class="color-input-row">
+        <input type="color" class="big-picker" id="modal-native-picker" oninput="syncFromNative(this.value)">
+        <input type="text" class="hex-input" id="modal-hex-input" placeholder="#FF0000" oninput="syncFromHex(this.value)" maxlength="9">
+      </div>
+      <!-- Quick presets -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div style="font-size:11px; color:var(--text2); width:100%; margin-bottom:4px;">Quick Colors:</div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#ffffff;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#ffffff')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#000000;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#000000')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#6c63ff;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#6c63ff')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#ff6584;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#ff6584')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#43e97b;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#43e97b')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#f7971e;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#f7971e')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#ee0979;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#ee0979')"></div>
+        <div class="color-swatch" style="width:32px;height:32px;background:#17ead9;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="setModalColor('#17ead9')"></div>
+      </div>
+      <!-- Alpha -->
+      <div>
+        <div style="font-size:11px; color:var(--text2); margin-bottom:6px;">Transparansi (Alpha): <span id="alpha-val">100%</span></div>
+        <input type="range" id="alpha-slider" min="0" max="255" value="255" style="width:100%; accent-color:var(--accent);" oninput="syncAlpha(this.value)">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-apply" onclick="applyColor()">✓ Terapkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Replace Input -->
+<input type="file" id="img-replace-input" accept="image/*" style="display:none" onchange="handleImgReplace(this)">
+<input type="file" id="wp-replace-input" accept="image/*" style="display:none" onchange="handleWpReplace(this)">
+
+<!-- Loading -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Memuat tema...</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let mtzData = null; // { outerZip, packages: { name: JSZip } }
+let colorData = {}; // { pkgName: [ {name, value, pkgColorIdx} ] }
+let imageData = {}; // { pkgName: [ {path, blob, url} ] }
+let changes = { colors: [], images: [] };
+let currentColorEdit = null;
+let currentImgEdit = null;
+let currentWpEdit = null;
+let themeInfo = {};
+let totalImages = 0;
+let wallpapers = { home: null, lock: null };
+
+// ===== HELPERS =====
+function showLoading(text='Memuat...') {
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('loading-text').textContent = text;
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+function showToast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ===== LOAD MTZ =====
+async function loadMTZ(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  showLoading('Membuka file MTZ...');
+  try {
+    const outerZip = await JSZip.loadAsync(file);
+    mtzData = { outerZip, packages: {} };
+    colorData = {};
+    imageData = {};
+    changes = { colors: [], images: [] };
+    totalImages = 0;
+
+    // Read description.xml
+    const descFile = outerZip.file('description.xml');
+    if (descFile) {
+      const descXml = await descFile.async('string');
+      parseDescription(descXml);
+    }
+
+    // Read wallpapers
+    showLoading('Memuat wallpaper...');
+    const homeWp = outerZip.file('wallpaper/default_wallpaper.jpg');
+    const lockWp = outerZip.file('wallpaper/default_lock_wallpaper.jpg');
+    if (homeWp) { const b = await homeWp.async('blob'); wallpapers.home = { blob: b, url: URL.createObjectURL(b), path: 'wallpaper/default_wallpaper.jpg', ext: 'jpg' }; }
+    if (lockWp) { const b = await lockWp.async('blob'); wallpapers.lock = { blob: b, url: URL.createObjectURL(b), path: 'wallpaper/default_lock_wallpaper.jpg', ext: 'jpg' }; }
+
+    // Read each package (they're ZIP files without extension)
+    const pkgNames = ['com.android.contacts','com.android.mms','com.android.settings','com.android.systemui','com.miui.home','com.android.phone','miui.systemui.plugin','icons','lockscreen','clock_2x4'];
+    
+    for (const pkgName of pkgNames) {
+      const pkgFile = outerZip.file(pkgName);
+      if (!pkgFile) continue;
+      showLoading(`Membaca ${pkgName}...`);
+      try {
+        const pkgBytes = await pkgFile.async('arraybuffer');
+        const pkgZip = await JSZip.loadAsync(pkgBytes);
+        mtzData.packages[pkgName] = pkgZip;
+
+        // Parse XMLs
+        colorData[pkgName] = [];
+        const xmlFiles = ['theme_values.xml','nightmode/theme_values.xml'];
+        for (const xmlName of xmlFiles) {
+          const xmlFile = pkgZip.file(xmlName);
+          if (!xmlFile) continue;
+          const xmlStr = await xmlFile.async('string');
+          const colors = parseColors(xmlStr, xmlName, pkgName);
+          colorData[pkgName].push(...colors);
+        }
+
+        // Parse images
+        imageData[pkgName] = [];
+        pkgZip.forEach((relPath, zipEntry) => {
+          if (!zipEntry.dir && relPath.match(/\.(png|jpg|jpeg|webp)$/i)) {
+            imageData[pkgName].push({ path: relPath, loaded: false });
+            totalImages++;
+          }
+        });
+      } catch(e) { console.warn('Skip', pkgName, e); }
+    }
+
+    renderUI();
+    showToast('✅ Tema berhasil dibuka!');
+  } catch(e) {
+    showToast('❌ Gagal membuka file: ' + e.message);
+    console.error(e);
+  }
+  hideLoading();
+}
+
+function parseDescription(xml) {
+  const get = (tag) => {
+    const m = xml.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([^\\]]*?)\\]\\]></${tag}>|<${tag}[^>]*>([^<]*?)</${tag}>`));
+    return m ? (m[1]||m[2]||'').trim() : '';
+  };
+  themeInfo = {
+    title: get('title') || 'Unknown Theme',
+    author: get('author'),
+    version: get('version'),
+    uiVersion: get('uiVersion')
+  };
+  // EN title
+  const enTitle = xml.match(/<title locale="en_US"><!\[CDATA\[([^\]]*?)\]\]>/);
+  if (enTitle) themeInfo.titleEn = enTitle[1];
+}
+
+function parseColors(xmlStr, xmlName, pkgName) {
+  const colors = [];
+  const regex = /<color name="([^"]+)"(?:\s+package="[^"]+")?\s*>(#[0-9a-fA-F]{6,8})<\/color>/g;
+  let m;
+  while ((m = regex.exec(xmlStr)) !== null) {
+    colors.push({
+      name: m[1],
+      value: m[2].toUpperCase(),
+      original: m[2].toUpperCase(),
+      xmlFile: xmlName,
+      pkgName
+    });
+  }
+  return colors;
+}
+
+// ===== RENDER UI =====
+function renderUI() {
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+  document.getElementById('tabs').style.display = 'flex';
+  
+  const badge = document.getElementById('theme-badge');
+  badge.textContent = themeInfo.titleEn || themeInfo.title || 'Theme';
+  badge.style.display = 'block';
+
+  // Stats
+  let totalColors = 0;
+  Object.values(colorData).forEach(arr => totalColors += arr.length);
+  document.getElementById('stat-colors').textContent = totalColors;
+  document.getElementById('stat-images').textContent = totalImages;
+  document.getElementById('stat-packages').textContent = Object.keys(mtzData.packages).length;
+
+  renderColors();
+  renderImages();
+  renderPreview();
+  renderExportInfo();
+
+  // Clock
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('preview-clock').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  document.getElementById('preview-date').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+}
+
+// ===== COLORS =====
+const PKG_ICONS = {
+  'com.android.systemui': '🔔',
+  'com.android.contacts': '📞',
+  'com.android.mms': '💬',
+  'com.android.settings': '⚙️',
+  'com.miui.home': '🏠',
+  'com.android.phone': '📱',
+  'miui.systemui.plugin': '🎛️',
+  'icons': '🖼️',
+  'lockscreen': '🔒',
+  'clock_2x4': '🕐',
+};
+
+function renderColors(filter='') {
+  const container = document.getElementById('colors-container');
+  container.innerHTML = '';
+  const fl = filter.toLowerCase();
+
+  for (const [pkgName, colors] of Object.entries(colorData)) {
+    const filtered = fl ? colors.filter(c => c.name.toLowerCase().includes(fl) || c.value.toLowerCase().includes(fl)) : colors;
+    if (!filtered.length) continue;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'pkg-card-' + pkgName;
+
+    const changedCount = filtered.filter(c => c.value !== c.original).length;
+    card.innerHTML = `
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-header-icon">${PKG_ICONS[pkgName]||'📦'}</div>
+        <div class="card-header-text">
+          <div class="card-header-name">${pkgName}</div>
+          <div class="card-header-count">${filtered.length} warna${changedCount ? ` · <span style="color:var(--accent2)">${changedCount} diubah</span>` : ''}</div>
+        </div>
+        <div class="changed-dot ${changedCount?'changed':''}"></div>
+        <div class="card-chevron">▼</div>
+      </div>
+      <div class="card-body" id="body-${pkgName}"></div>
+    `;
+    container.appendChild(card);
+
+    const body = card.querySelector('.card-body');
+    filtered.forEach((c, i) => {
+      const rgbHex = toDisplayHex(c.value);
+      const alpha = getAlpha(c.value);
+      const item = document.createElement('div');
+      item.className = 'color-item';
+      item.innerHTML = `
+        <div class="color-swatch" style="background:${rgbHex}${alpha < 1 ? ';opacity:'+alpha : ''};">
+        </div>
+        <div class="color-info">
+          <div class="color-name">${c.name}</div>
+          <div class="color-hex">${c.value}${c.value !== c.original ? ' <span style="color:var(--accent2)">✏️</span>' : ''}</div>
+        </div>
+        <button class="color-edit-btn" onclick="openColorModal('${pkgName}',${colors.indexOf(c)})">Edit</button>
+      `;
+      body.appendChild(item);
+    });
+  }
+}
+
+function filterColors(val) { renderColors(val); }
+
+function toggleCard(header) {
+  header.parentElement.classList.toggle('expanded');
+}
+
+function toDisplayHex(miuiColor) {
+  // MIUI format: #AARRGGBB or #RRGGBB
+  if (miuiColor.length === 9) {
+    // #AARRGGBB → #RRGGBB
+    return '#' + miuiColor.substring(3);
+  }
+  return miuiColor;
+}
+
+function getAlpha(miuiColor) {
+  if (miuiColor.length === 9) {
+    return parseInt(miuiColor.substring(1, 3), 16) / 255;
+  }
+  return 1;
+}
+
+function getAlphaByte(miuiColor) {
+  if (miuiColor.length === 9) return miuiColor.substring(1, 3);
+  return 'ff';
+}
+
+function toMIUIColor(hex6, alphaByte) {
+  return ('#' + alphaByte + hex6.substring(1)).toUpperCase();
+}
+
+// ===== COLOR MODAL =====
+function openColorModal(pkgName, colorIdx) {
+  const c = colorData[pkgName][colorIdx];
+  currentColorEdit = { pkgName, colorIdx };
+
+  document.getElementById('modal-color-name').textContent = c.name;
+  const hex6 = toDisplayHex(c.value);
+  const alphaByte = parseInt(getAlphaByte(c.value), 16);
+
+  document.getElementById('modal-native-picker').value = hex6;
+  document.getElementById('modal-hex-input').value = c.value;
+  document.getElementById('modal-color-preview').style.background = hex6;
+  document.getElementById('alpha-slider').value = alphaByte;
+  document.getElementById('alpha-val').textContent = Math.round(alphaByte/255*100) + '%';
+
+  document.getElementById('color-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('color-modal').classList.remove('open');
+  currentColorEdit = null;
+}
+
+function syncFromNative(hex6) {
+  const alpha = document.getElementById('alpha-slider').value;
+  const alphaByte = parseInt(alpha).toString(16).padStart(2,'0');
+  const miui = toMIUIColor(hex6, alphaByte);
+  document.getElementById('modal-hex-input').value = miui;
+  document.getElementById('modal-color-preview').style.background = hex6;
+}
+
+function syncFromHex(val) {
+  let clean = val.trim();
+  if (clean.length === 9 && clean[0]==='#') {
+    // #AARRGGBB
+    const a = parseInt(clean.substring(1,3),16);
+    const rgb = '#' + clean.substring(3);
+    document.getElementById('modal-native-picker').value = rgb;
+    document.getElementById('modal-color-preview').style.background = rgb;
+    document.getElementById('alpha-slider').value = a;
+    document.getElementById('alpha-val').textContent = Math.round(a/255*100)+'%';
+  } else if (clean.length === 7 && clean[0]==='#') {
+    document.getElementById('modal-native-picker').value = clean;
+    document.getElementById('modal-color-preview').style.background = clean;
+  }
+}
+
+function syncAlpha(val) {
+  const pct = Math.round(val/255*100);
+  document.getElementById('alpha-val').textContent = pct + '%';
+  const hex6 = document.getElementById('modal-native-picker').value;
+  const alphaByte = parseInt(val).toString(16).padStart(2,'0');
+  document.getElementById('modal-hex-input').value = toMIUIColor(hex6, alphaByte).toUpperCase();
+}
+
+function setModalColor(hex6) {
+  document.getElementById('modal-native-picker').value = hex6;
+  syncFromNative(hex6);
+}
+
+function applyColor() {
+  if (!currentColorEdit) return;
+  const { pkgName, colorIdx } = currentColorEdit;
+  const c = colorData[pkgName][colorIdx];
+  const newVal = document.getElementById('modal-hex-input').value.toUpperCase();
+
+  if (newVal === c.value) { closeModal(); return; }
+
+  c.value = newVal;
+  changes.colors.push({ pkgName, name: c.name, from: c.original, to: newVal });
+
+  closeModal();
+  renderColors(document.getElementById('color-search').value);
+  updateChangeLog();
+  showToast('✅ Warna diperbarui');
+}
+
+// ===== IMAGES =====
+function renderImages(filter='') {
+  const container = document.getElementById('images-container');
+  container.innerHTML = '';
+  const fl = filter.toLowerCase();
+
+  for (const [pkgName, imgs] of Object.entries(imageData)) {
+    const filtered = fl ? imgs.filter(i => i.path.toLowerCase().includes(fl)) : imgs;
+    if (!filtered.length) continue;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    const changedCount = filtered.filter(i => i.replaced).length;
+    card.innerHTML = `
+      <div class="card-header" onclick="toggleCard(this);loadImagesForPkg('${pkgName}')">
+        <div class="card-header-icon">${PKG_ICONS[pkgName]||'📦'}</div>
+        <div class="card-header-text">
+          <div class="card-header-name">${pkgName}</div>
+          <div class="card-header-count">${filtered.length} gambar${changedCount ? ` · <span style="color:var(--accent2)">${changedCount} diganti</span>` : ''}</div>
+        </div>
+        <div class="card-chevron">▼</div>
+      </div>
+      <div class="card-body">
+        <div class="img-grid" id="img-grid-${pkgName}"></div>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function filterImages(val) { renderImages(val); }
+
+async function loadImagesForPkg(pkgName) {
+  const grid = document.getElementById('img-grid-' + pkgName);
+  if (!grid || grid.children.length > 0) return;
+
+  const pkgZip = mtzData.packages[pkgName];
+  if (!pkgZip) return;
+
+  const imgs = imageData[pkgName] || [];
+  grid.innerHTML = '<div style="padding:16px; color:var(--text2); font-size:13px;">Loading...</div>';
+
+  const items = [];
+  for (const img of imgs) {
+    if (!img.url) {
+      try {
+        const f = pkgZip.file(img.path);
+        if (f) {
+          const blob = await f.async('blob');
+          img.blob = blob;
+          img.url = URL.createObjectURL(blob);
+        }
+      } catch(e) {}
+    }
+    items.push(img);
+  }
+
+  grid.innerHTML = '';
+  items.forEach(img => {
+    if (!img.url) return;
+    const shortName = img.path.split('/').pop();
+    const item = document.createElement('div');
+    item.className = 'img-item';
+    item.innerHTML = `
+      <img src="${img.url}" alt="${shortName}" loading="lazy">
+      <div class="img-item-name">${shortName}</div>
+      <button class="img-replace-btn" onclick="startReplaceImage('${pkgName}','${img.path}')">✏️</button>
+      ${img.replaced ? '<div style="position:absolute;top:4px;left:4px;background:var(--accent2);border-radius:6px;width:8px;height:8px;"></div>' : ''}
+    `;
+    grid.appendChild(item);
+  });
+}
+
+function startReplaceImage(pkgName, imgPath) {
+  currentImgEdit = { pkgName, imgPath };
+  document.getElementById('img-replace-input').click();
+}
+
+async function handleImgReplace(input) {
+  if (!input.files[0] || !currentImgEdit) return;
+  const { pkgName, imgPath } = currentImgEdit;
+  const file = input.files[0];
+  showLoading('Mengganti gambar...');
+
+  try {
+    const pkgZip = mtzData.packages[pkgName];
+    const arrBuf = await file.arrayBuffer();
+
+    // Determine extension
+    const origExt = imgPath.split('.').pop().toLowerCase();
+    const newBlob = new Blob([arrBuf], { type: file.type });
+
+    // Store back
+    pkgZip.file(imgPath, arrBuf);
+
+    // Update local state
+    const imgEntry = imageData[pkgName].find(i => i.path === imgPath);
+    if (imgEntry) {
+      imgEntry.blob = newBlob;
+      imgEntry.url = URL.createObjectURL(newBlob);
+      imgEntry.replaced = true;
+    }
+
+    changes.images.push({ pkgName, path: imgPath });
+    updateChangeLog();
+
+    // Re-render grid
+    const grid = document.getElementById('img-grid-' + pkgName);
+    if (grid) { grid.innerHTML = ''; await loadImagesForPkg(pkgName); }
+
+    showToast('✅ Gambar berhasil diganti!');
+  } catch(e) {
+    showToast('❌ Gagal mengganti: ' + e.message);
+  }
+
+  hideLoading();
+  input.value = '';
+}
+
+// ===== PREVIEW =====
+function renderPreview() {
+  // Lockscreen wallpaper
+  if (wallpapers.lock) {
+    const ph = document.getElementById('preview-wallpaper-placeholder');
+    const img = document.createElement('img');
+    img.className = 'preview-wallpaper';
+    img.src = wallpapers.lock.url;
+    ph.parentElement.replaceChild(img, ph);
+    img.id = 'preview-lockscreen-img';
+  }
+
+  // Home wallpaper
+  if (wallpapers.home) {
+    document.getElementById('preview-home-wp').src = wallpapers.home.url;
+    document.getElementById('preview-home-wp').style.display = 'block';
+    document.getElementById('preview-home-wp-ph').style.display = 'none';
+  }
+  if (wallpapers.lock) {
+    document.getElementById('preview-lock-wp').src = wallpapers.lock.url;
+    document.getElementById('preview-lock-wp').style.display = 'block';
+    document.getElementById('preview-lock-wp-ph').style.display = 'none';
+  }
+
+  // Load some icons for preview
+  loadIconPreview();
+}
+
+async function loadIconPreview() {
+  const row = document.getElementById('icon-preview-row');
+  const pkgZip = mtzData.packages['icons'];
+  if (!pkgZip) { row.innerHTML = '<div style="color:var(--text2); font-size:13px; padding:16px;">Tidak ada icon</div>'; return; }
+
+  row.innerHTML = '';
+  const commonIcons = [
+    'com.android.contacts.png','com.android.camera.png','com.android.settings.png',
+    'com.android.deskclock.png','com.android.gallery3d.png','com.android.calculator2.png',
+    'com.android.fileexplorer.png','com.android.browser.png','com.android.email.png'
+  ];
+
+  let count = 0;
+  for (const ic of commonIcons) {
+    const f = pkgZip.file('res/drawable-xxhdpi/' + ic);
+    if (!f) continue;
+    const blob = await f.async('blob');
+    const url = URL.createObjectURL(blob);
+    const shortName = ic.replace('com.android.','').replace('.png','');
+    const item = document.createElement('div');
+    item.className = 'icon-item';
+    item.innerHTML = `<img class="icon-img" src="${url}"><div class="icon-label">${shortName}</div>`;
+    row.appendChild(item);
+    count++;
+    if (count >= 6) break;
+  }
+  if (!count) row.innerHTML = '<div style="color:var(--text2); font-size:13px; padding:16px;">Icons tidak bisa dimuat</div>';
+}
+
+// ===== WALLPAPER REPLACE =====
+function replaceWallpaper(type) {
+  currentWpEdit = type;
+  document.getElementById('wp-replace-input').click();
+}
+
+async function handleWpReplace(input) {
+  if (!input.files[0] || !currentWpEdit) return;
+  const file = input.files[0];
+  const type = currentWpEdit;
+  showLoading('Mengganti wallpaper...');
+
+  try {
+    const path = type === 'home' ? 'wallpaper/default_wallpaper.jpg' : 'wallpaper/default_lock_wallpaper.jpg';
+    const buf = await file.arrayBuffer();
+    const blob = new Blob([buf], { type: file.type });
+    const url = URL.createObjectURL(blob);
+
+    mtzData.outerZip.file(path, buf);
+    wallpapers[type] = { blob, url, path };
+
+    if (type === 'home') {
+      document.getElementById('preview-home-wp').src = url;
+      document.getElementById('preview-home-wp').style.display = 'block';
+      document.getElementById('preview-home-wp-ph').style.display = 'none';
+    } else {
+      const lockImg = document.getElementById('preview-lockscreen-img') || document.getElementById('preview-wallpaper-placeholder');
+      if (lockImg) { lockImg.src = url; }
+      document.getElementById('preview-lock-wp').src = url;
+      document.getElementById('preview-lock-wp').style.display = 'block';
+      document.getElementById('preview-lock-wp-ph').style.display = 'none';
+    }
+
+    changes.images.push({ pkgName: 'wallpaper', path });
+    updateChangeLog();
+    showToast('✅ Wallpaper berhasil diganti!');
+  } catch(e) {
+    showToast('❌ Gagal: ' + e.message);
+  }
+
+  hideLoading();
+  input.value = '';
+}
+
+// ===== EXPORT =====
+function renderExportInfo() {
+  const info = document.getElementById('theme-info-display');
+  info.innerHTML = `
+    <div>📛 <b style="color:var(--text)">Nama:</b> ${themeInfo.titleEn || themeInfo.title || '-'}</div>
+    <div>👤 <b style="color:var(--text)">Author:</b> ${themeInfo.author || '-'}</div>
+    <div>🔢 <b style="color:var(--text)">Versi:</b> ${themeInfo.version || '-'}</div>
+    <div>📱 <b style="color:var(--text)">UI Version:</b> ${themeInfo.uiVersion || '-'}</div>
+  `;
+}
+
+function updateChangeLog() {
+  const list = document.getElementById('changelog-list');
+  const all = [];
+  changes.colors.forEach(c => all.push(`🎨 ${c.pkgName} · <b>${c.name}</b><br>&nbsp;&nbsp;<span style="color:var(--text2)">${c.from}</span> → <b style="color:var(--accent)">${c.to}</b>`));
+  changes.images.forEach(i => all.push(`🖼️ ${i.pkgName} · <b>${i.path.split('/').pop()}</b>`));
+  list.innerHTML = all.length ? all.join('<br>') : 'Belum ada perubahan.';
+
+  const info = document.getElementById('export-info');
+  if (all.length > 0) {
+    info.innerHTML = `<b style="color:var(--accent3)">${all.length} perubahan</b> siap di-export ke file MTZ baru.`;
+  }
+}
+
+async function exportMTZ() {
+  const btn = document.getElementById('btn-export');
+  btn.disabled = true;
+  btn.textContent = '⏳ Menyimpan...';
+  showLoading('Menyimpan perubahan warna...');
+
+  try {
+    // Apply color changes back to XML
+    for (const [pkgName, colors] of Object.entries(colorData)) {
+      const pkgZip = mtzData.packages[pkgName];
+      if (!pkgZip) continue;
+
+      // Group by xmlFile
+      const byXml = {};
+      colors.forEach(c => {
+        if (!byXml[c.xmlFile]) byXml[c.xmlFile] = [];
+        byXml[c.xmlFile].push(c);
+      });
+
+      for (const [xmlFile, xmlColors] of Object.entries(byXml)) {
+        const changed = xmlColors.filter(c => c.value !== c.original);
+        if (!changed.length) continue;
+
+        let xmlStr = await pkgZip.file(xmlFile).async('string');
+        changed.forEach(c => {
+          // Replace color value in XML - handle both formats
+          const escapedName = c.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          xmlStr = xmlStr.replace(
+            new RegExp(`(<color name="${escapedName}"(?:\\s+package="[^"]+")?>)(#[0-9a-fA-F]{6,8})(</color>)`,'i'),
+            `$1${c.value}$3`
+          );
+        });
+        pkgZip.file(xmlFile, xmlStr);
+      }
+    }
+
+    showLoading('Merakit ulang package...');
+
+    // Repack each sub-package back into outer ZIP
+    for (const [pkgName, pkgZip] of Object.entries(mtzData.packages)) {
+      const pkgBlob = await pkgZip.generateAsync({ type: 'arraybuffer', compression: 'STORE' });
+      mtzData.outerZip.file(pkgName, pkgBlob);
+    }
+
+    showLoading('Membuat file MTZ...');
+
+    const finalBlob = await mtzData.outerZip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
+
+    // Download
+    const filename = (themeInfo.titleEn || themeInfo.title || 'theme').replace(/\s+/g,'_') + '_edited.mtz';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(finalBlob);
+    a.download = filename;
+    a.click();
+
+    showToast('🎉 MTZ berhasil di-download!', 4000);
+  } catch(e) {
+    showToast('❌ Export gagal: ' + e.message);
+    console.error(e);
+  }
+
+  hideLoading();
+  btn.disabled = false;
+  btn.textContent = '💾 Download MTZ';
+}
+
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+  const tabIdx = ['colors','images','preview','export'].indexOf(name);
+  document.querySelectorAll('.tab')[tabIdx].classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+}
+
+// Close modal on outside click
+document.getElementById('color-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
