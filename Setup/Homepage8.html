@@ -173,9 +173,9 @@ body.edit-mode #gear{background:rgba(255,200,80,0.18);border-color:rgba(255,200,
 
 /* ── SUB-PANELS ── */
 .subpanel{
-  position:fixed;bottom:72px;right:66px;z-index:58;
-  width:min(310px,calc(100vw - 80px));
-  max-height:calc(100dvh - 100px);
+  position:fixed;z-index:58;
+  width:min(310px,calc(100vw - 24px));
+  max-height:min(480px,calc(100dvh - 100px));
   overflow-y:auto;
   background:rgba(12,12,20,0.92);
   backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
@@ -184,6 +184,8 @@ body.edit-mode #gear{background:rgba(255,200,80,0.18);border-color:rgba(255,200,
   padding:16px;
   display:none;flex-direction:column;gap:11px;
   scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.1) transparent;
+  /* default position, overridden by JS */
+  bottom:72px;right:66px;
 }
 .subpanel.open{display:flex;animation:pop .2s ease}
 .subpanel h2{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px}
@@ -319,12 +321,12 @@ body.edit-mode #edit-bar{display:block}
 
 <!-- Radial ring (6 buttons, positioned by JS) -->
 <div id="radial-ring">
-  <button class="r-btn" id="rbtn-layout" onclick="openPanel('layout')" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg><span class="r-tip">Layout</span></button>
-  <button class="r-btn" id="rbtn-bg"     onclick="openPanel('bg')"     style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="r-tip">Background</span></button>
-  <button class="r-btn" id="rbtn-app"    onclick="openPanel('appearance')" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><span class="r-tip">Tampilan</span></button>
-  <button class="r-btn" id="rbtn-clock"  onclick="openPanel('clock')"  style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="r-tip">Jam</span></button>
-  <button class="r-btn" id="rbtn-search" onclick="openPanel('search')" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="r-tip">Search</span></button>
-  <button class="r-btn" id="rbtn-bm"     onclick="openPanel('bookmarks')" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span class="r-tip">Bookmark</span></button>
+  <button class="r-btn" id="rbtn-layout" onclick="openPanel('layout',this)" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg><span class="r-tip">Layout</span></button>
+  <button class="r-btn" id="rbtn-bg"     onclick="openPanel('bg',this)"     style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="r-tip">Background</span></button>
+  <button class="r-btn" id="rbtn-app"    onclick="openPanel('appearance',this)" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><span class="r-tip">Tampilan</span></button>
+  <button class="r-btn" id="rbtn-clock"  onclick="openPanel('clock',this)"  style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="r-tip">Jam</span></button>
+  <button class="r-btn" id="rbtn-search" onclick="openPanel('search',this)" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="r-tip">Search</span></button>
+  <button class="r-btn" id="rbtn-bm"     onclick="openPanel('bookmarks',this)" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span class="r-tip">Bookmark</span></button>
   <button class="r-btn" id="bgm-toggle"  onclick="toggleBgmPanel()"    style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="r-tip">Musik</span></button>
 </div>
 
@@ -377,16 +379,14 @@ body.edit-mode #edit-bar{display:block}
   <div class="p-row"><label>Durasi fade</label><div class="slider-row"><input type="range" id="sl-bgfade" min="0" max="3" step="0.1" value="0.8"><span class="slider-val" id="sl-bgfade-v">0.8s</span></div></div>
   <div class="toggle-row"><span>Looping slideshow</span><div class="tog on" id="tog-bgloop" onclick="toggleBgLoop()"></div></div>
   <div class="p-row">
-    <label>Loop region (slide ke-N sampai ke-M, 0 = awal/akhir)</label>
-    <div class="slider-row">
-      <span style="font-size:11px;color:var(--muted);white-space:nowrap">Dari</span>
-      <input type="range" id="sl-bgls" min="0" max="9" value="0">
-      <span class="slider-val" id="sl-bgls-v">0</span>
-    </div>
-    <div class="slider-row">
-      <span style="font-size:11px;color:var(--muted);white-space:nowrap">Ke</span>
-      <input type="range" id="sl-bgle" min="0" max="9" value="0">
-      <span class="slider-val" id="sl-bgle-v">0</span>
+    <label>Loop region video/audio (detik, 0 = awal/akhir)</label>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+      <span style="font-size:11px;color:var(--muted);white-space:nowrap;width:28px">Dari</span>
+      <input type="number" id="sl-bgls" class="p-inp" min="0" value="0" placeholder="0" style="width:70px;padding:6px 8px">
+      <span style="font-size:11px;color:var(--muted)">→</span>
+      <input type="number" id="sl-bgle" class="p-inp" min="0" value="0" placeholder="0s=akhir" style="width:80px;padding:6px 8px">
+      <span style="font-size:11px;color:var(--muted)">detik</span>
+      <button class="loop-tog" id="bg-loop-range-btn" onclick="toggleBgLoopRange()" style="white-space:nowrap">Off</button>
     </div>
   </div>
   <div class="p-row"><label>Posisi Horizontal</label><div class="slider-row"><input type="range" id="sl-bgx" min="0" max="100" value="50"><span class="slider-val" id="sl-bgx-v">50%</span></div></div>
@@ -484,34 +484,10 @@ body.edit-mode #edit-bar{display:block}
 <div id="toast"></div>
 <audio id="bgm-audio"></audio>
 <script>
-// ── Radial fan positioning ──
-// 7 buttons: 4 inner arc + 3 outer arc, fan up-left from gear
-(function(){
-  const btns = [
-    // Inner arc (r=66): layout, bg, appearance, clock
-    {id:'rbtn-layout', angle:260, r:66},
-    {id:'rbtn-bg',     angle:225, r:66},
-    {id:'rbtn-app',    angle:190, r:66},
-    {id:'rbtn-clock',  angle:155, r:66},
-    // Outer arc (r:124): search, bookmarks, bgm
-    {id:'rbtn-search', angle:248, r:124},
-    {id:'rbtn-bm',     angle:213, r:124},
-    {id:'bgm-toggle',  angle:178, r:124},
-  ];
-  btns.forEach((b,i)=>{
-    const el=document.getElementById(b.id);
-    if(!el)return;
-    const rad=b.angle*Math.PI/180;
-    const tx=Math.round(Math.cos(rad)*b.r);
-    const ty=Math.round(Math.sin(rad)*b.r);
-    el.style.setProperty('--tx', tx+'px');
-    el.style.setProperty('--ty', ty+'px');
-    el.style.transitionDelay = i*0.035+'s';
-  });
-})();
+// Radial angles set by updateRadialAngles() called from init
 
 
-const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgLoopStart:0,bgLoopEnd:0,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Twitter',u:'https://x.com'},{n:'GitHub',u:'https://github.com'}],bmGrid:false,hidden:{},layout:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,psRotActive:false,psRotInterval:30,psRotOrder:"seq",psRotSelected:[],bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0};
+const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgLoopStart:0,bgLoopEnd:0,bgLoopRangeActive:false,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Twitter',u:'https://x.com'},{n:'GitHub',u:'https://github.com'}],bmGrid:false,hidden:{},layout:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,psRotActive:false,psRotInterval:30,psRotOrder:"seq",psRotSelected:[],gearX:null,gearY:null,bgmPlayerX:null,bgmPlayerY:null,bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0};
 let S=JSON.parse(JSON.stringify(DEF));
 try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
 S.hidden=S.hidden||{};S.layout=S.layout||{};
@@ -549,7 +525,17 @@ function toggleClockCard(){S.clockCard=!S.clockCard;save();document.getElementBy
 const bgImg=document.getElementById('bg-img'),bgImg2=document.getElementById('bg-img2'),bgVid=document.getElementById('bg-video');
 let bgSlideIdx=0,bgSlideTimer=null;
 function applyBgStyle(){const pos=`${S.bgX}% ${S.bgY}%`;const sz=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.backgroundPosition=pos;bgImg.style.backgroundSize=sz;bgImg2.style.backgroundPosition=pos;bgImg2.style.backgroundSize=sz;bgVid.style.objectPosition=pos;bgVid.style.transform=S.bgZ>100?`scale(${S.bgZ/100})`:'none';}
-function showSlide(idx){const url=S.bgUrls[idx];if(!url)return;const isVid=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);if(isVid){bgVid.src=url;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';return;}const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
+function showSlide(idx){const url=S.bgUrls[idx];if(!url)return;const isVid=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);if(isVid){
+    bgVid.src=url;bgVid.style.display='block';
+    bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';
+    bgVid.ontimeupdate=()=>{
+      if(!S.bgLoopRangeActive)return;
+      const end=S.bgLoopEnd>0?S.bgLoopEnd:null;
+      if(end&&bgVid.currentTime>=end)bgVid.currentTime=S.bgLoopStart||0;
+    };
+    bgVid.oncanplay=()=>{bgVid.oncanplay=null;if(S.bgLoopRangeActive&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;};
+    return;
+  }const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
 function startSlideTimer(){
   clearInterval(bgSlideTimer);
   if(!S.bgUrls||S.bgUrls.length<=1)return;
@@ -565,7 +551,24 @@ function startSlideTimer(){
   },(S.bgTransSec||10)*1000);
 }
 let _bgLocalData=''; // runtime cache for IDB bg data
-function applyBgData(data,isVid){if(isVid){bgVid.src=data;bgVid.style.display='block';bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';}else{bgImg.style.backgroundImage=`url('${data}')`;bgVid.style.display='none';bgVid.src='';}applyBgStyle();}
+function applyBgData(data,isVid){
+  if(isVid){
+    bgVid.src=data;bgVid.style.display='block';
+    bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';
+    // attach loop region handler
+    bgVid.ontimeupdate=()=>{
+      if(!S.bgLoopRangeActive)return;
+      const end=S.bgLoopEnd>0?S.bgLoopEnd:null;
+      if(end&&bgVid.currentTime>=end){bgVid.currentTime=S.bgLoopStart||0;}
+    };
+    // set start point
+    bgVid.oncanplay=()=>{bgVid.oncanplay=null;if(S.bgLoopRangeActive&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;};
+  }else{
+    bgImg.style.backgroundImage=`url('${data}')`;bgVid.style.display='none';bgVid.src='';
+    bgVid.ontimeupdate=null;
+  }
+  applyBgStyle();
+}
 function applyBg(){
   clearInterval(bgSlideTimer);
   if(S.bgLocal){
@@ -594,6 +597,17 @@ document.getElementById('bg-file').addEventListener('change',function(e){
 });
 function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;_bgLocalData='';clearInterval(bgSlideTimer);bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';syncBgSliders();idbDel('bg');save();toast('Background direset!');}
 function toggleBgLoop(){S.bgLoop=!S.bgLoop;save();document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop);}
+function toggleBgLoopRange(){
+  S.bgLoopRangeActive=!S.bgLoopRangeActive;
+  S.bgLoopStart=+document.getElementById('sl-bgls').value||0;
+  S.bgLoopEnd=+document.getElementById('sl-bgle').value||0;
+  save();
+  const btn=document.getElementById('bg-loop-range-btn');
+  btn.classList.toggle('on',S.bgLoopRangeActive);
+  btn.textContent=S.bgLoopRangeActive?'On':'Off';
+  if(S.bgLoopRangeActive&&bgVid.src&&!bgVid.paused&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;
+  toast(S.bgLoopRangeActive?`Loop ${S.bgLoopStart}s → ${S.bgLoopEnd||'akhir'}s aktif`:'Loop region off');
+}
 document.getElementById('sl-bgtrans').addEventListener('input',function(){S.bgTransSec=+this.value;document.getElementById('sl-bgtrans-v').textContent=this.value+'s';save();startSlideTimer();});
 document.getElementById('sl-bgfade').addEventListener('input',function(){S.bgFadeSec=+this.value;document.getElementById('sl-bgfade-v').textContent=(+this.value).toFixed(1)+'s';save();});
 function syncBgSliders(){
@@ -601,15 +615,17 @@ function syncBgSliders(){
   document.getElementById('sl-bgy').value=S.bgY;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';
   document.getElementById('sl-bgz').value=S.bgZ;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';
   const ls=document.getElementById('sl-bgls');const le=document.getElementById('sl-bgle');
-  if(ls){ls.value=S.bgLoopStart||0;document.getElementById('sl-bgls-v').textContent=S.bgLoopStart||0;}
-  if(le){le.value=S.bgLoopEnd||0;document.getElementById('sl-bgle-v').textContent=S.bgLoopEnd||0;}
+  if(ls)ls.value=S.bgLoopStart||0;
+  if(le)le.value=S.bgLoopEnd||0;
+  const lrBtn=document.getElementById('bg-loop-range-btn');
+  if(lrBtn){lrBtn.classList.toggle('on',S.bgLoopRangeActive);lrBtn.textContent=S.bgLoopRangeActive?'On':'Off';}
 }
 function setupBgSliders(){syncBgSliders();document.getElementById('sl-bgtrans').value=S.bgTransSec||10;document.getElementById('sl-bgtrans-v').textContent=(S.bgTransSec||10)+'s';document.getElementById('sl-bgfade').value=S.bgFadeSec||0.8;document.getElementById('sl-bgfade-v').textContent=(S.bgFadeSec||0.8).toFixed(1)+'s';document.getElementById('sl-bgx').addEventListener('input',function(){S.bgX=+this.value;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';applyBgStyle();save();});document.getElementById('sl-bgy').addEventListener('input',function(){S.bgY=+this.value;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';applyBgStyle();save();});document.getElementById('sl-bgz').addEventListener('input',function(){S.bgZ=+this.value;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';applyBgStyle();save();});
-  // bg loop region sliders
+  // bg loop region inputs
   const slBgLs=document.getElementById('sl-bgls');
   const slBgLe=document.getElementById('sl-bgle');
-  if(slBgLs){slBgLs.addEventListener('input',function(){S.bgLoopStart=+this.value;document.getElementById('sl-bgls-v').textContent=this.value;save();startSlideTimer();});}
-  if(slBgLe){slBgLe.addEventListener('input',function(){S.bgLoopEnd=+this.value;document.getElementById('sl-bgle-v').textContent=this.value;save();startSlideTimer();});}
+  if(slBgLs){slBgLs.addEventListener('change',function(){S.bgLoopStart=+this.value||0;save();});}
+  if(slBgLe){slBgLe.addEventListener('change',function(){S.bgLoopEnd=+this.value||0;save();});}
 }
 document.getElementById('sl-overlay').addEventListener('input',function(){S.overlay=+this.value;document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';save();});
 // PRESETS
@@ -802,6 +818,121 @@ function resetLayout(){S.layout={};save();setDefaultLayout();toast('Layout dires
 function centerWidget(wid){const w=document.getElementById(wid);const wr=w.getBoundingClientRect();w.style.transform='none';w.style.left=((window.innerWidth-wr.width)/2)+'px';saveLayout();toast('Widget dicenterin!');}
 const guideH=document.getElementById('guide-h'),guideV=document.getElementById('guide-v'),SNAP=12;
 (function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy;function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;}else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}}function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);dr.style.left=nx+'px';dr.style.top=ny+'px';}if(rs){e.preventDefault();rs.style.width=Math.max(100,ow+(p.x-ox))+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';}}function onE(){if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
+// ── Draggable gear + BGM player (long press = drag) ──
+(function(){
+  const gear=document.getElementById('gear');
+  const ring=document.getElementById('radial-ring');
+  const bgmPlayer=document.getElementById('bgm-player');
+  let dragging=null,ox=0,oy=0,ex=0,ey=0;
+  let longT=null,dragReady=false,hasMoved=false;
+
+  function getP(e){return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};}
+
+  function applyPos(el,nx,ny){
+    el.style.left=nx+'px';el.style.top=ny+'px';
+    el.style.right='auto';el.style.bottom='auto';
+  }
+
+  function clamp(el,nx,ny){
+    const W=window.innerWidth,H=window.innerHeight;
+    const r=el.getBoundingClientRect();
+    return{x:Math.max(0,Math.min(nx,W-r.width)),y:Math.max(0,Math.min(ny,H-r.height))};
+  }
+
+  function startArm(e,el){
+    if(e.button>0)return;
+    const p=getP(e);
+    const r=el.getBoundingClientRect();
+    ox=p.x;oy=p.y;ex=r.left;ey=r.top;
+    dragReady=false;hasMoved=false;
+    clearTimeout(longT);
+    longT=setTimeout(()=>{
+      dragReady=true;dragging=el;
+      el.style.opacity='0.75';
+      el.style.transform=el===gear?'rotate(90deg) scale(1.1)':'scale(1.08)';
+      el.style.transition='opacity .15s,transform .15s';
+    },420);
+  }
+
+  function onMove(e){
+    if(!dragReady||!dragging)return;
+    const p=getP(e);
+    const dx=p.x-ox,dy=p.y-oy;
+    if(Math.abs(dx)+Math.abs(dy)>3)hasMoved=true;
+    if(!hasMoved)return;
+    e.preventDefault();e.stopPropagation();
+    const c=clamp(dragging,ex+dx,ey+dy);
+    applyPos(dragging,c.x,c.y);
+    if(dragging===gear)applyPos(ring,c.x,c.y);
+  }
+
+  function onEnd(e){
+    clearTimeout(longT);
+    if(dragging){
+      dragging.style.opacity='';
+      dragging.style.transition='';
+      if(hasMoved){
+        const r=dragging.getBoundingClientRect();
+        if(dragging===gear){
+          // keep gear transform but reset inline
+          dragging.style.transform='';
+          S.gearX=Math.round(r.left);S.gearY=Math.round(r.top);save();
+          updateRadialAngles();
+        } else {
+          S.bgmPlayerX=Math.round(r.left);S.bgmPlayerY=Math.round(r.top);save();
+        }
+        e.preventDefault();e.stopPropagation();
+      } else {
+        dragging.style.transform='';
+      }
+    }
+    dragging=null;dragReady=false;hasMoved=false;
+  }
+
+  gear.addEventListener('pointerdown',e=>startArm(e,gear),{passive:true});
+  bgmPlayer.addEventListener('pointerdown',e=>{
+    if(e.target.closest('input,button,canvas,select'))return;
+    startArm(e,bgmPlayer);
+  },{passive:true});
+
+  document.addEventListener('pointermove',onMove,{passive:false});
+  document.addEventListener('pointerup',onEnd);
+  document.addEventListener('pointercancel',onEnd);
+})();
+
+function updateRadialAngles(){
+  const gear=document.getElementById('gear');
+  const gr=gear.getBoundingClientRect();
+  const cx=gr.left+gr.width/2, cy=gr.top+gr.height/2;
+  const W=window.innerWidth, H=window.innerHeight;
+  const fromRight=cx>W/2, fromBottom=cy>H/2;
+  // Fan points away from nearest corner: 4 quadrant directions
+  // Angles: 0=right, 90=down, 180=left, 270=up
+  let midAngle;
+  if(fromRight&&fromBottom)  midAngle=225; // top-left fan
+  else if(fromRight)         midAngle=135; // bottom-left fan
+  else if(fromBottom)        midAngle=315; // top-right fan
+  else                       midAngle=45;  // bottom-right fan
+
+  // Inner ring: 4 buttons spread ±40deg around midAngle
+  // Outer ring: 3 buttons spread ±25deg around midAngle
+  const inner=[
+    {id:'rbtn-layout',offset:-45},{id:'rbtn-bg',offset:-15},
+    {id:'rbtn-app',offset:15},{id:'rbtn-clock',offset:45}
+  ];
+  const outer=[
+    {id:'rbtn-search',offset:-25},{id:'rbtn-bm',offset:0},
+    {id:'bgm-toggle',offset:25}
+  ];
+  [...inner.map(b=>({...b,r:68})),...outer.map(b=>({...b,r:126}))].forEach((b,i)=>{
+    const el=document.getElementById(b.id);if(!el)return;
+    const rad=(midAngle+b.offset)*Math.PI/180;
+    el.style.setProperty('--tx', Math.round(Math.cos(rad)*b.r)+'px');
+    el.style.setProperty('--ty', Math.round(Math.sin(rad)*b.r)+'px');
+    el.style.transitionDelay=i*0.03+'s';
+  });
+}
+
 function checkOrientation(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const b=document.getElementById('orient-badge');b.textContent=D?(L?'🖥 Desktop Landscape':'🖥 Desktop Portrait'):(L?'📱 Landscape':'📱 Portrait');b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);if(!Object.keys(S.layout).length)setDefaultLayout();}
 window.addEventListener('resize',checkOrientation);
 window.addEventListener('orientationchange',()=>setTimeout(checkOrientation,300));
@@ -824,18 +955,40 @@ function toggleRadial(){
   // show/hide bgm toggle only when radial open
 }
 
-function openPanel(id){
+function positionPanel(panel, triggerBtn){
+  const btnR=triggerBtn.getBoundingClientRect();
+  const pw=Math.min(310, window.innerWidth-24);
+  const gap=12;
+  // Measure panel height by briefly making visible off-screen
+  panel.style.cssText+='visibility:hidden;display:flex;left:-9999px;top:-9999px;';
+  const ph=panel.offsetHeight||320;
+  panel.style.visibility='';panel.style.left='';panel.style.top='';panel.style.display='';
+
+  // Horizontal: center on button, clamp
+  let left=btnR.left+btnR.width/2-pw/2;
+  left=Math.max(12, Math.min(left, window.innerWidth-pw-12));
+
+  // Vertical: prefer above, flip below if needed
+  let top=btnR.top-ph-gap;
+  if(top<12) top=btnR.bottom+gap;
+  top=Math.max(12, Math.min(top, window.innerHeight-ph-12));
+
+  panel.style.left=left+'px';
+  panel.style.top=top+'px';
+  panel.style.bottom='auto';
+  panel.style.right='auto';
+}
+
+function openPanel(id, triggerBtn){
   const target=document.getElementById('subpanel-'+id);
   if(!target)return;
   const wasOpen=target.classList.contains('open');
-  // close all
   PANELS.forEach(p=>{const el=document.getElementById('subpanel-'+p);if(el)el.classList.remove('open');});
   document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('active-panel'));
-  // bgm panel close too
   bgmPanelOpen=false;document.getElementById('bgm-player').classList.add('mini');
-  if(wasOpen)return; // was open → just close
+  if(wasOpen)return;
+  if(triggerBtn)positionPanel(target,triggerBtn);
   target.classList.add('open');
-  // highlight radial button
   const btnMap={layout:'rbtn-layout',bg:'rbtn-bg',appearance:'rbtn-app',clock:'rbtn-clock',search:'rbtn-search',bookmarks:'rbtn-bm'};
   const btn=document.getElementById(btnMap[id]);
   if(btn)btn.classList.add('active-panel');
@@ -925,6 +1078,21 @@ function init(){
   audio.loop=S.bgmLoop&&!S.bgmLoopRange;
   if(S.bgmPlaylist&&S.bgmPlaylist.length){bgmLoad(0,()=>{});renderBgmPlaylist();}
   setTimeout(()=>document.getElementById('search').focus(),150);
+  // restore saved gear/ring position
+  const gear=document.getElementById('gear');
+  const ring=document.getElementById('radial-ring');
+  if(S.gearX!=null&&S.gearY!=null){
+    gear.style.left=S.gearX+'px';gear.style.top=S.gearY+'px';
+    gear.style.right='auto';gear.style.bottom='auto';
+    ring.style.left=S.gearX+'px';ring.style.top=S.gearY+'px';
+    ring.style.right='auto';ring.style.bottom='auto';
+  }
+  updateRadialAngles();
+  if(S.bgmPlayerX!=null&&S.bgmPlayerY!=null){
+    const p=document.getElementById('bgm-player');
+    p.style.left=S.bgmPlayerX+'px';p.style.top=S.bgmPlayerY+'px';
+    p.style.bottom='auto';
+  }
 }
 init();
 </script>
