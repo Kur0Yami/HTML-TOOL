@@ -420,6 +420,16 @@ body.edit-mode #edit-bar{display:block}
   <div class="toggle-row"><span>Edit Mode (drag widget)</span><div class="tog" id="tog-edit" onclick="toggleEditMode()"></div></div>
   <div class="hr"></div>
   <h2>Widget Utama</h2>
+  <div class="toggle-row">
+    <span>Orientasi Layar</span>
+    <div style="display:flex;gap:6px">
+      <button class="loop-tog" id="orient-auto-btn" onclick="setOrientLock('auto')">⟳ Auto</button>
+      <button class="loop-tog" id="orient-port-btn" onclick="setOrientLock('portrait')">▯ Portrait</button>
+      <button class="loop-tog" id="orient-land-btn" onclick="setOrientLock('landscape')">▭ Landscape</button>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <h2>Widget Utama</h2>
   <div class="toggle-row"><span>Clock (all-in-one)</span><div class="tog on" id="tog-clock" onclick="toggleWidget('w-clock','tog-clock')"></div></div>
   <div class="toggle-row"><span>Search</span><div class="tog on" id="tog-search" onclick="toggleWidget('w-search','tog-search')"></div></div>
   <div class="toggle-row"><span>Bookmark</span><div class="tog on" id="tog-bm" onclick="toggleWidget('w-bookmarks','tog-bm')"></div></div>
@@ -430,14 +440,6 @@ body.edit-mode #edit-bar{display:block}
   <div class="toggle-row"><span>Hari</span><div class="tog" id="tog-sw-day" onclick="toggleSW('w-day','tog-sw-day')"></div></div>
   <div class="toggle-row"><span>Jam</span><div class="tog" id="tog-sw-time" onclick="toggleSW('w-time-only','tog-sw-time')"></div></div>
   <div class="toggle-row"><span>Tanggal</span><div class="tog" id="tog-sw-date" onclick="toggleSW('w-date-only','tog-sw-date')"></div></div>
-  <div class="toggle-row">
-    <span>Orientasi Layar</span>
-    <div style="display:flex;gap:6px">
-      <button class="loop-tog" id="orient-auto-btn" onclick="setOrientLock('auto')">⟳ Auto</button>
-      <button class="loop-tog" id="orient-port-btn" onclick="setOrientLock('portrait')">▯ Portrait</button>
-      <button class="loop-tog" id="orient-land-btn" onclick="setOrientLock('landscape')">▭ Landscape</button>
-    </div>
-  </div>
   <button class="p-btn" onclick="resetLayout()">↺ Reset posisi widget</button>
   <div class="hr"></div>
   <h2>BGM Playlist</h2>
@@ -786,9 +788,10 @@ function updateSW(now){
 const SW_SIZE_MAP={time:'fszTime',day:'fszDay',date:'fszDate',greeting:'fszGreeting'};
 const SW_CSS_MAP={time:'--fsz-time',day:'--fsz-day',date:'--fsz-date',greeting:'--fsz-greeting'};
 function setSWSize(w,val){
-  val=parseInt(val);
+  val=Number(val);
   S[SW_SIZE_MAP[w]]=val;save();
   document.documentElement.style.setProperty(SW_CSS_MAP[w],val+'px');
+  const sl=document.getElementById('sl-fsz-'+w);if(sl)sl.value=val;
   const sv=document.getElementById('sl-fsz-'+w+'-v');if(sv)sv.textContent=val+'px';
 }
 
@@ -814,14 +817,14 @@ function applyWidgetPreset(name){
     },
     minimal:{
       sizes:{day:18,time:72,date:13,greeting:12},
-      dateFmt:'DAY · DD MMM',
+      dateFmt:'DD · MMM · YYYY',
       positions:{
         'w-time-only':{left:'50%',top:'18%',transform:'translateX(-50%)'},
         'w-date-only':{left:'50%',top:'40%',transform:'translateX(-50%)'},
-        'w-day':{left:'50%',top:'2%',transform:'translateX(-50%)'},
-        'w-greeting':{left:'50%',top:'60%',transform:'translateX(-50%)'},
+        'w-day':{left:'50%',top:'55%',transform:'translateX(-50%)'},
+        'w-greeting':{left:'50%',top:'62%',transform:'translateX(-50%)'},
       },
-      hidden:{'w-clock':true,'w-greeting':true,'w-day':true},
+      hidden:{'w-clock':true},// semua SW tampil
     },
     centered:{
       sizes:{day:28,time:80,date:13,greeting:13},
@@ -836,14 +839,14 @@ function applyWidgetPreset(name){
     },
     clean:{
       sizes:{day:16,time:60,date:13,greeting:13},
-      dateFmt:'DAY DD/MM/YY',
+      dateFmt:'DAY · DD/MM/YY',
       positions:{
         'w-greeting':{left:'50%',top:'6%',transform:'translateX(-50%)'},
         'w-time-only':{left:'50%',top:'14%',transform:'translateX(-50%)'},
         'w-date-only':{left:'50%',top:'36%',transform:'translateX(-50%)'},
         'w-day':  {left:'50%',top:'44%',transform:'translateX(-50%)'},
       },
-      hidden:{'w-clock':true,'w-day':true},
+      hidden:{'w-clock':true},// semua SW tampil
     },
   };
   
@@ -866,9 +869,9 @@ function applyWidgetPreset(name){
   // Apply 12h
   if(p.timeFmt!==undefined){S.use12h=!!p.timeFmt;document.getElementById('tog-12h').classList.toggle('on',S.use12h);}
   
-  // Show/hide widgets
+  // Show/hide widgets — kalau tidak ada di p.hidden → tampilkan
   allSW.forEach(wid=>{
-    const shouldHide=!!(p.hidden&&p.hidden[wid]);
+    const shouldHide=!!(p.hidden&&p.hidden[wid]===true);
     S.swHidden[wid]=shouldHide;
     document.getElementById(wid)?.classList.toggle('hidden',shouldHide);
     const togId='tog-sw-'+wid.replace('w-','').replace('-only','');
@@ -1704,8 +1707,9 @@ function init(){
     }
   });
   // Apply SW sizes
-  [{w:'time',def:72},{w:'day',def:52},{w:'date',def:13},{w:'greeting',def:14}].forEach(({w,def})=>{
-    const val=S['fsz'+w.charAt(0).toUpperCase()+w.slice(1)]||def;
+  [{w:'time',key:'fszTime',def:72},{w:'day',key:'fszDay',def:52},{w:'date',key:'fszDate',def:13},{w:'greeting',key:'fszGreeting',def:14}].forEach(({w,key,def})=>{
+    const val=Number(S[key])||def;
+    S[key]=val; // normalisasi ke number
     document.documentElement.style.setProperty(SW_CSS_MAP[w],val+'px');
     const sl=document.getElementById('sl-fsz-'+w);if(sl)sl.value=val;
     const sv=document.getElementById('sl-fsz-'+w+'-v');if(sv)sv.textContent=val+'px';
