@@ -1090,7 +1090,16 @@ function renderPresets(){const grid=document.getElementById('preset-grid');grid.
 document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
 document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
 document.getElementById('sl-fs-ui').addEventListener('input',function(){S.fsUI=+this.value;document.documentElement.style.setProperty('--fs-ui',S.fsUI+'px');document.getElementById('sl-fs-ui-v').textContent=S.fsUI+'px';save();});
-document.getElementById('sl-fs-clock').addEventListener('input',function(){S.fsClock=+this.value;document.documentElement.style.setProperty('--fs-clock',S.fsClock+'px');document.getElementById('sl-fs-clock-v').textContent=S.fsClock+'px';save();});
+document.getElementById('sl-fs-clock').addEventListener('input',function(){
+  const val=+this.value;
+  S.fsClock=val;S.fszTime=val;
+  document.documentElement.style.setProperty('--fs-clock',val+'px');
+  document.documentElement.style.setProperty('--fsz-time',val+'px');
+  document.getElementById('sl-fs-clock-v').textContent=val+'px';
+  const sl2=document.getElementById('sl-fsz-time');if(sl2)sl2.value=val;
+  const sv2=document.getElementById('sl-fsz-time-v');if(sv2)sv2.textContent=val+'px';
+  save();
+});
 function applyFontUI(){const p=parseFontInput(document.getElementById('font-ui-input').value);const nf=document.getElementById('font-ui-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-ui-name').value=p.name;document.getElementById('font-main-link').href=url;document.documentElement.style.setProperty('--font-ui',`'${name}',sans-serif`);S.fontUIUrl=url;S.fontUIName=name;save();toast('Font UI diterapkan!');}
 function resetFontUI(){document.getElementById('font-main-link').href='https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap';document.documentElement.style.setProperty('--font-ui',"'Outfit',sans-serif");S.fontUIUrl='';S.fontUIName='';save();document.getElementById('font-ui-input').value='';document.getElementById('font-ui-name').value='';toast('Font UI direset');}
 function applyFontClock(){const p=parseFontInput(document.getElementById('font-clock-input').value);const nf=document.getElementById('font-clock-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-clock-name').value=p.name;document.getElementById('font-clock-link').href=url;document.documentElement.style.setProperty('--font-clock',`'${name}',monospace`);S.fontClockUrl=url;S.fontClockName=name;save();toast('Font jam diterapkan!');}
@@ -1531,13 +1540,31 @@ function checkOrientation(){
 function reapplySWSizes(){
   [{w:'time',key:'fszTime',def:72},{w:'day',key:'fszDay',def:52},{w:'date',key:'fszDate',def:13},{w:'greeting',key:'fszGreeting',def:14}].forEach(({w,key,def})=>{
     const val=Number(S[key])||def;
-    S[key]=val; // normalize to number
+    S[key]=val;
     document.documentElement.style.setProperty(SW_CSS_MAP[w],val+'px');
     const sl=document.getElementById('sl-fsz-'+w);if(sl)sl.value=val;
     const sv=document.getElementById('sl-fsz-'+w+'-v');if(sv)sv.textContent=val+'px';
+    // sync jam: --fsz-time dan --fs-clock harus sama
+    if(w==='time'){
+      S.fsClock=val;
+      document.documentElement.style.setProperty('--fs-clock',val+'px');
+      const sc=document.getElementById('sl-fs-clock');if(sc)sc.value=val;
+      const scv=document.getElementById('sl-fs-clock-v');if(scv)scv.textContent=val+'px';
+    }
   });
 }
-window.addEventListener('resize',()=>{clearTimeout(_orientT);_orientT=setTimeout(checkOrientation,250);});
+window.addEventListener('resize',()=>{
+  // Abaikan resize yang disebabkan keyboard (hanya height yang mengecil)
+  const isKeyboardResize=window.innerWidth===_lastW&&window.innerWidth>window.innerHeight!==_lastLandscape;
+  _lastW=window.innerWidth;_lastLandscape=window.innerWidth>window.innerHeight;
+  // Hanya trigger checkOrientation kalau width berubah (bukan keyboard)
+  clearTimeout(_orientT);
+  _orientT=setTimeout(()=>{
+    if(window.innerWidth!==_lastW||window.innerWidth>window.innerHeight!==_lastLandscape)checkOrientation();
+    else reapplySWSizes(); // tetap reapply sizes
+  },300);
+});
+let _lastW=window.innerWidth,_lastLandscape=window.innerWidth>window.innerHeight;
 window.addEventListener('orientationchange',()=>{
   setTimeout(checkOrientation,350);
   // Re-lock segera setelah orientasi berubah
