@@ -1058,6 +1058,8 @@ function startPresetRot(){
       if(S.psRotOrder==='shuffle')psRotIdx=Math.floor(Math.random()*list.length);
       else psRotIdx=(psRotIdx+1)%list.length;
       loadPresetFull(list[psRotIdx]);
+      // update status after loading next
+      document.getElementById('ps-rot-status').textContent='P'+(list[psRotIdx]+1)+' — '+interval+'s';
     }
   },1000);
 }
@@ -1684,9 +1686,8 @@ function init(){
   document.documentElement.style.setProperty('--accent',S.accent);
   document.querySelectorAll('.swatch').forEach(sw=>sw.classList.toggle('on',sw.dataset.rgb===S.accent));
   document.documentElement.style.setProperty('--fs-ui',(S.fsUI||15)+'px');
-  document.documentElement.style.setProperty('--fs-clock',(S.fsClock||72)+'px');
   document.getElementById('sl-fs-ui').value=S.fsUI||15;document.getElementById('sl-fs-ui-v').textContent=(S.fsUI||15)+'px';
-  document.getElementById('sl-fs-clock').value=S.fsClock||72;document.getElementById('sl-fs-clock-v').textContent=(S.fsClock||72)+'px';
+  // --fs-clock & sl-fs-clock akan diset oleh reapplySWSizes() di bawah, supaya selalu sinkron dengan fszTime
   if(S.fontUIUrl&&S.fontUIName){document.getElementById('font-main-link').href=S.fontUIUrl;document.documentElement.style.setProperty('--font-ui',`'${S.fontUIName}',sans-serif`);document.getElementById('font-ui-name').value=S.fontUIName;}
   if(S.fontClockUrl&&S.fontClockName){document.getElementById('font-clock-link').href=S.fontClockUrl;document.documentElement.style.setProperty('--font-clock',`'${S.fontClockName}',monospace`);document.getElementById('font-clock-name').value=S.fontClockName;}
   document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i.dataset.url===S.engine));
