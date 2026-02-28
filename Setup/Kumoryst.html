@@ -6,10 +6,11 @@
 <title>Kumoryst</title>
 <link id="font-main-link" href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
 <link id="font-clock-link" href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+<link id="font-day-link" href="" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{color-scheme:dark}
-:root{--accent:255,255,255;--blur:20px;--text:rgba(255,255,255,0.93);--muted:rgba(255,255,255,0.45);--font-ui:'Outfit',sans-serif;--font-clock:'Space Mono',monospace;--fs-ui:15px;--fs-clock:72px;color-scheme:dark}
+:root{--accent:255,255,255;--blur:20px;--text:rgba(255,255,255,0.93);--muted:rgba(255,255,255,0.45);--font-ui:'Outfit',sans-serif;--font-clock:'Space Mono',monospace;--font-day:'Space Mono',monospace;--fs-ui:15px;--fs-clock:72px;color-scheme:dark}
 html,body{
   margin:0;padding:0;
   width:100%;height:100%;
@@ -57,7 +58,7 @@ body.edit-mode .edit-handle{display:block}
 #w-time-only{display:flex;align-items:center;justify-content:center}
 /* standalone elements mirror the clock widget styles */
 .standalone-greeting{font-size:var(--fs-greeting,15px);color:var(--muted);font-weight:300;letter-spacing:1px;text-align:center;padding:4px 8px}
-.standalone-day{font-family:var(--font-clock);font-size:var(--fs-day,42px);color:var(--text);letter-spacing:6px;text-transform:uppercase;text-align:center;padding:4px 8px;line-height:1}
+.standalone-day{font-family:var(--font-day);font-size:var(--fs-day,42px);color:var(--text);letter-spacing:6px;text-transform:uppercase;text-align:center;padding:4px 8px;line-height:1}
 .standalone-date{font-size:var(--fs-date,13px);color:var(--muted);letter-spacing:3px;text-transform:uppercase;font-weight:300;text-align:center;padding:4px 8px}
 .standalone-time{font-family:var(--font-clock);font-size:var(--fs-time,72px);color:var(--text);letter-spacing:-3px;line-height:1;text-shadow:0 4px 40px rgba(0,0,0,0.5);white-space:nowrap;text-align:center;padding:4px 8px}
 #sec-bar-wrap{width:100%;height:3px;background:rgba(var(--accent),0.12);border-radius:2px;overflow:hidden;margin-top:2px}
@@ -410,16 +411,10 @@ body.edit-mode #edit-bar{display:block}
   <div class="toggle-row"><span>Hari (terpisah)</span><div class="tog" id="tog-w-day" onclick="toggleWidget('w-day','tog-w-day')"></div></div>
   <div class="toggle-row"><span>Jam (terpisah)</span><div class="tog" id="tog-w-time-only" onclick="toggleWidget('w-time-only','tog-w-time-only')"></div></div>
   <div class="toggle-row"><span>Tanggal (terpisah)</span><div class="tog" id="tog-w-date-only" onclick="toggleWidget('w-date-only','tog-w-date-only')"></div></div>
-  <div class="p-row">
-    <label>Format tanggal custom</label>
-    <input id="datefmt-input" class="p-inp" type="text" placeholder="DD-MMM°YYYY" style="font-family:monospace;letter-spacing:1px">
-    <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.6">
-      Token: <b style="color:var(--text)">DD</b>=28 · <b style="color:var(--text)">MM</b>=02 · <b style="color:var(--text)">MMM</b>=Feb · <b style="color:var(--text)">YYYY</b>=2026 · <b style="color:var(--text)">YY</b>=26 · <b style="color:var(--text)">DAY</b>=Sabtu<br>
-      Separator bebas: - , . ° • / spasi dll<br>
-      Contoh: <span style="color:var(--text)">DD-MMM°YYYY</span> → 28-Feb°2026
-    </div>
-    <button class="p-btn" onclick="applyDateFmt()" style="margin-top:6px">Terapkan</button>
-  </div>
+  <div class="hr"></div>
+  <h2>Grup Widget</h2>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Saat aktif, semua widget bergerak bersama sebagai satu grup</div>
+  <div class="toggle-row"><span>Kunci Grup (drag semua)</span><div class="tog" id="tog-group-lock" onclick="toggleGroupLock()"></div></div>
   <div class="toggle-row">
     <span>Orientasi Layar</span>
     <div style="display:flex;gap:6px">
@@ -570,6 +565,17 @@ body.edit-mode #edit-bar{display:block}
   </div>
   <div class="p-row"><label>Ukuran Jam</label><div class="slider-row"><input type="range" id="sl-fs-time" min="28" max="140" value="72" oninput="setWidgetFontSize('time',this.value)"><span class="slider-val" id="sl-fs-time-v">72px</span></div></div>
   <div class="p-row"><label>Ukuran Hari</label><div class="slider-row"><input type="range" id="sl-fs-day" min="14" max="100" value="42" oninput="setWidgetFontSize('day',this.value)"><span class="slider-val" id="sl-fs-day-v">42px</span></div></div>
+  <div class="p-row">
+    <label>Font Hari</label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <label class="p-btn" for="font-day-file" style="cursor:pointer;flex:1">📁 File TTF/OTF</label>
+      <input id="font-day-file" type="file" class="p-file" accept=".ttf,.otf,font/ttf,font/otf">
+      <button class="p-btn" onclick="applyFontDay()" style="flex:1">Terapkan</button>
+      <button class="p-btn" onclick="resetFontDay()" style="color:rgba(255,150,150,.8);flex:1">↺ Reset</button>
+    </div>
+    <textarea id="font-day-input" class="p-inp" rows="2" placeholder="atau paste URL Google Fonts / &lt;link&gt; tag" style="margin-top:6px"></textarea>
+    <input id="font-day-name" class="p-inp" type="text" placeholder="Nama font hari (otomatis terisi)" style="margin-top:4px">
+  </div>
   <div class="p-row"><label>Ukuran Tanggal</label><div class="slider-row"><input type="range" id="sl-fs-date" min="10" max="60" value="13" oninput="setWidgetFontSize('date',this.value)"><span class="slider-val" id="sl-fs-date-v">13px</span></div></div>
   <div class="p-row"><label>Ukuran Greeting</label><div class="slider-row"><input type="range" id="sl-fs-greeting" min="10" max="40" value="15" oninput="setWidgetFontSize('greeting',this.value)"><span class="slider-val" id="sl-fs-greeting-v">15px</span></div></div>
   <div class="hr"></div>
@@ -616,7 +622,7 @@ body.edit-mode #edit-bar{display:block}
 // Radial angles set by updateRadialAngles() called from init
 
 
-const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgLoopStart:0,bgLoopEnd:0,bgLoopRangeActive:false,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Facebook',u:'https://facebook.com'},{n:'Instagram',u:'https://instagram.com'}],bmGrid:false,hidden:{},layout:{},layoutP:{},layoutL:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,orientLock:'portrait',psRotActive:false,psRotInterval:30,psRotOrder:"seq",psRotSelected:[],appName:'Kumoryst',gearX:null,gearY:null,iconPos:{},bgmPlayerX:null,bgmPlayerY:null,bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0,dateFmt:'DD MMM YYYY',fontUILocal:'',fontClockLocal:'',fsTime:72,fsDay:42,fsDate:13,fsGreeting:15};
+const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgLoopStart:0,bgLoopEnd:0,bgLoopRangeActive:false,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Facebook',u:'https://facebook.com'},{n:'Instagram',u:'https://instagram.com'}],bmGrid:false,hidden:{},layout:{},layoutP:{},layoutL:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',fontDayUrl:'',fontDayName:'',opClock:100,opSearch:100,opBm:100,orientLock:'portrait',psRotActive:false,psRotInterval:30,psRotOrder:"seq",psRotSelected:[],appName:'Kumoryst',gearX:null,gearY:null,iconPos:{},bgmPlayerX:null,bgmPlayerY:null,bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0,dateFmt:'DD MMM YYYY',fontUILocal:'',fontClockLocal:'',fsTime:72,fsDay:42,fsDate:13,fsGreeting:15,groupLock:false};
 let S=JSON.parse(JSON.stringify(DEF));
 try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
 S.hidden=S.hidden||{};S.layout=S.layout||{};S.layoutP=S.layoutP||{};S.layoutL=S.layoutL||{};
@@ -956,6 +962,38 @@ async function restoreFontFromIdb(target){
     document.documentElement.style.setProperty(prop,`'${name}',${target==='ui'?'sans-serif':'monospace'}`);
   }catch(e){}
 }
+async function restoreFontFromIdb_Day(){
+  const name=S.fontDayName;if(!name)return;
+  try{
+    const buf=await idbGet('font_day');if(!buf)return;
+    const blob=new Blob([buf],{type:'font/ttf'});
+    const url=URL.createObjectURL(blob);
+    const ff=new FontFace(name,`url(${url})`);
+    const loaded=await ff.load();
+    document.fonts.add(loaded);
+    document.documentElement.style.setProperty('--font-day',`'${name}',monospace`);
+  }catch(e){}
+}
+// Group Lock
+let groupLockOffsets=null;
+function toggleGroupLock(){
+  S.groupLock=!S.groupLock;save();
+  document.getElementById('tog-group-lock')?.classList.toggle('on',S.groupLock);
+  toast(S.groupLock?'Grup aktif — drag satu widget, semua ikut':'Grup dinonaktifkan');
+}
+function applyGroupMove(movedId,dx,dy){
+  if(!S.groupLock)return;
+  const groupIds=['w-greeting','w-day','w-time-only','w-date-only','w-search','w-bookmarks'];
+  groupIds.forEach(wid=>{
+    if(wid===movedId)return;
+    const el=document.getElementById(wid);
+    if(!el||el.classList.contains('hidden'))return;
+    el.style.transform='none';
+    const cx=parseFloat(el.style.left)||el.getBoundingClientRect().left;
+    const cy=parseFloat(el.style.top)||el.getBoundingClientRect().top;
+    el.style.left=(cx+dx)+'px';el.style.top=(cy+dy)+'px';
+  });
+}
 document.getElementById('font-ui-file').addEventListener('change',function(e){
   if(e.target.files[0])applyFontFromFile(e.target.files[0],'ui');
 });
@@ -967,6 +1005,10 @@ function applyFontUI(){const inp=document.getElementById('font-ui-input').value.
 function resetFontUI(){document.getElementById('font-main-link').href='https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap';document.documentElement.style.setProperty('--font-ui',"'Outfit',sans-serif");S.fontUIUrl='';S.fontUIName='';S.fontUILocal='';idbDel('font_ui');save();document.getElementById('font-ui-input').value='';document.getElementById('font-ui-name').value='';toast('Font UI direset');}
 function applyFontClock(){const p=parseFontInput(document.getElementById('font-clock-input').value);const nf=document.getElementById('font-clock-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-clock-name').value=p.name;document.getElementById('font-clock-link').href=url;document.documentElement.style.setProperty('--font-clock',`'${name}',monospace`);S.fontClockUrl=url;S.fontClockName=name;save();toast('Font jam diterapkan!');}
 function resetFontClock(){document.getElementById('font-clock-link').href='https://fonts.googleapis.com/css2?family=Space+Mono&display=swap';document.documentElement.style.setProperty('--font-clock',"'Space Mono',monospace");S.fontClockUrl='';S.fontClockName='';S.fontClockLocal='';idbDel('font_clock');save();document.getElementById('font-clock-input').value='';document.getElementById('font-clock-name').value='';toast('Font jam direset');}
+function applyFontDay(){const inp=document.getElementById('font-day-input').value.trim();if(!inp)return toast('Paste URL atau gunakan tombol u{1F4C1}');const p=parseFontInput(inp);const nf=document.getElementById('font-day-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-day-name').value=p.name;document.getElementById('font-day-link').href=url;document.documentElement.style.setProperty('--font-day',`'${name}',monospace`);S.fontDayUrl=url;S.fontDayName=name;save();toast('Font Hari diterapkan!');}
+function resetFontDay(){document.getElementById('font-day-link').href='';document.documentElement.style.setProperty('--font-day',"'Space Mono',monospace");S.fontDayUrl='';S.fontDayName='';idbDel('font_day');save();document.getElementById('font-day-input').value='';document.getElementById('font-day-name').value='';toast('Font Hari direset');}
+document.getElementById('font-day-file').addEventListener('change',function(e){if(e.target.files[0])applyFontFromFile_Day(e.target.files[0]);});
+function applyFontFromFile_Day(file){const reader=new FileReader();reader.onload=function(e){const blob=new Blob([e.target.result],{type:file.type||'font/ttf'});const url=URL.createObjectURL(blob);const name=file.name.replace(/.[^.]+$/,'').replace(/[-_]/g,' ');const idbKey='font_day';idbSet(idbKey,e.target.result).then(function(){const ff=new FontFace(name,'url('+url+')');ff.load().then(function(loaded){document.fonts.add(loaded);document.documentElement.style.setProperty('--font-day',"'" +name+ "',monospace");document.getElementById('font-day-link').href='';S.fontDayName=name;S.fontDayUrl='idb:'+idbKey;save();document.getElementById('font-day-name').value=name;toast('Font Hari diterapkan: '+name);}).catch(function(){toast('Gagal load font!');});});};reader.readAsArrayBuffer(file);}
 function setupOpSliders(){[['sl-op-search','opSearch','w-search'],['sl-op-bm','opBm','w-bookmarks']].forEach(([id,key,wid])=>{const sl=document.getElementById(id);sl.value=S[key]||100;document.getElementById(id+'-v').textContent=(S[key]||100)+'%';sl.addEventListener('input',()=>{S[key]=+sl.value;document.getElementById(wid).style.opacity=S[key]/100;document.getElementById(id+'-v').textContent=S[key]+'%';save();});});}
 // SEARCH
 function doSearch(){const q=document.getElementById('search').value.trim();if(!q)return;window.location.href=/^https?:\/\//.test(q)?q:/^[\w-]+\.\w{2,}(\/|$)/.test(q)?'https://'+q:S.engine+encodeURIComponent(q);}
@@ -985,6 +1027,7 @@ function toggleWidget(wid,togId){
   const el=document.getElementById(wid);if(!el)return;
   el.classList.toggle('hidden',!!S.hidden[wid]);
   document.getElementById(togId)?.classList.toggle('on',!S.hidden[wid]);
+  if(!S.hidden[wid]){setTimeout(()=>saveLayout(),50);}
 }
 
 // BGM
@@ -1112,7 +1155,8 @@ function applyLayout(){
   document.querySelectorAll('.widget').forEach(w=>{
     const l=layoutData[w.id];if(!l)return;
     if(l.left)w.style.left=l.left;if(l.top)w.style.top=l.top;
-    if(l.width)w.style.width=l.width;if(l.height)w.style.height=l.height;
+    if(l.width&&l.width!=='')w.style.width=l.width;
+    if(l.height&&l.height!=='')w.style.height=l.height;
     if(l.transform!=null)w.style.transform=l.transform;
   });
 }
@@ -1135,7 +1179,7 @@ function resetLayout(){
 }
 function centerWidget(wid){const w=document.getElementById(wid);const wr=w.getBoundingClientRect();w.style.transform='none';w.style.left=((window.innerWidth-wr.width)/2)+'px';saveLayout();toast('Widget dicenterin!');}
 const guideH=document.getElementById('guide-h'),guideV=document.getElementById('guide-v'),SNAP=12;
-(function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy;function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;}else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}}function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);dr.style.left=nx+'px';dr.style.top=ny+'px';}if(rs){e.preventDefault();rs.style.width=Math.max(100,ow+(p.x-ox))+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';}}function onE(){if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
+(function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy,prevNx,prevNy;function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;}else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;prevNx=wx;prevNy=wy;w.style.left=wx+'px';w.style.top=wy+'px';}}function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);const dxG=nx-prevNx,dyG=ny-prevNy;dr.style.left=nx+'px';dr.style.top=ny+'px';prevNx=nx;prevNy=ny;if(S.groupLock)applyGroupMove(dr.id,dxG,dyG);}if(rs){e.preventDefault();rs.style.width=Math.max(100,ow+(p.x-ox))+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';}}function onE(){if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
 // ── Draggable: gear, r-btn icons, BGM player ──
 (function(){
   const gear=document.getElementById('gear');
@@ -1539,6 +1583,12 @@ function init(){
     else{document.getElementById('font-clock-link').href=S.fontClockUrl;document.documentElement.style.setProperty('--font-clock',`'${S.fontClockName}',monospace`);}
     document.getElementById('font-clock-name').value=S.fontClockName;
   }
+  if(S.fontDayUrl&&S.fontDayName){
+    if(S.fontDayUrl.startsWith('idb:')){restoreFontFromIdb_Day();}
+    else{document.getElementById('font-day-link').href=S.fontDayUrl;document.documentElement.style.setProperty('--font-day',`'${S.fontDayName}',monospace`);}
+    document.getElementById('font-day-name').value=S.fontDayName;
+  }
+  document.getElementById('tog-group-lock')?.classList.toggle('on',!!S.groupLock);
   document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i.dataset.url===S.engine));
   document.getElementById('tog-12h').classList.toggle('on',S.use12h);
   document.getElementById('tog-sec').classList.toggle('on',S.showSecs);
