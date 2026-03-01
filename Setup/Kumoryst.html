@@ -972,6 +972,13 @@ function saveLayout(){
   S.layout=S[key];
   save();
 }
+function restoreFontVars(){
+  document.documentElement.style.setProperty('--fs-day',(S.fsDay||72)+'px');
+  document.documentElement.style.setProperty('--fs-time',(S.fsTime||27)+'px');
+  document.documentElement.style.setProperty('--fs-date',(S.fsDate||13)+'px');
+  document.documentElement.style.setProperty('--fs-greeting',(S.fsGreeting||15)+'px');
+  document.documentElement.style.setProperty('--clock-gap',(S.clockGap!=null?S.clockGap:10)+'px');
+}
 function applyLayout(){
   const key=curLayoutKey();
   const layoutData=S[key]&&Object.keys(S[key]).length?S[key]:S.layout;
@@ -982,13 +989,9 @@ function applyLayout(){
     if(l.width)w.style.width=l.width;if(l.height)w.style.height=l.height;
     if(l.transform!=null)w.style.transform=l.transform;
   });
-  // restore saved font sizes
-  document.documentElement.style.setProperty('--fs-day',(S.fsDay||72)+'px');
-  document.documentElement.style.setProperty('--fs-time',(S.fsTime||27)+'px');
-  document.documentElement.style.setProperty('--fs-date',(S.fsDate||13)+'px');
-  document.documentElement.style.setProperty('--fs-greeting',(S.fsGreeting||15)+'px');
+  restoreFontVars();
 }
-function setDefaultLayout(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const cw=document.getElementById('w-clock'),sw=document.getElementById('w-search'),bw=document.getElementById('w-bookmarks');if(D&&L){cw.style.cssText='left:50%;top:8%;transform:translateX(-50%);width:420px;';sw.style.cssText='left:50%;top:52%;transform:translateX(-50%);width:600px;';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:700px;';}else if(L){cw.style.cssText='left:50%;top:4%;transform:translateX(-50%);width:280px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(460px,85vw);';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:min(520px,90vw);';}else{cw.style.cssText='left:50%;top:12%;transform:translateX(-50%);width:320px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(500px,90vw);';bw.style.cssText='left:50%;top:70%;transform:translateX(-50%);width:min(560px,94vw);';}}
+function setDefaultLayout(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const cw=document.getElementById('w-clock'),sw=document.getElementById('w-search'),bw=document.getElementById('w-bookmarks');if(D&&L){cw.style.cssText='left:50%;top:8%;transform:translateX(-50%);width:420px;';sw.style.cssText='left:50%;top:52%;transform:translateX(-50%);width:600px;';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:700px;';}else if(L){cw.style.cssText='left:50%;top:4%;transform:translateX(-50%);width:280px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(460px,85vw);';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:min(520px,90vw);';}else{cw.style.cssText='left:50%;top:12%;transform:translateX(-50%);width:320px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(500px,90vw);';bw.style.cssText='left:50%;top:70%;transform:translateX(-50%);width:min(560px,94vw);';restoreFontVars();}}
 function resetLayout(){
   const key=curLayoutKey();
   S[key]={};S.layout={};save();setDefaultLayout();
@@ -1316,16 +1319,19 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){
     setTimeout(applyOrientLock,200);
     setTimeout(applyOrientLock,800);
+    setTimeout(restoreFontVars,300);
   }
 });
 // Also re-lock on focus
 window.addEventListener('focus',()=>{
   setTimeout(applyOrientLock,200);
   setTimeout(applyOrientLock,700);
+  setTimeout(restoreFontVars,350);
 });
 window.addEventListener('pageshow',()=>{
   setTimeout(applyOrientLock,100);
   setTimeout(applyOrientLock,600);
+  setTimeout(restoreFontVars,200);
 });
 // Re-lock saat screen.orientation berubah
 if(screen.orientation){
