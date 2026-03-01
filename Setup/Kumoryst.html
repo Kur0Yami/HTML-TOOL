@@ -1536,6 +1536,8 @@ function init(){
   });
   reapplySWSizes();
   updateSW(new Date());
+  // DEBUG: tampilkan nilai tersimpan
+  setTimeout(()=>toast(`fszTime: ${S.fszTime} | fszDay: ${S.fszDay}`),500);
   setupOpSliders();
   document.getElementById('w-clock').style.opacity=(S.opClock||100)/100;
   document.getElementById('w-search').style.opacity=(S.opSearch||100)/100;
