@@ -1391,9 +1391,18 @@ window.addEventListener('focus',()=>{
   setTimeout(applyOrientLock,200);
   setTimeout(applyOrientLock,700);
 });
-window.addEventListener('pageshow',()=>{
+window.addEventListener('pageshow',(e)=>{
   setTimeout(applyOrientLock,100);
   setTimeout(applyOrientLock,600);
+  // Kalau halaman di-restore dari bfcache (back/forward), reload S dari localStorage
+  if(e.persisted){
+    try{
+      const r=localStorage.getItem('gntd5');
+      if(r){const p=JSON.parse(r);S={...DEF,...p};S.hidden=S.hidden||{};S.swHidden=S.swHidden||{};}
+    }catch(ex){}
+    reapplySWSizes();
+    updateSW(new Date());
+  }
 });
 // Re-lock saat screen.orientation berubah
 if(screen.orientation){
