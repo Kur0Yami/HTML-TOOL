@@ -734,9 +734,6 @@ function reapplySWSizes(){
     const sl=document.getElementById('sl-fsz-'+w);if(sl)sl.value=v;
     const sv=document.getElementById('sl-fsz-'+w+'-v');if(sv)sv.textContent=v+'px';
   });
-  // sync fsClock slider with fszTime
-  const fsClockVal=S.fszTime||S.fsClock||32;
-  document.documentElement.style.setProperty('--fs-clock',fsClockVal+'px');
 }
 function tick(){const n=new Date();let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?' PM':' AM';hh=hh%12||12;}let str=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)str+=':'+String(ss).padStart(2,'0');if(suf)str+=suf;document.getElementById('clock').textContent=str;document.getElementById('date').textContent=`${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;renderGreeting();if(S.showSecBar)document.getElementById('sec-bar').style.width=(ss/59*100)+'%';updateSW(n);}
 setInterval(tick,1000);tick();
@@ -1062,10 +1059,8 @@ function saveLayout(){
   document.querySelectorAll('.widget').forEach(w=>{
     S[key][w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height,transform:w.style.transform};
   });
-  // also keep legacy S.layout for compat
   S.layout=S[key];
   save();
-  reapplySWSizes();
 }
 function applyLayout(){
   const key=curLayoutKey();
@@ -1356,6 +1351,14 @@ function setOrientLock(mode){
   toast('Orientasi: '+labels[mode]);
 }
 function checkOrientation(){
+  const isLandNow=window.innerWidth>window.innerHeight;
+  // Ignore if only height changed (keyboard popup) — width stays same
+  if(checkOrientation._lastW===window.innerWidth&&checkOrientation._lastH!==undefined){
+    checkOrientation._lastH=window.innerHeight;
+    return;
+  }
+  checkOrientation._lastW=window.innerWidth;
+  checkOrientation._lastH=window.innerHeight;
   const L=isLandscape(),D=window.innerWidth>=768;
   const b=document.getElementById('orient-badge');
   b.textContent=D?(L?'🖥 Desktop Landscape':'🖥 Desktop Portrait'):(L?'📱 Landscape':'📱 Portrait');
@@ -1364,7 +1367,6 @@ function checkOrientation(){
   const key=curLayoutKey();
   if(S[key]&&Object.keys(S[key]).length)applyLayout();
   else setDefaultLayout();
-  reapplySWSizes();
   // Update orientation lock based on setting
   applyOrientLock();syncOrientBtns();
 }
