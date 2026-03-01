@@ -27,7 +27,7 @@ body{
 }
 
 /* BG layers */
-#bg-img{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;transition:opacity .8s ease}
+#bg-img{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%}
 #bg-img2{position:fixed;inset:0;z-index:0;background-size:cover;background-repeat:no-repeat;background-position:50% 50%;opacity:0;transition:opacity .8s ease}
 #bg-video{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:none}
 #overlay{position:fixed;inset:0;z-index:1;pointer-events:none;background:rgba(0,0,0,0.38)}
@@ -151,50 +151,8 @@ body.edit-mode #gear{background:rgba(255,200,80,0.18);border-color:rgba(255,200,
 .r-btn.active-panel{background:rgba(var(--accent),0.18);border-color:rgba(var(--accent),0.5);color:rgba(var(--accent),1);box-shadow:0 0 0 2px rgba(var(--accent),0.15),0 2px 14px rgba(0,0,0,0.35)}
 
 /* ── BGM TOGGLE (hidden until gear open) ── */
-/* bgm-toggle is now a .r-btn inside #radial-ring */
-#bgm-toggle{font-size:19px;}
-#bgm-toggle.playing{color:rgba(var(--accent),1);background:rgba(var(--accent),0.16);border-color:rgba(var(--accent),0.4)}
 
 /* ── BGM PLAYER ── */
-#bgm-player{
-  position:fixed;z-index:70;
-  left:50%;top:50%;
-  transform:translate(-50%,-50%) scale(0.92);
-  width:min(300px,calc(100vw - 24px));
-  background:rgba(12,12,20,0.95);
-  backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:22px;padding:16px;
-  display:flex;flex-direction:column;gap:8px;
-  opacity:0;pointer-events:none;
-  transition:opacity .18s ease,transform .18s cubic-bezier(.34,1.4,.64,1);
-}
-#bgm-player.show{
-  opacity:1;pointer-events:all;
-  transform:translate(-50%,-50%) scale(1);
-}
-#bgm-player.mini{
-  opacity:0;pointer-events:none;
-  transform:translate(-50%,-50%) scale(0.92);
-}
-#bgm-title{font-size:11px;color:var(--text);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#bgm-sub{font-size:10px;color:var(--muted)}
-#bgm-viz{width:100%;height:28px;display:block}
-#bgm-prog-wrap{position:relative;height:4px;background:rgba(var(--accent),0.15);border-radius:2px;cursor:pointer}
-#bgm-prog-fill{height:100%;background:rgba(var(--accent),0.7);border-radius:2px;width:0%;pointer-events:none}
-#bgm-time{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
-#bgm-loop-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
-#bgm-loop-row input[type=number]{width:46px;padding:3px 6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--text);font-size:10px;outline:none;font-family:var(--font-ui)}
-.loop-tog{font-size:10px;padding:2px 8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--muted);cursor:pointer;white-space:nowrap}
-.loop-tog.on{background:rgba(var(--accent),0.2);border-color:rgba(var(--accent),0.3);color:var(--text)}
-#bgm-controls{display:flex;align-items:center;justify-content:space-between;gap:4px}
-.bgm-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;transition:color .15s;display:flex;align-items:center;flex-shrink:0}
-.bgm-btn:hover{color:var(--text)}
-.bgm-btn.play{font-size:22px;color:var(--text)}
-#bgm-vol-row{display:flex;align-items:center;gap:5px}
-#bgm-vol{height:3px;appearance:none;background:rgba(var(--accent),0.2);border-radius:2px;outline:none;cursor:pointer;width:58px}
-#bgm-vol::-webkit-slider-thumb{appearance:none;width:12px;height:12px;border-radius:50%;background:white;cursor:pointer}
-#bgm-shuffle.on,#bgm-loop-btn.on{color:rgba(var(--accent),0.9)}
 
 /* ── SUB-PANELS ── */
 .panel-backdrop{
@@ -261,23 +219,6 @@ textarea.p-inp{resize:vertical;line-height:1.5}
 .eng-item.on .eng-dot{background:white;border-color:white}
 
 /* Presets */
-.preset-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.preset-slot{height:44px;border-radius:8px;border:1px dashed rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
-.preset-slot.filled{border-style:solid;border-color:rgba(255,255,255,0.2)}
-.preset-slot.filled:hover{border-color:rgba(255,255,255,0.4)}
-.preset-slot .ps-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0.6}
-.preset-slot .ps-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);font-family:var(--font-ui)}
-.preset-slot.filled .ps-label{color:rgba(255,255,255,0.9);text-shadow:0 1px 4px rgba(0,0,0,0.9)}
-.preset-slot .ps-del{display:none;position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:50%;background:rgba(200,50,50,0.9);color:white;font-size:8px;align-items:center;justify-content:center;cursor:pointer;border:none;z-index:2}
-.preset-slot.filled:hover .ps-del{display:flex}
-.preset-slot .ps-chk{display:none;position:absolute;bottom:2px;left:2px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);align-items:center;justify-content:center;font-size:8px;color:white;z-index:3;pointer-events:none}
-.preset-slot.filled .ps-chk{display:flex}
-.preset-slot.in-rot .ps-chk{background:rgba(var(--accent),0.6);border-color:white}
-.preset-slot.in-rot{outline:2px solid rgba(var(--accent),0.7);outline-offset:-2px}
-#ps-rot-bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;flex-wrap:wrap}
-#ps-rot-bar.active{border-color:rgba(var(--accent),0.35);background:rgba(var(--accent),0.08)}
-#ps-rot-prog{flex:1;min-width:60px;height:3px;background:rgba(var(--accent),0.15);border-radius:2px;overflow:hidden}
-#ps-rot-fill{height:100%;background:rgba(var(--accent),0.8);border-radius:2px;width:0%}
 
 /* Edit bar */
 #edit-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:58;padding:7px 16px;background:rgba(255,200,80,0.15);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,200,80,0.25);font-size:12px;color:rgba(255,220,100,0.9);text-align:center;letter-spacing:1px}
@@ -301,7 +242,6 @@ body.edit-mode #edit-bar{display:block}
 </head>
 <body>
 <div id="bg-img"></div>
-<div id="bg-img2"></div>
 <video id="bg-video" autoplay muted loop playsinline disablepictureinpicture disableremoteplayback x-webkit-airplay="deny"></video>
 <div id="overlay"></div>
 <div class="guide h" id="guide-h"></div>
@@ -317,7 +257,7 @@ body.edit-mode #edit-bar{display:block}
       <div id="greeting"></div>
       <div id="day-name">MINGGU</div>
       <div id="date">1 Maret, 2026.</div>
-      <div id="clock-time-wrap" style="display:flex;flex-direction:column;align-items:stretch">
+      <div style="display:flex;flex-direction:column;align-items:stretch">
       <div id="clock">- 00:00 -</div>
       <div id="sec-bar-wrap" class="hidden-bar"><div id="sec-bar"></div></div>
       </div>
@@ -338,31 +278,6 @@ body.edit-mode #edit-bar{display:block}
 
 
 
-<!-- BGM Player -->
-<div id="bgm-player" class="mini">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-    <div style="overflow:hidden;flex:1;min-width:0"><div id="bgm-title">Tidak ada musik</div><div id="bgm-sub">—</div></div>
-    <button class="bgm-btn" onclick="document.getElementById('bgm-player').classList.add('mini')" style="font-size:12px;flex-shrink:0">✕</button>
-  </div>
-  <canvas id="bgm-viz" height="28"></canvas>
-  <div id="bgm-prog-wrap"><div id="bgm-prog-fill"></div></div>
-  <div id="bgm-time"><span id="bgm-cur">0:00</span><span id="bgm-dur">0:00</span></div>
-  <div id="bgm-loop-row">
-    <span>Loop</span>
-    <input type="number" id="bgm-loop-start" placeholder="dari(s)" min="0" value="0">
-    <span>→</span>
-    <input type="number" id="bgm-loop-end" placeholder="ke(s)" min="0" value="0">
-    <button class="loop-tog" id="bgm-loop-range-btn" onclick="toggleLoopRange()">Off</button>
-  </div>
-  <div id="bgm-controls">
-    <button class="bgm-btn" id="bgm-shuffle" onclick="toggleShuffle()">⇄</button>
-    <button class="bgm-btn" onclick="bgmPrev()">⏮</button>
-    <button class="bgm-btn play" id="bgm-play" onclick="bgmTogglePlay()">▶</button>
-    <button class="bgm-btn" onclick="bgmNext()">⏭</button>
-    <button class="bgm-btn" id="bgm-loop-btn" onclick="toggleLoop()">↻</button>
-    <div id="bgm-vol-row"><span style="font-size:11px">🔈</span><input type="range" id="bgm-vol" min="0" max="100" value="70"></div>
-  </div>
-</div>
 
 <!-- Gear button -->
 <button id="gear" class="glass-btn" title="Settings">
@@ -377,7 +292,6 @@ body.edit-mode #edit-bar{display:block}
   <button class="r-btn" id="rbtn-clock"  onclick="openPanel('clock',this)"  style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="r-tip">Jam</span></button>
   <button class="r-btn" id="rbtn-search" onclick="openPanel('search',this)" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="r-tip">Search</span></button>
   <button class="r-btn" id="rbtn-bm"     onclick="openPanel('bookmarks',this)" style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span class="r-tip">Bookmark</span></button>
-  <button class="r-btn" id="bgm-toggle"  onclick="toggleBgmPanel()"    style="--tx:0px;--ty:0px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="r-tip">Musik</span></button>
 </div>
 
 <div class="panel-backdrop" id="panel-backdrop" onclick="closeAllPanels();toggleBgmClose()"></div>
@@ -401,20 +315,6 @@ body.edit-mode #edit-bar{display:block}
   </div>
   <button class="p-btn" onclick="resetLayout()">↺ Reset posisi widget</button>
   <div class="hr"></div>
-  <h2>BGM Playlist</h2>
-  <div class="p-row">
-    <label>URL musik (raw GitHub / direct link)</label>
-    <input id="bgm-url-inp" class="p-inp" type="url" placeholder="https://raw.githubusercontent.com/.../lagu.mp3">
-    <input id="bgm-name-inp" class="p-inp" type="text" placeholder="Nama lagu (opsional)" style="margin-top:6px">
-    <button class="p-btn" onclick="bgmAddUrl()" style="margin-top:6px">+ Tambah URL</button>
-  </div>
-  <div class="p-row">
-    <label>Upload MP3/OGG/WAV</label>
-    <label class="p-btn" for="bgm-file" style="cursor:pointer">📁 Upload Musik</label>
-    <input id="bgm-file" type="file" class="p-file" accept="audio/*,.mp3,.ogg,.wav,.flac" multiple>
-  </div>
-  <div id="bgm-playlist-list" style="display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto"></div>
-  <button class="p-btn" onclick="bgmClearAll()" style="color:rgba(255,100,100,.8)">🗑 Hapus semua lagu</button>
   <div class="hr"></div>
   <h2>Backup & Restore</h2>
   <button class="p-btn" onclick="exportSettings()">⬇ Export JSON</button>
@@ -426,62 +326,23 @@ body.edit-mode #edit-bar{display:block}
 <div class="subpanel" id="subpanel-bg">
   <h2>Background</h2>
   <div class="p-row">
-    <label>URL gambar/video (satu per baris = slideshow)</label>
-    <textarea id="bg-urls" class="p-inp" rows="3" placeholder="https://...&#10;https://... (multi = slideshow)"></textarea>
-    <button class="p-btn" onclick="applyBgUrls()">Terapkan URL</button>
+    <label>URL gambar/video (satu per baris = shuffle)</label>
+    <textarea id="bg-urls" class="p-inp" rows="3" placeholder="https://...&#10;https://... (multi = shuffle tiap tab)"></textarea>
+    <button class="p-btn" onclick="applyBgUrls()">Terapkan</button>
   </div>
   <div class="p-row">
-    <label>Upload file (gambar/video)</label>
-    <div style="display:flex;gap:8px">
-      <label class="p-btn" for="bg-file" style="cursor:pointer;flex:1">🖼 Galeri</label>
-      <label class="p-btn" for="bg-file-mgr" style="cursor:pointer;flex:1">📁 File Manager</label>
-    </div>
-    <input id="bg-file" type="file" class="p-file" accept="image/*,video/*">
-    <input id="bg-file-mgr" type="file" class="p-file" accept="*/*">
-  </div>
-  <div class="p-row"><label>Waktu slideshow</label><div class="slider-row"><input type="range" id="sl-bgtrans" min="3" max="120" value="10"><span class="slider-val" id="sl-bgtrans-v">10s</span></div></div>
-  <div class="p-row"><label>Durasi fade</label><div class="slider-row"><input type="range" id="sl-bgfade" min="0" max="3" step="0.1" value="0.8"><span class="slider-val" id="sl-bgfade-v">0.8s</span></div></div>
-  <div class="toggle-row"><span>Looping slideshow</span><div class="tog on" id="tog-bgloop" onclick="toggleBgLoop()"></div></div>
-  <div class="p-row">
-    <label>Loop region video/audio (detik, 0 = awal/akhir)</label>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-      <span style="font-size:11px;color:var(--muted);white-space:nowrap;width:28px">Dari</span>
-      <input type="number" id="sl-bgls" class="p-inp" min="0" value="0" placeholder="0" style="width:70px;padding:6px 8px">
-      <span style="font-size:11px;color:var(--muted)">→</span>
-      <input type="number" id="sl-bgle" class="p-inp" min="0" value="0" placeholder="0s=akhir" style="width:80px;padding:6px 8px">
-      <span style="font-size:11px;color:var(--muted)">detik</span>
-      <button class="loop-tog" id="bg-loop-range-btn" onclick="toggleBgLoopRange()" style="white-space:nowrap">Off</button>
-    </div>
+    <label>Upload dari file manager</label>
+    <label class="p-btn" for="bg-file" style="cursor:pointer">📁 Pilih File (gambar/video)</label>
+    <input id="bg-file" type="file" class="p-file" accept="image/*,video/*,.webm,.mp4,.mkv">
   </div>
   <div class="p-row"><label>Posisi Horizontal</label><div class="slider-row"><input type="range" id="sl-bgx" min="0" max="100" value="50"><span class="slider-val" id="sl-bgx-v">50%</span></div></div>
   <div class="p-row"><label>Posisi Vertikal</label><div class="slider-row"><input type="range" id="sl-bgy" min="0" max="100" value="50"><span class="slider-val" id="sl-bgy-v">50%</span></div></div>
   <div class="p-row"><label>Zoom / Scale</label><div class="slider-row"><input type="range" id="sl-bgz" min="100" max="200" value="100"><span class="slider-val" id="sl-bgz-v">100%</span></div></div>
   <div class="p-row"><label>Opacity Overlay</label><div class="slider-row"><input type="range" id="sl-overlay" min="0" max="80" value="38"><span class="slider-val" id="sl-overlay-v">38%</span></div></div>
   <button class="p-btn" onclick="resetBg()" style="color:rgba(255,150,150,.8)">↺ Reset background</button>
-  <div class="hr"></div>
-  <div class="p-row">
-    <label>Preset (klik kosong = simpan, klik terisi = load, tahan = tambah ke rotasi)</label>
-    <div class="preset-grid" id="preset-grid"></div>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">
-      <div id="ps-rot-bar">
-        <span id="ps-rot-status" style="font-size:11px;color:var(--muted);flex:1;min-width:60px">Pilih preset lalu Start</span>
-        <div id="ps-rot-prog"><div id="ps-rot-fill"></div></div>
-        <button class="loop-tog" id="ps-rot-btn" onclick="togglePresetRot()">▶ Start</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:12px;color:var(--muted);flex:1">Interval</span>
-        <input type="range" id="sl-psrot" min="5" max="300" value="30" style="flex:1;height:4px;appearance:none;background:rgba(255,255,255,0.15);border-radius:2px;outline:none;cursor:pointer">
-        <span id="sl-psrot-v" style="font-size:11px;color:var(--muted);min-width:34px;text-align:right">30s</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:12px;color:var(--muted);flex:1">Urutan</span>
-        <button class="loop-tog" id="ps-order-btn" onclick="togglePsOrder()">Berurutan</button>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!-- Appearance -->
+<!-- Appearance<!-- Appearance -->
 <div class="subpanel" id="subpanel-appearance">
   <h2>Tampilan</h2>
   <div class="p-row"><label>Accent Color</label><div class="swatches"><div class="swatch on" data-rgb="255,255,255" style="background:rgba(255,255,255,0.7)"></div><div class="swatch" data-rgb="147,197,253" style="background:#93c5fd"></div><div class="swatch" data-rgb="196,181,253" style="background:#c4b5fd"></div><div class="swatch" data-rgb="253,186,116" style="background:#fdba74"></div><div class="swatch" data-rgb="134,239,172" style="background:#86efac"></div><div class="swatch" data-rgb="249,168,212" style="background:#f9a8d4"></div><div class="swatch" data-rgb="103,232,249" style="background:#67e8f9"></div></div></div>
@@ -559,26 +420,12 @@ body.edit-mode #edit-bar{display:block}
 // Radial angles set by updateRadialAngles() called from init
 
 
-const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,bgTransSec:10,bgFadeSec:0.8,bgLoop:true,bgLoopStart:0,bgLoopEnd:0,bgLoopRangeActive:false,bgPresets:new Array(10).fill(null),overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,clockGap:10,fsDay:72,fsTime:27,fsDate:13,fsGreeting:15,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Facebook',u:'https://facebook.com'},{n:'Instagram',u:'https://instagram.com'}],bmGrid:false,hidden:{},layout:{},layoutP:{},layoutL:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,orientLock:'auto',psRotActive:false,psRotInterval:30,psRotOrder:"seq",psRotSelected:[],appName:'Kumoryst',gearX:null,gearY:null,iconPos:{},bgmPlayerX:null,bgmPlayerY:null,bgmPlaylist:[],bgmVol:70,bgmShuffle:false,bgmLoop:true,bgmLoopRange:false,bgmLoopStart:0,bgmLoopEnd:0};
+const DEF={bgUrls:[],bgLocal:'',bgType:'img',bgX:50,bgY:50,bgZ:100,overlay:38,blur:20,accent:'255,255,255',fsUI:15,fsClock:72,clockGap:10,fsDay:72,fsTime:27,fsDate:13,fsGreeting:15,engine:'https://www.google.com/search?q=',bookmarks:[{n:'YouTube',u:'https://youtube.com'},{n:'Facebook',u:'https://facebook.com'},{n:'Instagram',u:'https://instagram.com'}],bmGrid:false,hidden:{},layout:{},layoutP:{},layoutL:{},name:'',greetingCustom:'',use12h:false,showSecs:false,showSecBar:false,clockCard:false,placeholder:'',fontUIUrl:'',fontUIName:'',fontClockUrl:'',fontClockName:'',opClock:100,opSearch:100,opBm:100,orientLock:'auto',appName:'Kumoryst',gearX:null,gearY:null,iconPos:{}};
 let S=JSON.parse(JSON.stringify(DEF));
 try{const r=localStorage.getItem('gntd5');if(r){const p=JSON.parse(r);S={...DEF,...p};}}catch(e){}
 S.hidden=S.hidden||{};S.layout=S.layout||{};S.layoutP=S.layoutP||{};S.layoutL=S.layoutL||{};
 if(!S.bgPresets||S.bgPresets.length<10)S.bgPresets=new Array(10).fill(null);
 
-// ── IndexedDB for large files ──
-let _idb=null;
-function idbOpen(){
-  return new Promise((res,rej)=>{
-    if(_idb)return res(_idb);
-    const req=indexedDB.open('gntd_files',1);
-    req.onupgradeneeded=e=>e.target.result.createObjectStore('files');
-    req.onsuccess=e=>{_idb=e.target.result;res(_idb);};
-    req.onerror=e=>rej(e);
-  });
-}
-function idbSet(key,val){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put(val,key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e);}));}
-function idbGet(key){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readonly');const req=tx.objectStore('files').get(key);req.onsuccess=()=>res(req.result);req.onerror=e=>rej(e);}));}
-function idbDel(key){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e);}));}
 
 
 // ── Dynamic manifest (app name) ──
@@ -635,7 +482,7 @@ function toggleSecs(){S.showSecs=!S.showSecs;save();document.getElementById('tog
 function toggleSecBar(){S.showSecBar=!S.showSecBar;save();document.getElementById('tog-secbar').classList.toggle('on',S.showSecBar);document.getElementById('sec-bar-wrap').classList.toggle('hidden-bar',!S.showSecBar);}
 function toggleClockCard(){S.clockCard=!S.clockCard;save();document.getElementById('tog-card').classList.toggle('on',S.clockCard);document.getElementById('clock-card').classList.toggle('card-on',S.clockCard);}
 // BACKGROUND
-const bgImg=document.getElementById('bg-img'),bgImg2=document.getElementById('bg-img2'),bgVid=document.getElementById('bg-video');
+const bgImg=document.getElementById('bg-img'),bgVid=document.getElementById('bg-video');
 // Prevent bg-video from showing in browser media controls
 bgVid.addEventListener('loadedmetadata',()=>{
   // Reset MediaSession so browser doesn't show video as media player
@@ -646,179 +493,13 @@ bgVid.addEventListener('loadedmetadata',()=>{
 });
 // Prevent video from being considered "active media"
 Object.defineProperty(bgVid,'mediaGroup',{value:'background',writable:false});
-let bgSlideIdx=0,bgSlideTimer=null;
-function applyBgStyle(){const pos=`${S.bgX}% ${S.bgY}%`;const sz=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.backgroundPosition=pos;bgImg.style.backgroundSize=sz;bgImg2.style.backgroundPosition=pos;bgImg2.style.backgroundSize=sz;bgVid.style.objectPosition=pos;bgVid.style.transform=S.bgZ>100?`scale(${S.bgZ/100})`:'none';}
-function showSlide(idx){const url=S.bgUrls[idx];if(!url)return;const isVid=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);if(isVid){
-    bgVid.src=url;bgVid.style.display='block';
-    bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';
-    bgVid.ontimeupdate=()=>{
-      if(!S.bgLoopRangeActive)return;
-      const end=S.bgLoopEnd>0?S.bgLoopEnd:null;
-      if(end&&bgVid.currentTime>=end)bgVid.currentTime=S.bgLoopStart||0;
-    };
-    bgVid.oncanplay=()=>{bgVid.oncanplay=null;if(S.bgLoopRangeActive&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;};
-    return;
-  }const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
-function startSlideTimer(){
-  clearInterval(bgSlideTimer);
-  if(!S.bgUrls||S.bgUrls.length<=1)return;
-  bgSlideTimer=setInterval(()=>{
-    bgSlideIdx=(bgSlideIdx+1);
-    const loopEnd=S.bgLoopEnd>0?Math.min(S.bgLoopEnd,S.bgUrls.length-1):S.bgUrls.length-1;
-    const loopStart=S.bgLoopStart>0?Math.min(S.bgLoopStart,loopEnd):0;
-    if(bgSlideIdx>loopEnd){
-      if(!S.bgLoop){clearInterval(bgSlideTimer);return;}
-      bgSlideIdx=loopStart;
-    }
-    showSlide(bgSlideIdx);
-  },(S.bgTransSec||10)*1000);
-}
-let _bgLocalData=''; // runtime cache for IDB bg data
-function applyBgData(data,isVid){
-  if(isVid){
-    bgVid.src=data;bgVid.style.display='block';
-    bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';
-    // attach loop region handler
-    bgVid.ontimeupdate=()=>{
-      if(!S.bgLoopRangeActive)return;
-      const end=S.bgLoopEnd>0?S.bgLoopEnd:null;
-      if(end&&bgVid.currentTime>=end){bgVid.currentTime=S.bgLoopStart||0;}
-    };
-    // set start point
-    bgVid.oncanplay=()=>{bgVid.oncanplay=null;if(S.bgLoopRangeActive&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;};
-  }else{
-    bgImg.style.backgroundImage=`url('${data}')`;bgVid.style.display='none';bgVid.src='';
-    bgVid.ontimeupdate=null;
-  }
-  applyBgStyle();
-}
-function applyBg(){
-  clearInterval(bgSlideTimer);
-  if(S.bgLocal){
-    const isVid=S.bgType==='video';
-    if(S.bgLocal==='idb:bg'){
-      if(_bgLocalData){applyBgData(_bgLocalData,isVid);}
-      else{idbGet('bg').then(data=>{if(data){_bgLocalData=data;applyBgData(data,isVid);}});}
-    }else{applyBgData(S.bgLocal,isVid);}
-    return;
-  }
-  if(!S.bgUrls||!S.bgUrls.length)return;
-  bgSlideIdx=0;showSlide(bgSlideIdx);startSlideTimer();
-}
+// ── Background (v2 - stable) ──
+function applyBgStyle(){const pos=`${S.bgX}% ${S.bgY}%`;const size=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.backgroundPosition=pos;bgImg.style.backgroundSize=size;bgVid.style.objectPosition=pos;bgVid.style.transform=S.bgZ>100?`scale(${S.bgZ/100})`:'none';}
+function applyBg(){applyBgStyle();const url=S.bgLocal||(S.bgUrls.length?S.bgUrls[Math.floor(Math.random()*S.bgUrls.length)]:'');if(!url)return;const isVid=S.bgType==='video'||/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(url);if(isVid){if(bgVid.getAttribute('src')!==url)bgVid.src=url;bgVid.style.display='block';bgImg.style.backgroundImage='';}else{bgImg.style.backgroundImage=`url('${url}')`;bgVid.style.display='none';bgVid.src='';}}
 function applyBgUrls(){const raw=document.getElementById('bg-urls').value.trim();const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;S.bgUrls=lines;S.bgLocal='';S.bgType=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(lines[0])?'video':'img';applyBg();save();toast('Background diterapkan!');}
-function handleBgFile(f){
-  if(!f)return;
-  // detect video by type or extension
-  const isVid=f.type.startsWith('video/')||/\.(webm|mp4|mkv|ogg|mov)$/i.test(f.name);
-  const r=new FileReader();
-  r.onload=ev=>{
-    idbSet('bg',ev.target.result).then(()=>{
-      S.bgLocal='idb:bg';S.bgUrls=[];S.bgType=isVid?'video':'img';
-      _bgLocalData=ev.target.result;
-      applyBg();save();toast('File disimpan!');
-    });
-  };
-  r.readAsDataURL(f);
-}
-document.getElementById('bg-file').addEventListener('change',function(e){handleBgFile(e.target.files[0]);});
-document.getElementById('bg-file-mgr').addEventListener('change',function(e){handleBgFile(e.target.files[0]);});
-function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;_bgLocalData='';clearInterval(bgSlideTimer);bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';syncBgSliders();idbDel('bg');save();toast('Background direset!');}
-function toggleBgLoop(){S.bgLoop=!S.bgLoop;save();document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop);}
-function toggleBgLoopRange(){
-  S.bgLoopRangeActive=!S.bgLoopRangeActive;
-  S.bgLoopStart=+document.getElementById('sl-bgls').value||0;
-  S.bgLoopEnd=+document.getElementById('sl-bgle').value||0;
-  save();
-  const btn=document.getElementById('bg-loop-range-btn');
-  btn.classList.toggle('on',S.bgLoopRangeActive);
-  btn.textContent=S.bgLoopRangeActive?'On':'Off';
-  if(S.bgLoopRangeActive&&bgVid.src&&!bgVid.paused&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;
-  toast(S.bgLoopRangeActive?`Loop ${S.bgLoopStart}s → ${S.bgLoopEnd||'akhir'}s aktif`:'Loop region off');
-}
-document.getElementById('sl-bgtrans').addEventListener('input',function(){S.bgTransSec=+this.value;document.getElementById('sl-bgtrans-v').textContent=this.value+'s';save();startSlideTimer();});
-document.getElementById('sl-bgfade').addEventListener('input',function(){S.bgFadeSec=+this.value;document.getElementById('sl-bgfade-v').textContent=(+this.value).toFixed(1)+'s';save();});
-function syncBgSliders(){
-  document.getElementById('sl-bgx').value=S.bgX;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';
-  document.getElementById('sl-bgy').value=S.bgY;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';
-  document.getElementById('sl-bgz').value=S.bgZ;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';
-  const ls=document.getElementById('sl-bgls');const le=document.getElementById('sl-bgle');
-  if(ls)ls.value=S.bgLoopStart||0;
-  if(le)le.value=S.bgLoopEnd||0;
-  const lrBtn=document.getElementById('bg-loop-range-btn');
-  if(lrBtn){lrBtn.classList.toggle('on',S.bgLoopRangeActive);lrBtn.textContent=S.bgLoopRangeActive?'On':'Off';}
-}
-function setupBgSliders(){syncBgSliders();document.getElementById('sl-bgtrans').value=S.bgTransSec||10;document.getElementById('sl-bgtrans-v').textContent=(S.bgTransSec||10)+'s';document.getElementById('sl-bgfade').value=S.bgFadeSec||0.8;document.getElementById('sl-bgfade-v').textContent=(S.bgFadeSec||0.8).toFixed(1)+'s';document.getElementById('sl-bgx').addEventListener('input',function(){S.bgX=+this.value;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';applyBgStyle();save();});document.getElementById('sl-bgy').addEventListener('input',function(){S.bgY=+this.value;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';applyBgStyle();save();});document.getElementById('sl-bgz').addEventListener('input',function(){S.bgZ=+this.value;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';applyBgStyle();save();});
-  // bg loop region inputs
-  const slBgLs=document.getElementById('sl-bgls');
-  const slBgLe=document.getElementById('sl-bgle');
-  if(slBgLs){slBgLs.addEventListener('change',function(){S.bgLoopStart=+this.value||0;save();});}
-  if(slBgLe){slBgLe.addEventListener('change',function(){S.bgLoopEnd=+this.value||0;save();});}
-}
-document.getElementById('sl-overlay').addEventListener('input',function(){S.overlay=+this.value;document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';save();});
-// PRESETS
-// PRESET SLIDESHOW
-let psRotProgTimer=null,psRotIdx=0,psRotElapsed=0;
-function getRotList(){return(S.psRotSelected||[]).filter(i=>i<10&&S.bgPresets[i]);}
-function loadPresetFull(i){
-  const p=S.bgPresets[i];if(!p)return;
-  S.bgUrls=p.bgUrls?[...p.bgUrls]:[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';
-  S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ!=null?p.bgZ:100;S.overlay=p.overlay!=null?p.overlay:38;
-  applyBg();applyBgStyle();syncBgSliders();
-  document.getElementById('overlay').style.background='rgba(0,0,0,'+(S.overlay/100)+')';
-  document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
-  if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
-}
-function startPresetRot(){
-  const list=getRotList();
-  if(!list.length){toast('Centang minimal 1 preset!');return;}
-  stopPresetRot();
-  S.psRotActive=true;save();psRotIdx=0;psRotElapsed=0;
-  loadPresetFull(list[psRotIdx]);
-  updatePsRotUI();
-  const interval=S.psRotInterval||30;
-  document.getElementById('ps-rot-fill').style.transition='none';
-  document.getElementById('ps-rot-fill').style.width='0%';
-  psRotProgTimer=setInterval(()=>{
-    psRotElapsed++;
-    const pct=psRotElapsed/interval*100;
-    document.getElementById('ps-rot-fill').style.transition='width 1s linear';
-    document.getElementById('ps-rot-fill').style.width=Math.min(pct,100)+'%';
-    document.getElementById('ps-rot-status').textContent='P'+(list[psRotIdx]+1)+' — '+(interval-psRotElapsed)+'s';
-    if(psRotElapsed>=interval){
-      psRotElapsed=0;
-      document.getElementById('ps-rot-fill').style.transition='none';
-      document.getElementById('ps-rot-fill').style.width='0%';
-      if(S.psRotOrder==='shuffle')psRotIdx=Math.floor(Math.random()*list.length);
-      else psRotIdx=(psRotIdx+1)%list.length;
-      loadPresetFull(list[psRotIdx]);
-    }
-  },1000);
-}
-function stopPresetRot(){
-  clearInterval(psRotProgTimer);psRotProgTimer=null;psRotElapsed=0;
-  S.psRotActive=false;save();
-  document.getElementById('ps-rot-fill').style.width='0%';
-  document.getElementById('ps-rot-status').textContent='Stopped';
-  updatePsRotUI();
-}
-function togglePresetRot(){if(S.psRotActive)stopPresetRot();else startPresetRot();}
-function updatePsRotUI(){
-  const btn=document.getElementById('ps-rot-btn');
-  const bar=document.getElementById('ps-rot-bar');
-  if(S.psRotActive){btn.textContent='⏹ Stop';btn.classList.add('on');bar.classList.add('active');}
-  else{btn.textContent='▶ Start';btn.classList.remove('on');bar.classList.remove('active');}
-}
-function togglePsOrder(){
-  S.psRotOrder=S.psRotOrder==='shuffle'?'seq':'shuffle';save();
-  document.getElementById('ps-order-btn').textContent=S.psRotOrder==='shuffle'?'Acak':'Berurutan';
-}
-function togglePresetInRot(i){
-  const sel=S.psRotSelected||[];const idx=sel.indexOf(i);
-  if(idx>-1)sel.splice(idx,1);else sel.push(i);
-  sel.sort((a,b)=>a-b);S.psRotSelected=sel;save();renderPresets();
-}
-
-function renderPresets(){const grid=document.getElementById('preset-grid');grid.innerHTML='';for(let i=0;i<10;i++){const p=S.bgPresets[i];const slot=document.createElement('div');const inRot=(S.psRotSelected||[]).includes(i);slot.className='preset-slot'+(p?' filled':'')+(inRot?' in-rot':'');if(p){const bg=document.createElement('div');bg.className='ps-bg';if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;slot.appendChild(bg);}const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);if(p){const del=document.createElement('button');del.className='ps-del';del.textContent='✕';del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;save();renderPresets();toast(`Preset ${i+1} dihapus`);};slot.appendChild(del);const chk=document.createElement('div');chk.className='ps-chk';chk.textContent=inRot?'✔':'';slot.appendChild(chk);}let _psLongT=null;slot.addEventListener('pointerdown',e=>{if(e.target.classList.contains('ps-del'))return;_psLongT=setTimeout(()=>{_psLongT=null;togglePresetInRot(i);},500);});slot.addEventListener('pointerup',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.addEventListener('pointerleave',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.onclick=e=>{if(e.target.classList.contains('ps-del'))return;if(!_psLongT&&Date.now){}; if(!S.bgPresets[i]){S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,overlay:S.overlay};save();renderPresets();toast(`Preset ${i+1} disimpan!`);}else{const p=S.bgPresets[i];S.bgUrls=p.bgUrls||[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ!=null?p.bgZ:100;S.overlay=p.overlay!=null?p.overlay:38;applyBg();applyBgStyle();syncBgSliders();document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');save();toast(`Preset ${i+1} dimuat!`);}};grid.appendChild(slot);}}
+document.getElementById('bg-file').addEventListener('change',function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.bgLocal=ev.target.result;S.bgUrls=[];S.bgType=f.type.startsWith('video')?'video':'img';applyBg();save();toast('File diupload!');};r.readAsDataURL(f);});
+function setupBgSliders(){const slx=document.getElementById('sl-bgx'),sly=document.getElementById('sl-bgy'),slz=document.getElementById('sl-bgz');slx.value=S.bgX;sly.value=S.bgY;slz.value=S.bgZ;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';document.getElementById('sl-bgy-v').textContent=S.bgY+'%';document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';slx.addEventListener('input',()=>{S.bgX=+slx.value;document.getElementById('sl-bgx-v').textContent=S.bgX+'%';applyBgStyle();save();});sly.addEventListener('input',()=>{S.bgY=+sly.value;document.getElementById('sl-bgy-v').textContent=S.bgY+'%';applyBgStyle();save();});slz.addEventListener('input',()=>{S.bgZ=+slz.value;document.getElementById('sl-bgz-v').textContent=S.bgZ+'%';applyBgStyle();save();});}
+function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;bgImg.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';setupBgSliders();save();toast('Background direset!');}
 // APPEARANCE
 document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
 document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
@@ -856,109 +537,6 @@ function addBm(){const n=document.getElementById('bm-n').value.trim();let u=docu
 ['bm-n','bm-u'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>e.key==='Enter'&&addBm()));
 function toggleBmGrid(){S.bmGrid=!S.bmGrid;save();document.getElementById('tog-grid').classList.toggle('on',S.bmGrid);renderBM();}
 function toggleWidget(wid,togId){S.hidden[wid]=!S.hidden[wid];save();document.getElementById(wid).classList.toggle('hidden',!!S.hidden[wid]);document.getElementById(togId).classList.toggle('on',!S.hidden[wid]);}
-// BGM
-// Create audio element dynamically (prevents browser media detection on page load)
-const audio=new Audio();
-audio.id='bgm-audio';
-// Prevent bg-video and audio from triggering media player UI before user interacts
-if('mediaSession' in navigator){
-  navigator.mediaSession.metadata=null;
-  navigator.mediaSession.playbackState='none';
-}
-let bgmIdx=0,vizAnim=null,audioCtx=null,analyser=null,srcNode=null;
-function bgmSetVol(){audio.volume=(S.bgmVol||70)/100;}
-function updateMediaSession(title){
-  if(!('mediaSession' in navigator))return;
-  navigator.mediaSession.metadata=new MediaMetadata({
-    title:title||'BGM',
-    artist:'Kumoryst',
-    album:'',
-  });
-  navigator.mediaSession.setActionHandler('play',()=>bgmPlay());
-  navigator.mediaSession.setActionHandler('pause',()=>bgmPause());
-  navigator.mediaSession.setActionHandler('previoustrack',()=>bgmPrev());
-  navigator.mediaSession.setActionHandler('nexttrack',()=>bgmNext());
-}
-function bgmLoad(idx,cb){
-  if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;
-  bgmIdx=((idx%S.bgmPlaylist.length)+S.bgmPlaylist.length)%S.bgmPlaylist.length;
-  const t=S.bgmPlaylist[bgmIdx];
-  document.getElementById('bgm-title').textContent=t.name||'Track '+(bgmIdx+1);
-  document.getElementById('bgm-sub').textContent=(bgmIdx+1)+' / '+S.bgmPlaylist.length;
-  renderBgmPlaylist();
-  function setAudioSrc(src){if(audio.src!==src)audio.src=src;if(cb)cb();}
-  if(t.url&&t.url.startsWith('idb:')){
-    idbGet(t.url.slice(4)).then(data=>{
-      if(data)setAudioSrc(data);
-      else toast('File tidak ditemukan di storage');
-    });
-  }else{setAudioSrc(t.url);}
-}
-// AudioContext init moved inside bgmPlay
-function bgmPlay(){
-  if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;
-  if(!audio.src||audio.src==='about:blank')bgmLoad(bgmIdx);
-  bgmSetVol();
-  const playPromise=audio.play();
-  if(playPromise!==undefined){
-    playPromise.then(()=>{
-      document.getElementById('bgm-play').textContent='⏸';
-      document.getElementById('bgm-toggle').classList.add('playing');
-      // Init AudioContext only after successful play
-      if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=64;srcNode=audioCtx.createMediaElementSource(audio);srcNode.connect(analyser);analyser.connect(audioCtx.destination);}catch(e){audioCtx=null;}}
-      if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
-      startViz();
-    }).catch(err=>{
-      toast('Autoplay diblokir — tap play lagi');
-      document.getElementById('bgm-play').textContent='▶';
-      document.getElementById('bgm-toggle').classList.remove('playing');
-    });
-  }else{
-    document.getElementById('bgm-play').textContent='⏸';
-    document.getElementById('bgm-toggle').classList.add('playing');
-    startViz();
-  }
-}
-function bgmPause(){audio.pause();document.getElementById('bgm-play').textContent='▶';document.getElementById('bgm-toggle').classList.remove('playing');stopViz();}
-function bgmTogglePlay(){if(audio.paused)bgmPlay();else bgmPause();}
-function bgmNext(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;const ni=S.bgmShuffle?Math.floor(Math.random()*S.bgmPlaylist.length):bgmIdx+1;bgmLoad(ni,()=>{audio.oncanplay=()=>{audio.oncanplay=null;
-    updateMediaSession(S.bgmPlaylist[idx]?.n||'Track '+(idx+1));bgmPlay();};});}
-function bgmPrev(){if(!S.bgmPlaylist||!S.bgmPlaylist.length)return;bgmLoad(bgmIdx-1,()=>{audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});}
-function toggleLoop(){S.bgmLoop=!S.bgmLoop;save();document.getElementById('bgm-loop-btn').classList.toggle('on',S.bgmLoop);audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
-function toggleShuffle(){S.bgmShuffle=!S.bgmShuffle;save();document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);}
-function toggleLoopRange(){S.bgmLoopRange=!S.bgmLoopRange;save();const btn=document.getElementById('bgm-loop-range-btn');btn.classList.toggle('on',S.bgmLoopRange);btn.textContent=S.bgmLoopRange?'On':'Off';audio.loop=S.bgmLoop&&!S.bgmLoopRange;}
-document.getElementById('bgm-loop-start').addEventListener('change',function(){S.bgmLoopStart=+this.value||0;save();});
-document.getElementById('bgm-loop-end').addEventListener('change',function(){S.bgmLoopEnd=+this.value||0;save();});
-function fmt(s){s=Math.floor(s)||0;return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
-audio.addEventListener('timeupdate',()=>{const cur=audio.currentTime,dur=audio.duration||0;if(S.bgmLoopRange&&S.bgmLoopEnd>0&&cur>=S.bgmLoopEnd)audio.currentTime=S.bgmLoopStart||0;document.getElementById('bgm-prog-fill').style.width=(dur?cur/dur*100:0)+'%';document.getElementById('bgm-cur').textContent=fmt(cur);document.getElementById('bgm-dur').textContent=fmt(dur);});
-audio.addEventListener('ended',()=>{if(S.bgmLoop&&!S.bgmLoopRange)return;bgmNext();});
-document.getElementById('bgm-prog-wrap').addEventListener('click',function(e){const r=this.getBoundingClientRect();audio.currentTime=(audio.duration||0)*((e.clientX-r.left)/r.width);});
-document.getElementById('bgm-vol').addEventListener('input',function(){S.bgmVol=+this.value;bgmSetVol();save();});
-// Visualizer
-function startViz(){if(vizAnim)return;const canvas=document.getElementById('bgm-viz');const ctx=canvas.getContext('2d');function frame(){vizAnim=requestAnimationFrame(frame);const W=canvas.width=canvas.offsetWidth||240,H=28;ctx.clearRect(0,0,W,H);if(analyser){const buf=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(buf);const bw=W/buf.length;for(let i=0;i<buf.length;i++){const h=Math.max(2,buf[i]/255*H);ctx.fillStyle=`rgba(${S.accent},${0.35+buf[i]/510})`;ctx.fillRect(i*bw,H-h,Math.max(1,bw-1),h);}}else{const n=24,bw=W/n;for(let i=0;i<n;i++){ctx.fillStyle=`rgba(${S.accent},0.25)`;ctx.fillRect(i*bw,H-4,Math.max(1,bw-1),4);}}}frame();}
-function stopViz(){if(vizAnim){cancelAnimationFrame(vizAnim);vizAnim=null;const c=document.getElementById('bgm-viz');c.getContext('2d').clearRect(0,0,c.width,28);}}
-function bgmAddUrl(){const url=document.getElementById('bgm-url-inp').value.trim();const name=document.getElementById('bgm-name-inp').value.trim();if(!url)return toast('Masukkan URL musik!');S.bgmPlaylist.push({url,name:name||decodeURIComponent(url.split('/').pop()).replace(/%20/g,' ').replace(/\.[^.]+$/,'')});save();renderBgmPlaylist();document.getElementById('bgm-url-inp').value='';document.getElementById('bgm-name-inp').value='';toast('Lagu ditambahkan!');if(S.bgmPlaylist.length===1)bgmLoad(0);}
-document.getElementById('bgm-file').addEventListener('change',function(e){
-  Array.from(e.target.files).forEach(f=>{
-    const r=new FileReader();
-    r.onload=ev=>{
-      const idbKey='bgm_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-      idbSet(idbKey,ev.target.result).then(()=>{
-        const track={url:'idb:'+idbKey,name:f.name.replace(/\.[^.]+$/,'')};
-        S.bgmPlaylist.push(track);
-        save();renderBgmPlaylist();toast(f.name+' disimpan!');
-        if(S.bgmPlaylist.length===1)bgmLoad(0);
-      });
-    };
-    r.readAsDataURL(f);
-  });
-});
-function renderBgmPlaylist(){const list=document.getElementById('bgm-playlist-list');list.innerHTML='';(S.bgmPlaylist||[]).forEach((t,i)=>{const row=document.createElement('div');row.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px 8px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;border:1px solid ${i===bgmIdx?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.07)'}`;row.innerHTML=`<span style="font-size:10px;color:var(--muted);flex-shrink:0">${i===bgmIdx?'▶':i+1}</span><span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||'Track '+(i+1)}</span><button style="background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:11px;flex-shrink:0;padding:0 2px">✕</button>`;row.querySelector('button').addEventListener('click',e=>{e.stopPropagation();const t=S.bgmPlaylist[i];if(t&&t.url&&t.url.startsWith('idb:'))idbDel(t.url.slice(4));S.bgmPlaylist.splice(i,1);if(bgmIdx>=S.bgmPlaylist.length)bgmIdx=0;save();renderBgmPlaylist();toast('Lagu dihapus!');});row.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;bgmLoad(i,()=>{audio.oncanplay=()=>{audio.oncanplay=null;bgmPlay();};});});list.appendChild(row);});}
-function bgmClearAll(){if(!confirm('Hapus semua lagu?'))return;
-  (S.bgmPlaylist||[]).forEach(t=>{if(t.url&&t.url.startsWith('idb:'))idbDel(t.url.slice(4));});
-  S.bgmPlaylist=[];audio.src='';bgmPause();save();renderBgmPlaylist();
-  document.getElementById('bgm-title').textContent='Tidak ada musik';document.getElementById('bgm-sub').textContent='—';}
-// bgm-toggle click handled by onclick="toggleBgmPanel()" in HTML
 // EDIT MODE
 let editMode=false;
 function toggleEditMode(){editMode=!editMode;document.body.classList.toggle('edit-mode',editMode);document.getElementById('tog-edit').classList.toggle('on',editMode);if(!editMode){saveLayout();toast('Layout disimpan!');}}
@@ -1039,7 +617,7 @@ if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveL
 (function(){
   const gear=document.getElementById('gear');
   const ring=document.getElementById('radial-ring');
-  const bgmPlayer=document.getElementById('bgm-player');
+  
   let dragging=null,ox=0,oy=0,ex=0,ey=0;
   let longT=null,dragReady=false,hasMoved=false;
 
@@ -1108,9 +686,7 @@ if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveL
   syncOrientBtns();
   applyOrientLock();
   restoreIconPositions();
-        } else if(id==='bgm-player'){
-          S.bgmPlayerX=Math.round(r.left);S.bgmPlayerY=Math.round(r.top);save();
-        } else {
+         else {
           // r-btn: save position by id
           if(!S.iconPos)S.iconPos={};
           S.iconPos[id]={x:Math.round(r.left),y:Math.round(r.top),free:true};
@@ -1183,7 +759,7 @@ function updateRadialAngles(){
   ];
   const outer=[
     {id:'rbtn-search',offset:-25},{id:'rbtn-bm',offset:0},
-    {id:'bgm-toggle',offset:25}
+    
   ];
   [...inner.map(b=>({...b,r:68})),...outer.map(b=>({...b,r:126}))].forEach((b,i)=>{
     const el=document.getElementById(b.id);if(!el)return;
@@ -1300,12 +876,10 @@ function checkOrientation(){
   b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);
   applyOrientLock();syncOrientBtns();
 }
-// Hanya re-apply layout saat orientasi benar-benar berubah (portrait <-> landscape)
 let _lastOrientLand=window.innerWidth>window.innerHeight;
 window.addEventListener('resize',()=>{
   const nowLand=window.innerWidth>window.innerHeight;
   if(nowLand!==_lastOrientLand){
-    // Orientasi berubah: apply layout yang sesuai
     _lastOrientLand=nowLand;
     clearTimeout(_orientT);_orientT=setTimeout(()=>{
       checkOrientation();
@@ -1313,9 +887,8 @@ window.addEventListener('resize',()=>{
       if(S[key]&&Object.keys(S[key]).length)applyLayout();else setDefaultLayout();
     },300);
   }
-  // Resize minor (address bar, keyboard) diabaikan — tidak re-apply layout
 });
-window.addEventListener('orientationchange',()=>{
+window.addEventListener('orientationchange',window.addEventListener('orientationchange',()=>{
   setTimeout(checkOrientation,350);
   // Re-lock segera setelah orientasi berubah
   setTimeout(applyOrientLock,100);
@@ -1354,18 +927,7 @@ if(screen.orientation){
 // ── Radial menu system ──
 let radialOpen=false;
 const PANELS=['layout','bg','appearance','clock','search','bookmarks'];
-let bgmPanelOpen=false;
 
-function toggleBgmPanel(){
-  const p=document.getElementById('bgm-player');
-  bgmPanelOpen=!bgmPanelOpen;
-  p.classList.toggle('show', bgmPanelOpen);
-  p.classList.toggle('mini', !bgmPanelOpen);
-  document.getElementById('bgm-toggle').classList.toggle('active-panel',bgmPanelOpen);
-  // show backdrop
-  document.getElementById('panel-backdrop').classList.toggle('show', bgmPanelOpen);
-  if(bgmPanelOpen&&S.bgmPlaylist&&S.bgmPlaylist.length&&(!audio.src||audio.src===window.location.href)){bgmLoad(0,()=>{});}
-}
 function toggleRadial(){
   radialOpen=!radialOpen;
   document.getElementById('gear').classList.toggle('open',radialOpen);
@@ -1381,7 +943,6 @@ function openPanel(id, triggerBtn){
   const wasOpen=target.classList.contains('open');
   PANELS.forEach(p=>{const el=document.getElementById('subpanel-'+p);if(el)el.classList.remove('open');});
   document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('active-panel'));
-  bgmPanelOpen=false;const _bp=document.getElementById('bgm-player');_bp.classList.remove('show');_bp.classList.add('mini');document.getElementById('bgm-toggle').classList.remove('active-panel');
   if(wasOpen)return;
   positionPanel(target);
   target.classList.add('open');
@@ -1396,19 +957,13 @@ function closeAllPanels(){
   document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('active-panel'));
   document.getElementById('panel-backdrop').classList.remove('show');
 }
-function toggleBgmClose(){
-  bgmPanelOpen=false;
-  const p=document.getElementById('bgm-player');
-  p.classList.remove('show');p.classList.add('mini');
-  document.getElementById('bgm-toggle').classList.remove('active-panel');
-}
 
 document.getElementById('gear').addEventListener('click',e=>{e.stopPropagation();toggleRadial();closeAllPanels();});
 document.addEventListener('click',e=>{
   const gear=document.getElementById('gear');
   const ring=document.getElementById('radial-ring');
   const panels=document.querySelectorAll('.subpanel');
-  const bgmPlayer=document.getElementById('bgm-player');
+  
   let inside=gear.contains(e.target)||ring.contains(e.target)||bgmPlayer.contains(e.target);
   panels.forEach(p=>{if(p.contains(e.target))inside=true;});
   if(!inside){
@@ -1424,14 +979,10 @@ function resetAll(){if(!confirm('Reset semua data?'))return;localStorage.removeI
 // INIT
 function init(){
   if(S.bgUrls&&S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');
-  // Load IDB bg first, then applyBg
-  if(S.bgLocal==='idb:bg'){
-    idbGet('bg').then(data=>{if(data){_bgLocalData=data;}applyBg();}).catch(()=>applyBg());
-  }else{applyBg();}
+  applyBg();
   setupBgSliders();
   document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;
   document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
-  document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop!==false);
   document.documentElement.style.setProperty('--blur',S.blur+'px');
   document.getElementById('sl-blur').value=S.blur;document.getElementById('sl-blur-v').textContent=S.blur+'px';
   document.documentElement.style.setProperty('--accent',S.accent);
@@ -1461,24 +1012,7 @@ function init(){
   document.getElementById('w-bookmarks').style.opacity=(S.opBm||100)/100;
   renderBM();
   applyLayout();
-  // Preset rotation init
-  document.getElementById('sl-psrot').value=S.psRotInterval||30;
-  document.getElementById('sl-psrot-v').textContent=(S.psRotInterval||30)+'s';
-  document.getElementById('sl-psrot').addEventListener('input',function(){S.psRotInterval=+this.value;document.getElementById('sl-psrot-v').textContent=this.value+'s';save();if(S.psRotActive){stopPresetRot();startPresetRot();}});
-  document.getElementById('ps-order-btn').textContent=(S.psRotOrder==='shuffle')?'Acak':'Berurutan';
-  // bgm toggle hidden at start
-  renderPresets();
-  updatePsRotUI();
-  if(S.psRotActive)startPresetRot();
-  bgmSetVol();
-  document.getElementById('bgm-vol').value=S.bgmVol||70;
-  document.getElementById('bgm-shuffle').classList.toggle('on',S.bgmShuffle);
-  document.getElementById('bgm-loop-btn').classList.toggle('on',S.bgmLoop);
-  const lrBtn=document.getElementById('bgm-loop-range-btn');lrBtn.classList.toggle('on',S.bgmLoopRange);lrBtn.textContent=S.bgmLoopRange?'On':'Off';
-  document.getElementById('bgm-loop-start').value=S.bgmLoopStart||0;
-  document.getElementById('bgm-loop-end').value=S.bgmLoopEnd||0;
-  audio.loop=S.bgmLoop&&!S.bgmLoopRange;
-  if(S.bgmPlaylist&&S.bgmPlaylist.length){bgmLoad(0,()=>{});renderBgmPlaylist();}
+  // bgm toggle hidden at startlrBtn.classList.toggle('on',S.bgmLoopRange);lrBtn.textContent=S.bgmLoopRange?'On':'Off';
   setTimeout(()=>document.getElementById('search').focus(),150);
   // apply saved app name
   if(S.appName && S.appName !== 'Glass New Tab') updateManifest(S.appName);
@@ -1495,8 +1029,7 @@ function init(){
   }
   updateRadialAngles();
   syncOrientBtns();
-  applyOrientLock();
-  // BGM player is now center-modal, no position restore needed
+  applyOrientLock();, no position restore needed
 }
 init();
 // Extra delayed locks saat pertama load — pastikan lock aktif setelah browser siap
@@ -1517,7 +1050,5 @@ if('serviceWorker' in navigator){
 }
 </script>
 
-<!-- Local file bg picker -->
-<input type="file" id="bg-file-picker" accept="image/*,video/*" style="display:none" onchange="loadLocalBg(this)">
 </body>
 </html>
