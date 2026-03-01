@@ -59,7 +59,7 @@ body.edit-mode .edit-handle{display:block}
 #day-name{font-family:'Anurati',sans-serif;font-size:var(--fs-day);color:var(--text);letter-spacing:10px;text-transform:uppercase;text-align:center;line-height:1}
 #date{font-family:var(--font-ui);font-size:var(--fs-date);color:var(--muted);letter-spacing:3px;font-weight:300;text-align:center}
 #clock{font-family:var(--font-ui);font-size:var(--fs-time);color:var(--muted);letter-spacing:3px;line-height:1;white-space:nowrap;text-align:center;font-weight:300}
-#sec-bar-wrap{width:var(--sec-bar-w,200px);height:3px;background:rgba(var(--accent),0.12);border-radius:2px;overflow:hidden;margin-top:2px;align-self:center}
+#sec-bar-wrap{width:100%;height:3px;background:rgba(var(--accent),0.12);border-radius:2px;overflow:hidden;margin-top:2px}
 #sec-bar{height:100%;background:rgba(var(--accent),0.6);border-radius:2px;width:0%;transition:width .95s linear}
 #sec-bar-wrap.hidden-bar{display:none}
 
@@ -626,7 +626,7 @@ function loadLocalBg(input){
   input.value='';
 }
 function renderGreeting(){const el=document.getElementById('greeting');if(S.greetingCustom){el.textContent=S.greetingCustom;return;}if(S.name){const h=new Date().getHours();el.textContent=`${h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam'}, ${S.name} ✦`;}else el.textContent='';}
-function tick(){const n=new Date();const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?'PM':'AM';hh=hh%12||12;}let t=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)t+=':'+String(ss).padStart(2,'0');document.getElementById('day-name').textContent=DAYS[n.getDay()].toUpperCase();document.getElementById('date').textContent=n.getDate()+' '+MF[n.getMonth()]+', '+n.getFullYear()+'.';document.getElementById('clock').textContent=suf?'- '+t+' '+suf+' -':'- '+t+' -';renderGreeting();if(S.showSecBar){const ck=document.getElementById('clock');if(ck){const w=ck.offsetWidth;if(w>0)document.documentElement.style.setProperty('--sec-bar-w',w+'px');}const bar=document.getElementById('sec-bar');if(ss===0){bar.style.transition='none';bar.style.width='0%';requestAnimationFrame(()=>{bar.style.transition='';bar.style.width='0%';});}else{bar.style.width=(ss/60*100)+'%';}}  }
+function tick(){const n=new Date();const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?'PM':'AM';hh=hh%12||12;}let t=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)t+=':'+String(ss).padStart(2,'0');document.getElementById('day-name').textContent=DAYS[n.getDay()].toUpperCase();document.getElementById('date').textContent=n.getDate()+' '+MF[n.getMonth()]+', '+n.getFullYear()+'.';document.getElementById('clock').textContent=suf?'- '+t+' '+suf+' -':'- '+t+' -';renderGreeting();if(S.showSecBar)document.getElementById('sec-bar').style.width=(ss/59*100)+'%';}
 setInterval(tick,1000);tick();
 function toggle12h(){S.use12h=!S.use12h;save();document.getElementById('tog-12h').classList.toggle('on',S.use12h);}
 function toggleSecs(){S.showSecs=!S.showSecs;save();document.getElementById('tog-sec').classList.toggle('on',S.showSecs);}
@@ -760,7 +760,7 @@ function getRotList(){return(S.psRotSelected||[]).filter(i=>i<10&&S.bgPresets[i]
 function loadPresetFull(i){
   const p=S.bgPresets[i];if(!p)return;
   S.bgUrls=p.bgUrls?[...p.bgUrls]:[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';
-  S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ||100;S.overlay=p.overlay!=null?p.overlay:38;
+  S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ!=null?p.bgZ:100;S.overlay=p.overlay!=null?p.overlay:38;
   applyBg();applyBgStyle();syncBgSliders();
   document.getElementById('overlay').style.background='rgba(0,0,0,'+(S.overlay/100)+')';
   document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';
@@ -816,7 +816,7 @@ function togglePresetInRot(i){
   sel.sort((a,b)=>a-b);S.psRotSelected=sel;save();renderPresets();
 }
 
-function renderPresets(){const grid=document.getElementById('preset-grid');grid.innerHTML='';for(let i=0;i<10;i++){const p=S.bgPresets[i];const slot=document.createElement('div');const inRot=(S.psRotSelected||[]).includes(i);slot.className='preset-slot'+(p?' filled':'')+(inRot?' in-rot':'');if(p){const bg=document.createElement('div');bg.className='ps-bg';if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;slot.appendChild(bg);}const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);if(p){const del=document.createElement('button');del.className='ps-del';del.textContent='✕';del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;save();renderPresets();toast(`Preset ${i+1} dihapus`);};slot.appendChild(del);const chk=document.createElement('div');chk.className='ps-chk';chk.textContent=inRot?'✔':'';slot.appendChild(chk);}let _psLongT=null;slot.addEventListener('pointerdown',e=>{if(e.target.classList.contains('ps-del'))return;_psLongT=setTimeout(()=>{_psLongT=null;togglePresetInRot(i);},500);});slot.addEventListener('pointerup',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.addEventListener('pointerleave',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.onclick=e=>{if(e.target.classList.contains('ps-del'))return;if(!_psLongT&&Date.now){}; if(!S.bgPresets[i]){S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,overlay:S.overlay};save();renderPresets();toast(`Preset ${i+1} disimpan!`);}else{const p=S.bgPresets[i];S.bgUrls=p.bgUrls||[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';S.bgX=p.bgX||50;S.bgY=p.bgY||50;S.bgZ=p.bgZ||100;S.overlay=p.overlay||38;applyBg();applyBgStyle();syncBgSliders();document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');save();toast(`Preset ${i+1} dimuat!`);}};grid.appendChild(slot);}}
+function renderPresets(){const grid=document.getElementById('preset-grid');grid.innerHTML='';for(let i=0;i<10;i++){const p=S.bgPresets[i];const slot=document.createElement('div');const inRot=(S.psRotSelected||[]).includes(i);slot.className='preset-slot'+(p?' filled':'')+(inRot?' in-rot':'');if(p){const bg=document.createElement('div');bg.className='ps-bg';if(p.bgLocal||p.bgUrls&&p.bgUrls[0])bg.style.backgroundImage=`url('${p.bgLocal||p.bgUrls[0]}')`;slot.appendChild(bg);}const lbl=document.createElement('div');lbl.className='ps-label';lbl.textContent=p?`P${i+1}`:`+${i+1}`;slot.appendChild(lbl);if(p){const del=document.createElement('button');del.className='ps-del';del.textContent='✕';del.onclick=e=>{e.stopPropagation();S.bgPresets[i]=null;save();renderPresets();toast(`Preset ${i+1} dihapus`);};slot.appendChild(del);const chk=document.createElement('div');chk.className='ps-chk';chk.textContent=inRot?'✔':'';slot.appendChild(chk);}let _psLongT=null;slot.addEventListener('pointerdown',e=>{if(e.target.classList.contains('ps-del'))return;_psLongT=setTimeout(()=>{_psLongT=null;togglePresetInRot(i);},500);});slot.addEventListener('pointerup',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.addEventListener('pointerleave',()=>{clearTimeout(_psLongT);_psLongT=null;});slot.onclick=e=>{if(e.target.classList.contains('ps-del'))return;if(!_psLongT&&Date.now){}; if(!S.bgPresets[i]){S.bgPresets[i]={bgUrls:[...S.bgUrls],bgLocal:S.bgLocal,bgType:S.bgType,bgX:S.bgX,bgY:S.bgY,bgZ:S.bgZ,overlay:S.overlay};save();renderPresets();toast(`Preset ${i+1} disimpan!`);}else{const p=S.bgPresets[i];S.bgUrls=p.bgUrls||[];S.bgLocal=p.bgLocal||'';S.bgType=p.bgType||'img';S.bgX=p.bgX!=null?p.bgX:50;S.bgY=p.bgY!=null?p.bgY:50;S.bgZ=p.bgZ!=null?p.bgZ:100;S.overlay=p.overlay!=null?p.overlay:38;applyBg();applyBgStyle();syncBgSliders();document.getElementById('overlay').style.background=`rgba(0,0,0,${S.overlay/100})`;document.getElementById('sl-overlay').value=S.overlay;document.getElementById('sl-overlay-v').textContent=S.overlay+'%';if(S.bgUrls.length)document.getElementById('bg-urls').value=S.bgUrls.join('\n');save();toast(`Preset ${i+1} dimuat!`);}};grid.appendChild(slot);}}
 // APPEARANCE
 document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
 document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
@@ -1296,20 +1296,25 @@ function checkOrientation(){
   const b=document.getElementById('orient-badge');
   b.textContent=D?(L?'🖥 Desktop Landscape':'🖥 Desktop Portrait'):(L?'📱 Landscape':'📱 Portrait');
   b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);
-  // Apply orientation-specific layout
-  const key=curLayoutKey();
-  if(S[key]&&Object.keys(S[key]).length)applyLayout();
-  else setDefaultLayout();
-  // Update orientation lock based on setting
   applyOrientLock();syncOrientBtns();
 }
-let _lastResizeW=window.innerWidth,_lastResizeH=window.innerHeight;
+// Hanya re-apply layout saat orientasi benar-benar berubah (landscape↔portrait)
+let _lastOrientIsLand=window.innerWidth>window.innerHeight;
 window.addEventListener('resize',()=>{
-  const dw=Math.abs(window.innerWidth-_lastResizeW);
-  const dh=Math.abs(window.innerHeight-_lastResizeH);
-  if(dw<5&&dh<120)return;
-  _lastResizeW=window.innerWidth;_lastResizeH=window.innerHeight;
-  clearTimeout(_orientT);_orientT=setTimeout(checkOrientation,300);
+  const nowLand=window.innerWidth>window.innerHeight;
+  // Jika orientasi berubah, apply layout sesuai key baru
+  if(nowLand!==_lastOrientIsLand){
+    _lastOrientIsLand=nowLand;
+    clearTimeout(_orientT);_orientT=setTimeout(()=>{
+      checkOrientation();
+      const key=curLayoutKey();
+      if(S[key]&&Object.keys(S[key]).length)applyLayout();
+      else setDefaultLayout();
+    },300);
+  }else{
+    // Resize minor (address bar, keyboard) — hanya update orient lock
+    clearTimeout(_orientT);_orientT=setTimeout(checkOrientation,250);
+  }
 });
 window.addEventListener('orientationchange',()=>{
   setTimeout(checkOrientation,350);
