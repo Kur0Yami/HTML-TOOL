@@ -396,9 +396,9 @@ body.edit-mode #edit-bar{display:block}
       <button class="loop-tog" id="orient-auto-btn" onclick="setOrientLock('auto')">⟳ Auto</button>
       <button class="loop-tog" id="orient-port-btn" onclick="setOrientLock('portrait')">▯ Portrait</button>
       <button class="loop-tog" id="orient-land-btn" onclick="setOrientLock('landscape')">▭ Landscape</button>
-
     </div>
   </div>
+  <div id="orient-pwa-note" style="font-size:10px;color:var(--muted);margin-top:-6px;display:none">⚠ Hanya aktif di mode PWA (install ke layar utama)</div>
   <button class="p-btn" onclick="resetLayout()">↺ Reset posisi widget</button>
   <div class="hr"></div>
   <h2>BGM Playlist</h2>
@@ -1266,38 +1266,63 @@ function _jsOrientApply(){
 }
 
 let _orientLockInterval=null;
+
+// Deteksi apakah berjalan sebagai PWA (installed / standalone)
+function isPWA(){
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.matchMedia('(display-mode: fullscreen)').matches
+    || window.navigator.standalone===true;
+}
+
 function applyOrientLock(){
   const l=S.orientLock||'auto';
   if(_orientLockInterval){clearInterval(_orientLockInterval);_orientLockInterval=null;}
+
+  // Cleanup wrapper dulu
   if(l==='auto'){
     try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
-    _jsOrientApply(); // cleanup wrapper
+    _jsOrientApply(); // cleanup
     return;
   }
+
+  // Kalau bukan PWA — native lock tidak support, JS rotate juga tidak reliable
+  // Jangan lakukan apa-apa, biarkan browser handle orientasi secara normal
+  if(!isPWA()){
+    _jsOrientApply(); // pastikan wrapper bersih
+    return;
+  }
+
+  // Mode PWA — coba native lock dulu
   const tryNative=async()=>{
     if(!screen.orientation||!screen.orientation.lock)return false;
     try{ await screen.orientation.lock(l); return true; }catch(e){ return false; }
   };
   (async()=>{
     const ok=await tryNative();
-    if(!ok) _jsOrientApply();
-    else document.documentElement.style.cssText='';
-  })();
-  // Polling 500ms — re-apply transform saat hp dirotasi
-  _orientLockInterval=setInterval(()=>{
-    if((S.orientLock||'auto')==='auto'){
-      clearInterval(_orientLockInterval);_orientLockInterval=null;
-      document.documentElement.style.cssText=''; return;
+    if(ok){
+      // Native lock berhasil — bersihkan JS transform kalau ada
+      _jsOrientApply();
+      // Tidak perlu polling, native lock handle sendiri
+    } else {
+      // Native lock gagal di PWA — fallback ke JS rotate
+      _jsOrientApply();
+      // Polling untuk re-apply saat orientasi berubah
+      _orientLockInterval=setInterval(()=>{
+        if((S.orientLock||'auto')==='auto'){
+          clearInterval(_orientLockInterval);_orientLockInterval=null;
+          return;
+        }
+        if(!isPWA()){clearInterval(_orientLockInterval);_orientLockInterval=null;_jsOrientApply();return;}
+        _jsOrientApply();
+      },500);
     }
-    const isNativeLocked=screen.orientation&&(
-      (l==='portrait'&&screen.orientation.type.startsWith('portrait'))||
-      (l==='landscape'&&screen.orientation.type.startsWith('landscape')));
-    if(!isNativeLocked) _jsOrientApply();
-  },500);
+  })();
 }
 function syncOrientBtns(){
   const l=S.orientLock||'auto';
   document.getElementById('orient-auto-btn')?.classList.toggle('on',l==='auto');
+  const note=document.getElementById('orient-pwa-note');
+  if(note)note.style.display=(l!=='auto'&&!isPWA())?'block':'none';
   document.getElementById('orient-port-btn')?.classList.toggle('on',l==='portrait');
   document.getElementById('orient-land-btn')?.classList.toggle('on',l==='landscape');
 }
