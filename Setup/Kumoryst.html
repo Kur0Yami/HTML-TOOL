@@ -1441,6 +1441,12 @@ function openPanel(id, triggerBtn){
   const target=document.getElementById('subpanel-'+id);
   if(!target)return;
   const wasOpen=target.classList.contains('open');
+  // Flush SW slider values before switching panel
+  ['time','day','date','greeting'].forEach(w=>{
+    const sl=document.getElementById('sl-fsz-'+w);
+    if(sl){const v=Number(sl.value);if(v&&!isNaN(v)){S[SW_SIZE_MAP[w]]=v;document.documentElement.style.setProperty(SW_CSS_MAP[w],v+'px');}}
+  });
+  save();
   PANELS.forEach(p=>{const el=document.getElementById('subpanel-'+p);if(el)el.classList.remove('open');});
   document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('active-panel'));
   bgmPanelOpen=false;const _bp=document.getElementById('bgm-player');_bp.classList.remove('show');_bp.classList.add('mini');document.getElementById('bgm-toggle').classList.remove('active-panel');
@@ -1454,6 +1460,12 @@ function openPanel(id, triggerBtn){
 }
 
 function closeAllPanels(){
+  // Flush SW slider values before closing
+  ['time','day','date','greeting'].forEach(w=>{
+    const sl=document.getElementById('sl-fsz-'+w);
+    if(sl){const v=Number(sl.value);if(v&&!isNaN(v)){S[SW_SIZE_MAP[w]]=v;document.documentElement.style.setProperty(SW_CSS_MAP[w],v+'px');}}
+  });
+  save();
   PANELS.forEach(p=>{const el=document.getElementById('subpanel-'+p);if(el)el.classList.remove('open');});
   document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('active-panel'));
   document.getElementById('panel-backdrop').classList.remove('show');
