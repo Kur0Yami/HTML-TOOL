@@ -19,11 +19,32 @@ html,body{
 }
 body{
   font-family:var(--font-ui);font-size:var(--fs-ui);box-sizing:border-box;
-  /* safe-area untuk notch — background sudah penuh */
+}
+
+/* app-root: kontainer tunggal yang bisa di-rotate untuk orient lock di Kiwi */
+#app-root{
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  width:100dvw;height:100dvh;
+  overflow:hidden;
+  transform-origin:center center;
+  /* safe-area hanya saat tidak di-rotate */
   padding-top:env(safe-area-inset-top);
   padding-bottom:env(safe-area-inset-bottom);
   padding-left:env(safe-area-inset-left);
   padding-right:env(safe-area-inset-right);
+}
+/* Saat di-rotate JS, matikan safe-area agar tidak offset */
+#app-root.orient-rotated{
+  padding:0!important;
+}
+
+/* Semua elemen fixed di dalam root pakai absolute, biar ikut rotate */
+#bg-img,#bg-img2,#bg-video,#overlay,#gear,#radial-ring,
+.panel-backdrop,.sub-panel,#bgm-player,#orient-badge,#edit-bar,
+.guide{
+  position:absolute!important;
 }
 
 /* BG layers */
@@ -300,6 +321,7 @@ body.edit-mode #edit-bar{display:block}
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iYmciIGN4PSI1MCUiIGN5PSI0MCUiIHI9IjYwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxYTJhNGEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDUwODEwIi8+CiAgICA8L3JhZGlhbEdyYWRpZW50PgogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iNTAlIiBjeT0iNTAlIiByPSI1MCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNmFkNGZmIiBzdG9wLW9wYWNpdHk9IjAuMzUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNmFkNGZmIiBzdG9wLW9wYWNpdHk9IjAiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyeXN0YWwxIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2U4ZjhmZiIgc3RvcC1vcGFjaXR5PSIwLjk1Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iNDAlIiBzdG9wLWNvbG9yPSIjYThlNGZmIiBzdG9wLW9wYWNpdHk9IjAuODUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNWJiZmVmIiBzdG9wLW9wYWNpdHk9IjAuNyIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY3J5c3RhbDIiIHgxPSIxMDAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmZmZmZmIiBzdG9wLW9wYWNpdHk9IjAuOSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iI2I4ZThmZiIgc3RvcC1vcGFjaXR5PSIwLjc1Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRhYWFkNCIgc3RvcC1vcGFjaXR5PSIwLjYiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJibHVyMSI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMyIvPjwvZmlsdGVyPgogICAgPGZpbHRlciBpZD0iZ2YiPjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjE4Ii8+PC9maWx0ZXI+CiAgICA8ZmlsdGVyIGlkPSJzcGFya2xlIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMS41IiByZXN1bHQ9ImIiLz4KICAgICAgPGZlQ29tcG9zaXRlIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9ImIiIG9wZXJhdG9yPSJvdmVyIi8+CiAgICA8L2ZpbHRlcj4KICAgIDxjbGlwUGF0aCBpZD0iaGV4Ij4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIyNTYsMjggNDUwLDE0MSA0NTAsMzcxIDI1Niw0ODQgNjIsMzcxIDYyLDE0MSIvPgogICAgPC9jbGlwUGF0aD4KICA8L2RlZnM+CgogIDwhLS0gSGV4YWdvbiBiYWNrZ3JvdW5kIC0tPgogIDxwb2x5Z29uIHBvaW50cz0iMjU2LDI4IDQ1MCwxNDEgNDUwLDM3MSAyNTYsNDg0IDYyLDM3MSA2MiwxNDEiIGZpbGw9InVybCgjYmcpIi8+CgogIDwhLS0gSGV4IGJvcmRlciBnbGFzc21vcnBoaXNtIC0tPgogIDxwb2x5Z29uIHBvaW50cz0iMjU2LDI4IDQ1MCwxNDEgNDUwLDM3MSAyNTYsNDg0IDYyLDM3MSA2MiwxNDEiCiAgICBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMTAwLDIxMCwyNTUsMC4yNSkiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwb2x5Z29uIHBvaW50cz0iMjU2LDM4IDQ0MiwxNDggNDQyLDM2NCAyNTYsNDc0IDcwLDM2NCA3MCwxNDgiCiAgICBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wOCkiIHN0cm9rZS13aWR0aD0iMSIvPgoKICA8IS0tIEhleCBncmlkIHBhdHRlcm4gKHN1YnRsZSkgLS0+CiAgPGcgY2xpcC1wYXRoPSJ1cmwoI2hleCkiIG9wYWNpdHk9IjAuMDciIHN0cm9rZT0icmdiYSgxNTAsMjIwLDI1NSwxKSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIj4KICAgIDxwb2x5Z29uIHBvaW50cz0iMjU2LDEyMCAyOTYsMTQzIDI5NiwxOTAgMjU2LDIxMyAyMTYsMTkwIDIxNiwxNDMiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iMjU2LDIxMCAyOTYsMjMzIDI5NiwyODAgMjU2LDMwMyAyMTYsMjgwIDIxNiwyMzMiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iMjU2LDMwMCAyOTYsMzIzIDI5NiwzNzAgMjU2LDM5MyAyMTYsMzcwIDIxNiwzMjMiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iMTY2LDE2NSAyMDYsMTg4IDIwNiwyMzUgMTY2LDI1OCAxMjYsMjM1IDEyNiwxODgiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iMzQ2LDE2NSAzODYsMTg4IDM4NiwyMzUgMzQ2LDI1OCAzMDYsMjM1IDMwNiwxODgiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iMTY2LDI1NSAyMDYsMjc4IDIwNiwzMjUgMTY2LDM0OCAxMjYsMzI1IDEyNiwyNzgiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iMzQ2LDI1NSAzODYsMjc4IDM4NiwzMjUgMzQ2LDM0OCAzMDYsMzI1IDMwNiwyNzgiLz4KICA8L2c+CgogIDwhLS0gR2xvdyBjZW50ZXIgLS0+CiAgPGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSIxMjAiIGZpbGw9InVybCgjZ2xvdykiIGZpbHRlcj0idXJsKCNnZikiLz4KCiAgPCEtLSBNYWluIGNyeXN0YWwgc25vd2ZsYWtlIOKAlCA2IGFybXMgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjU2LDI1NikiIGZpbGw9InVybCgjY3J5c3RhbDEpIiBzdHJva2U9InJnYmEoMTgwLDIzNSwyNTUsMC40KSIgc3Ryb2tlLXdpZHRoPSIwLjUiPgogICAgPCEtLSBBcm0gMGRlZyAtLT4KICAgIDxnPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTggNiwtOTAgMCwtMTU1IC02LC05MCIgb3BhY2l0eT0iMC45NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTc1IDE4LC05NSAwLC0xMTUgLTE4LC05NSIgb3BhY2l0eT0iMC44NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTUwIDE0LC02NSAwLC04MCAtMTQsLTY1IiBvcGFjaXR5PSIwLjgiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xMDAgMTAsLTExMCAwLC0xMjUgLTEwLC0xMTAiIG9wYWNpdHk9IjAuOSIvPgogICAgICA8IS0tIHRpcCBjcnlzdGFsIC0tPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTE0MCA1LC0xNTUgMCwtMTc1IC01LC0xNTUiIGZpbGw9InVybCgjY3J5c3RhbDIpIiBvcGFjaXR5PSIwLjk1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtMTU1IDMsLTE2NSAwLC0xODIgLTMsLTE2NSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuNyIvPgogICAgPC9nPgogICAgPCEtLSBBcm0gNjBkZWcgLS0+CiAgICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSg2MCkiPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTggNiwtOTAgMCwtMTU1IC02LC05MCIgb3BhY2l0eT0iMC45NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTc1IDE4LC05NSAwLC0xMTUgLTE4LC05NSIgb3BhY2l0eT0iMC44NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTUwIDE0LC02NSAwLC04MCAtMTQsLTY1IiBvcGFjaXR5PSIwLjgiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xMDAgMTAsLTExMCAwLC0xMjUgLTEwLC0xMTAiIG9wYWNpdHk9IjAuOSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTE0MCA1LC0xNTUgMCwtMTc1IC01LC0xNTUiIGZpbGw9InVybCgjY3J5c3RhbDIpIiBvcGFjaXR5PSIwLjk1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtMTU1IDMsLTE2NSAwLC0xODIgLTMsLTE2NSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuNyIvPgogICAgPC9nPgogICAgPCEtLSBBcm0gMTIwZGVnIC0tPgogICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoMTIwKSI+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtOCA2LC05MCAwLC0xNTUgLTYsLTkwIiBvcGFjaXR5PSIwLjk1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtNzUgMTgsLTk1IDAsLTExNSAtMTgsLTk1IiBvcGFjaXR5PSIwLjg1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtNTAgMTQsLTY1IDAsLTgwIC0xNCwtNjUiIG9wYWNpdHk9IjAuOCIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTEwMCAxMCwtMTEwIDAsLTEyNSAtMTAsLTExMCIgb3BhY2l0eT0iMC45Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtMTQwIDUsLTE1NSAwLC0xNzUgLTUsLTE1NSIgZmlsbD0idXJsKCNjcnlzdGFsMikiIG9wYWNpdHk9IjAuOTUiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xNTUgMywtMTY1IDAsLTE4MiAtMywtMTY1IiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC43Ii8+CiAgICA8L2c+CiAgICA8IS0tIEFybSAxODBkZWcgLS0+CiAgICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSgxODApIj4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC04IDYsLTkwIDAsLTE1NSAtNiwtOTAiIG9wYWNpdHk9IjAuOTUiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC03NSAxOCwtOTUgMCwtMTE1IC0xOCwtOTUiIG9wYWNpdHk9IjAuODUiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC01MCAxNCwtNjUgMCwtODAgLTE0LC02NSIgb3BhY2l0eT0iMC44Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtMTAwIDEwLC0xMTAgMCwtMTI1IC0xMCwtMTEwIiBvcGFjaXR5PSIwLjkiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xNDAgNSwtMTU1IDAsLTE3NSAtNSwtMTU1IiBmaWxsPSJ1cmwoI2NyeXN0YWwyKSIgb3BhY2l0eT0iMC45NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTE1NSAzLC0xNjUgMCwtMTgyIC0zLC0xNjUiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjciLz4KICAgIDwvZz4KICAgIDwhLS0gQXJtIDI0MGRlZyAtLT4KICAgIDxnIHRyYW5zZm9ybT0icm90YXRlKDI0MCkiPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTggNiwtOTAgMCwtMTU1IC02LC05MCIgb3BhY2l0eT0iMC45NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTc1IDE4LC05NSAwLC0xMTUgLTE4LC05NSIgb3BhY2l0eT0iMC44NSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTUwIDE0LC02NSAwLC04MCAtMTQsLTY1IiBvcGFjaXR5PSIwLjgiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xMDAgMTAsLTExMCAwLC0xMjUgLTEwLC0xMTAiIG9wYWNpdHk9IjAuOSIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTE0MCA1LC0xNTUgMCwtMTc1IC01LC0xNTUiIGZpbGw9InVybCgjY3J5c3RhbDIpIiBvcGFjaXR5PSIwLjk1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtMTU1IDMsLTE2NSAwLC0xODIgLTMsLTE2NSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuNyIvPgogICAgPC9nPgogICAgPCEtLSBBcm0gMzAwZGVnIC0tPgogICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoMzAwKSI+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtOCA2LC05MCAwLC0xNTUgLTYsLTkwIiBvcGFjaXR5PSIwLjk1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtNzUgMTgsLTk1IDAsLTExNSAtMTgsLTk1IiBvcGFjaXR5PSIwLjg1Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtNTAgMTQsLTY1IDAsLTgwIC0xNCwtNjUiIG9wYWNpdHk9IjAuOCIvPgogICAgICA8cG9seWdvbiBwb2ludHM9IjAsLTEwMCAxMCwtMTEwIDAsLTEyNSAtMTAsLTExMCIgb3BhY2l0eT0iMC45Ii8+CiAgICAgIDxwb2x5Z29uIHBvaW50cz0iMCwtMTQwIDUsLTE1NSAwLC0xNzUgLTUsLTE1NSIgZmlsbD0idXJsKCNjcnlzdGFsMikiIG9wYWNpdHk9IjAuOTUiLz4KICAgICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xNTUgMywtMTY1IDAsLTE4MiAtMywtMTY1IiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC43Ii8+CiAgICA8L2c+CgogICAgPCEtLSBDZW50ZXIgZ2VtIC0tPgogICAgPHBvbHlnb24gcG9pbnRzPSIwLC0yMiAxMywtMTMgMjIsMCAxMywxMyAwLDIyIC0xMywxMyAtMjIsMCAtMTMsLTEzIiBmaWxsPSJ1cmwoI2NyeXN0YWwyKSIgc3Ryb2tlPSJyZ2JhKDIwMCwyNDAsMjU1LDAuNikiIHN0cm9rZS13aWR0aD0iMSIvPgogICAgPHBvbHlnb24gcG9pbnRzPSIwLC0xMiA3LC03IDEyLDAgNyw3IDAsMTIgLTcsNyAtMTIsMCAtNywtNyIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOCIvPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjUiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjk1Ii8+CiAgPC9nPgoKICA8IS0tIFNwYXJrbGUgZG90cyAtLT4KICA8ZyBmaWxsPSJ3aGl0ZSIgZmlsdGVyPSJ1cmwoI3NwYXJrbGUpIj4KICAgIDxjaXJjbGUgY3g9IjE4MCIgY3k9IjEzMCIgcj0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgICA8Y2lyY2xlIGN4PSIzNDAiIGN5PSIxMTAiIHI9IjIiIG9wYWNpdHk9IjAuNyIvPgogICAgPGNpcmNsZSBjeD0iMzkwIiBjeT0iMjgwIiByPSIyLjUiIG9wYWNpdHk9IjAuNzUiLz4KICAgIDxjaXJjbGUgY3g9IjEzMCIgY3k9IjM2MCIgcj0iMiIgb3BhY2l0eT0iMC42NSIvPgogICAgPGNpcmNsZSBjeD0iMzEwIiBjeT0iNDAwIiByPSIzIiBvcGFjaXR5PSIwLjgiLz4KICAgIDxjaXJjbGUgY3g9IjE1MCIgY3k9IjIyMCIgcj0iMS41IiBvcGFjaXR5PSIwLjYiLz4KICAgIDxjaXJjbGUgY3g9IjQyMCIgY3k9IjE5MCIgcj0iMiIgb3BhY2l0eT0iMC43Ii8+CiAgICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSI5MCIgcj0iMi41IiBvcGFjaXR5PSIwLjg1Ii8+CiAgICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSI0MzAiIHI9IjIiIG9wYWNpdHk9IjAuNyIvPgogIDwvZz4KCiAgPCEtLSBIZXggYm9yZGVyIHNoaW1tZXIgdG9wIC0tPgogIDxwb2x5Z29uIHBvaW50cz0iMjU2LDI4IDQ1MCwxNDEgNDUwLDI1MCAyNTYsMjgiCiAgICBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBjbGlwLXBhdGg9InVybCgjaGV4KSIvPgo8L3N2Zz4=">
 </head>
 <body>
+<div id="app-root">
 <div id="bg-img"></div>
 <div id="bg-img2"></div>
 <video id="bg-video" autoplay muted loop playsinline disablepictureinpicture disableremoteplayback x-webkit-airplay="deny"></video>
@@ -1196,12 +1218,11 @@ function updateRadialAngles(){
 
 /* ── Orientation Lock: JS Transform (bekerja saat API diblok browser) ── */
 // ── ORIENTATION LOCK SYSTEM ──
-// Strategy:
-//   PWA (Ultimatum) → screen.orientation.lock() native, reliable
-//   Kiwi Browser    → native lock TIDAK support, pakai CSS transform rotate fallback
-//     Portrait lock: deteksi saat device di-landscape → counter-rotate -90deg
-//     Landscape lock: deteksi saat device di-portrait → counter-rotate 90deg
-//     Auto: tidak ada transform, bebas rotate
+// PWA (Ultimatum) → screen.orientation.lock() native
+// Kiwi Browser    → rotate #app-root CSS transform
+//   Portrait lock : device landscape → root rotate(-90deg), swap W/H
+//   Landscape lock: device portrait  → root rotate(90deg),  swap W/H
+//   Auto          : no transform, free rotate
 
 function isPWA(){
   return window.matchMedia('(display-mode: standalone)').matches
@@ -1210,119 +1231,100 @@ function isPWA(){
 }
 
 let _orientLockInterval=null;
-let _nativeLockWorked=false; // track apakah native lock berhasil
 
-// Cleanup CSS transform rotate — kembalikan tampilan normal
-function _jsOrientCleanup(){
-  const el=document.getElementById('_orient-root');
-  if(el){
-    el.style.cssText='';
-    // pindahkan children kembali ke body kalau sempat dipindah
+function _getDeviceIsLandscape(){
+  // Gunakan screen.width/height (dimensi fisik, tidak terpengaruh CSS transform)
+  if(typeof window.orientation!=='undefined'){
+    return window.orientation===90||window.orientation===-90;
   }
-  // hapus style yang kita inject
-  const st=document.getElementById('_orient-style');
-  if(st)st.remove();
-  // reset html/body overflow
-  document.documentElement.style.overflow='';
-  document.documentElement.style.height='';
+  if(screen.orientation&&screen.orientation.type){
+    return screen.orientation.type.includes('landscape');
+  }
+  return screen.width>screen.height;
 }
 
-// Apply CSS transform rotate untuk lock orientasi di browser non-PWA (Kiwi)
-// wantLandscape=true → paksa tampilan landscape meski device portrait
-// wantLandscape=false → paksa tampilan portrait meski device landscape
-function _jsOrientForce(wantLandscape){
-  const deviceIsLandscape=window.screen.width>window.screen.height
-    ||(screen.orientation&&screen.orientation.type||'').includes('landscape')
-    ||(typeof window.orientation!=='undefined'&&(window.orientation===90||window.orientation===-90));
+function _applyRootRotate(wantLandscape){
+  const root=document.getElementById('app-root');
+  if(!root)return;
+  const deviceLandscape=_getDeviceIsLandscape();
 
-  // Kalau orientasi device sudah sesuai keinginan → tidak perlu rotate
-  if(wantLandscape===deviceIsLandscape){
-    _jsOrientCleanup();
+  if(wantLandscape===deviceLandscape){
+    // Orientasi device sudah sesuai — hapus transform
+    root.style.transform='';
+    root.style.width='';
+    root.style.height='';
+    root.style.top='';
+    root.style.left='';
+    root.classList.remove('orient-rotated');
     return;
   }
 
   // Perlu counter-rotate
-  const vw=window.innerWidth;
-  const vh=window.innerHeight;
-  // Rotasi 90 atau -90 derajat, scale supaya pas di layar
+  // Dimensi fisik layar
+  const sw=screen.width;
+  const sh=screen.height;
+  const W=Math.max(sw,sh); // dimensi panjang
+  const H=Math.min(sw,sh); // dimensi pendek
   const deg=wantLandscape?90:-90;
-  // Setelah rotate, lebar/tinggi tukar — paksa dimensi yang benar
-  const W=Math.max(vw,vh);
-  const H=Math.min(vw,vh);
 
-  // Inject style sekali
-  let st=document.getElementById('_orient-style');
-  if(!st){st=document.createElement('style');st.id='_orient-style';document.head.appendChild(st);}
-  st.textContent=`
-    html,body{
-      overflow:hidden!important;
-      width:${W}px!important;
-      height:${H}px!important;
-      margin:0!important;
-      padding:0!important;
-    }
-    body{
-      transform-origin:center center!important;
-      transform:rotate(${deg}deg) !important;
-      width:${vh}px!important;
-      height:${vw}px!important;
-      position:fixed!important;
-      top:${(vw-vh)/2}px!important;
-      left:${(vh-vw)/2}px!important;
-    }
-  `;
+  root.style.width=H+'px';
+  root.style.height=W+'px';
+  root.style.top=((W-H)/2)+'px';
+  root.style.left=-((W-H)/2)+'px';
+  root.style.transform=`rotate(${deg}deg)`;
+  root.classList.add('orient-rotated');
 }
 
-// Polling loop untuk JS fallback — re-check setiap 400ms
+function _clearRootRotate(){
+  const root=document.getElementById('app-root');
+  if(!root)return;
+  root.style.transform='';
+  root.style.width='';
+  root.style.height='';
+  root.style.top='';
+  root.style.left='';
+  root.classList.remove('orient-rotated');
+}
+
 function _startJsOrientPoll(wantLandscape){
   if(_orientLockInterval)clearInterval(_orientLockInterval);
-  _jsOrientForce(wantLandscape); // apply langsung
+  _applyRootRotate(wantLandscape);
   _orientLockInterval=setInterval(()=>{
     const l=S.orientLock||'auto';
-    if(l==='auto'){clearInterval(_orientLockInterval);_orientLockInterval=null;_jsOrientCleanup();return;}
-    _jsOrientForce(l==='landscape');
-  },400);
+    if(l==='auto'){clearInterval(_orientLockInterval);_orientLockInterval=null;_clearRootRotate();return;}
+    _applyRootRotate(l==='landscape');
+  },300);
 }
 
 function applyOrientLock(){
   const l=S.orientLock||'auto';
-
-  // Stop interval lama
   if(_orientLockInterval){clearInterval(_orientLockInterval);_orientLockInterval=null;}
 
-  // Mode AUTO → bebaskan semua lock
   if(l==='auto'){
-    _nativeLockWorked=false;
     try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
-    _jsOrientCleanup();
+    _clearRootRotate();
     return;
   }
 
-  // Mode PWA → pakai native lock (reliable di Ultimatum)
   if(isPWA()){
-    _jsOrientCleanup(); // pastikan tidak ada CSS transform aktif
+    // Native lock untuk PWA
+    _clearRootRotate();
     if(screen.orientation&&screen.orientation.lock){
-      screen.orientation.lock(l).then(()=>{
-        _nativeLockWorked=true;
-      }).catch(()=>{
-        // Native gagal di PWA pun → fallback JS
-        _nativeLockWorked=false;
+      screen.orientation.lock(l).catch(()=>{
+        // Fallback JS kalau native gagal di PWA juga
         _startJsOrientPoll(l==='landscape');
       });
     }
     return;
   }
 
-  // Mode Kiwi / browser biasa → langsung JS CSS transform
-  // Native lock tidak akan berhasil di Kiwi tanpa PWA
-  _nativeLockWorked=false;
+  // Kiwi / browser biasa → JS rotate #app-root
   _startJsOrientPoll(l==='landscape');
 }
 
 function syncOrientBtns(){
   const l=S.orientLock||'auto';
   document.getElementById('orient-auto-btn')?.classList.toggle('on',l==='auto');
-  // Sembunyikan note PWA — JS fallback sudah handle Kiwi
   const note=document.getElementById('orient-pwa-note');
   if(note)note.style.display='none';
   document.getElementById('orient-port-btn')?.classList.toggle('on',l==='portrait');
@@ -1341,11 +1343,9 @@ function checkOrientation(){
   applyOrientLock();syncOrientBtns();
 }
 // Hanya re-apply layout saat orientasi benar-benar berubah (portrait <-> landscape)
-// Skip jika JS orient lock aktif (CSS transform sudah handle orientasi)
+// Skip jika JS orient lock aktif di Kiwi (window size "terbalik" karena CSS rotate)
 let _lastOrientLand=window.innerWidth>window.innerHeight;
 window.addEventListener('resize',()=>{
-  // Kalau JS lock aktif → jangan re-apply layout berdasarkan window size
-  // karena window size akan "terbalik" akibat CSS rotate
   if((S&&S.orientLock&&S.orientLock!=='auto')&&!isPWA())return;
   const nowLand=window.innerWidth>window.innerHeight;
   if(nowLand!==_lastOrientLand){
@@ -1557,5 +1557,6 @@ if('serviceWorker' in navigator){
 
 <!-- Local file bg picker -->
 <input type="file" id="bg-file-picker" accept="image/*,video/*" style="display:none" onchange="loadLocalBg(this)">
+</div><!-- #app-root -->
 </body>
 </html>
