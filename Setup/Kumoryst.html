@@ -1196,78 +1196,17 @@ function updateRadialAngles(){
 
 /* ── Orientation Lock: JS Transform (bekerja saat API diblok browser) ── */
 function _jsOrientApply(){
-  const mode = S.orientLock||'auto';
-  let wrap = document.getElementById('_orient-wrap');
-
-  function removeWrap(){
-    if(wrap){while(wrap.firstChild)document.body.appendChild(wrap.firstChild);wrap.remove();wrap=null;}
-    document.documentElement.style.cssText='';
-    document.body.style.cssText='';
-  }
-
-  if(mode==='auto'){removeWrap();return;}
-
-  // Deteksi orientasi FISIK layar sekarang (bukan window yang sudah di-transform)
-  // Gunakan screen.orientation.angle jika tersedia — paling akurat
-  let isLandscapeNow;
-  if(screen.orientation && screen.orientation.type){
-    isLandscapeNow = screen.orientation.type.startsWith('landscape');
-  } else if(typeof screen.orientation?.angle === 'number'){
-    isLandscapeNow = screen.orientation.angle===90 || screen.orientation.angle===270;
-  } else {
-    // Fallback: pakai window.innerWidth/Height SEBELUM ada transform
-    // Kalau wrap sudah ada, ukuran window sudah berubah — pakai screen langsung
-    const sw=screen.width||0, sh=screen.height||0;
-    if(sw>0&&sh>0) isLandscapeNow = sw>sh;
-    else isLandscapeNow = window.innerWidth>window.innerHeight;
-  }
-
-  const needRotate = (mode==='portrait'&&isLandscapeNow)||(mode==='landscape'&&!isLandscapeNow);
-  if(!needRotate){removeWrap();return;}
-
-  // Dimensi fisik layar — selalu ambil yang lebih kecil sebagai portrait-width
-  const sw = screen.width  || window.innerWidth;
-  const sh = screen.height || window.innerHeight;
-  const pW = Math.min(sw,sh); // portrait width  = sisi pendek
-  const pH = Math.max(sw,sh); // portrait height = sisi panjang
-
-  // Tentukan arah rotasi berdasarkan angle orientasi saat ini
-  // Landscape-primary (90°) → perlu rotate -90° untuk portrait
-  // Landscape-secondary (270°) → perlu rotate +90° untuk portrait
-  let angle = -90; // default
-  if(screen.orientation && typeof screen.orientation.angle==='number'){
-    const a = screen.orientation.angle;
-    if(mode==='portrait') angle = (a===270||a===90) ? (a===270?90:-90) : -90;
-    if(mode==='landscape') angle = 90;
-  }
-
-  // Set html/body ke dimensi portrait
-  document.documentElement.style.cssText=`width:${pW}px!important;height:${pH}px!important;overflow:hidden!important;background:#080810;`;
-  document.body.style.cssText=`width:${pW}px!important;height:${pH}px!important;overflow:hidden!important;`;
-
-  if(!wrap){
-    wrap=document.createElement('div');
-    wrap.id='_orient-wrap';
-    while(document.body.firstChild)wrap.appendChild(document.body.firstChild);
-    document.body.appendChild(wrap);
-  }
-
-  // Wrapper berukuran landscape (pH x pW), lalu dirotasi ke portrait
-  // translate supaya tepat di tengah viewport portrait (pW x pH)
-  const dx = (pW - pH) / 2;
-  const dy = (pH - pW) / 2;
-  wrap.style.cssText=`
-    position:fixed;top:0;left:0;
-    width:${pH}px;height:${pW}px;
-    transform-origin:${pH/2}px ${pW/2}px;
-    transform:translate(${dx}px,${dy}px) rotate(${angle}deg);
-    overflow:hidden;
-  `;
+  // Hanya cleanup wrapper jika ada — tidak melakukan rotate apapun
+  const wrap=document.getElementById('_orient-wrap');
+  if(wrap){while(wrap.firstChild)document.body.appendChild(wrap.firstChild);wrap.remove();}
+  // JANGAN reset body/html style — bisa hapus safe-area padding dll
 }
+
 
 let _orientLockInterval=null;
 
-// Deteksi apakah berjalan sebagai PWA (installed / standalone)
+// Deteksi apakah native screen.orientation.lock bisa dicoba
+// Kiwi Browser support screen.orientation.lock meski bukan PWA
 function isPWA(){
   return window.matchMedia('(display-mode: standalone)').matches
     || window.matchMedia('(display-mode: fullscreen)').matches
@@ -1278,51 +1217,60 @@ function applyOrientLock(){
   const l=S.orientLock||'auto';
   if(_orientLockInterval){clearInterval(_orientLockInterval);_orientLockInterval=null;}
 
-  // Cleanup wrapper dulu
   if(l==='auto'){
     try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
-    _jsOrientApply(); // cleanup
+    _jsOrientApply();
     return;
   }
 
-  // Kalau bukan PWA — native lock tidak support, JS rotate juga tidak reliable
-  // Jangan lakukan apa-apa, biarkan browser handle orientasi secara normal
-  if(!isPWA()){
-    _jsOrientApply(); // pastikan wrapper bersih
-    return;
-  }
-
-  // Mode PWA — coba native lock dulu
+  // Coba native lock — support di PWA (Ultimatum) DAN Kiwi Browser
   const tryNative=async()=>{
     if(!screen.orientation||!screen.orientation.lock)return false;
-    try{ await screen.orientation.lock(l); return true; }catch(e){ return false; }
+    try{
+      // Map nilai lock: portrait -> portrait-primary, landscape -> landscape-primary
+      // Fallback ke nilai asli jika gagal
+      const lockVal = l==='portrait' ? 'portrait' : l==='landscape' ? 'landscape' : l;
+      await screen.orientation.lock(lockVal);
+      return true;
+    }catch(e){
+      // Coba lagi dengan nilai alternatif kalau gagal
+      try{
+        const altVal = l==='portrait' ? 'portrait-primary' : 'landscape-primary';
+        await screen.orientation.lock(altVal);
+        return true;
+      }catch(e2){ return false; }
+    }
   };
+
   (async()=>{
     const ok=await tryNative();
     if(ok){
-      // Native lock berhasil — bersihkan JS transform kalau ada
       _jsOrientApply();
-      // Tidak perlu polling, native lock handle sendiri
-    } else {
-      // Native lock gagal di PWA — fallback ke JS rotate
-      _jsOrientApply();
-      // Polling untuk re-apply saat orientasi berubah
-      _orientLockInterval=setInterval(()=>{
-        if((S.orientLock||'auto')==='auto'){
-          clearInterval(_orientLockInterval);_orientLockInterval=null;
-          return;
+      // Polling ringan untuk re-apply kalau browser lepas lock (misal setelah minimize)
+      _orientLockInterval=setInterval(async()=>{
+        if((S.orientLock||'auto')==='auto'){clearInterval(_orientLockInterval);_orientLockInterval=null;return;}
+        // Cek apakah orientasi saat ini sudah sesuai lock
+        const cur=screen.orientation&&screen.orientation.type||'';
+        const wantPort=l==='portrait';
+        const wantLand=l==='landscape';
+        const isPort=cur.includes('portrait');
+        const isLand=cur.includes('landscape');
+        if((wantPort&&!isPort)||(wantLand&&!isLand)){
+          await tryNative();
         }
-        if(!isPWA()){clearInterval(_orientLockInterval);_orientLockInterval=null;_jsOrientApply();return;}
-        _jsOrientApply();
-      },500);
+      },1500);
+    } else {
+      // Native lock gagal — tidak ada JS CSS rotate (tidak reliable di mobile)
+      _jsOrientApply();
     }
   })();
 }
 function syncOrientBtns(){
   const l=S.orientLock||'auto';
   document.getElementById('orient-auto-btn')?.classList.toggle('on',l==='auto');
+  // Sembunyikan PWA note — Kiwi Browser juga support lock tanpa PWA
   const note=document.getElementById('orient-pwa-note');
-  if(note)note.style.display=(l!=='auto'&&!isPWA())?'block':'none';
+  if(note)note.style.display='none';
   document.getElementById('orient-port-btn')?.classList.toggle('on',l==='portrait');
   document.getElementById('orient-land-btn')?.classList.toggle('on',l==='landscape');
 }
@@ -1355,37 +1303,31 @@ window.addEventListener('resize',()=>{
 });
 window.addEventListener('orientationchange',()=>{
   setTimeout(checkOrientation,350);
-  // Re-lock segera setelah orientasi berubah
-  setTimeout(applyOrientLock,100);
-  setTimeout(applyOrientLock,500);
-  setTimeout(applyOrientLock,1000);
+  // Re-lock orientasi setelah berubah (native only)
+  setTimeout(applyOrientLock,300);
 });
 let _orientT=null;
 // Re-lock orientation + fullscreen when user returns to app
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){
-    setTimeout(applyOrientLock,200);
-    setTimeout(applyOrientLock,800);
+    setTimeout(applyOrientLock,300);
     setTimeout(restoreFontVars,300);
   }
 });
 // Also re-lock on focus
 window.addEventListener('focus',()=>{
-  setTimeout(applyOrientLock,200);
-  setTimeout(applyOrientLock,700);
+  setTimeout(applyOrientLock,300);
   setTimeout(restoreFontVars,350);
 });
 window.addEventListener('pageshow',()=>{
-  setTimeout(applyOrientLock,100);
-  setTimeout(applyOrientLock,600);
+  setTimeout(applyOrientLock,300);
   setTimeout(restoreFontVars,200);
 });
 // Re-lock saat screen.orientation berubah
 if(screen.orientation){
   screen.orientation.addEventListener('change',()=>{
     if((S.orientLock||'auto')!=='auto'){
-      setTimeout(applyOrientLock,150);
-      setTimeout(applyOrientLock,600);
+      setTimeout(applyOrientLock,300);
     }
   });
 }
