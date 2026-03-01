@@ -554,10 +554,10 @@ body.edit-mode #edit-bar{display:block}
   <div class="p-row"><label>Opacity Clock</label><div class="slider-row"><input type="range" id="sl-op-clock" min="10" max="100" value="100"><span class="slider-val" id="sl-op-clock-v">100%</span></div></div>
   <div class="hr"></div>
   <h2>Ukuran Standalone</h2>
-  <div class="p-row"><label>Ukuran Jam (SW)</label><div class="slider-row"><input type="range" id="sl-fsz-time" min="16" max="140" value="32" oninput="setSWSize('time',this.value)"><span class="slider-val" id="sl-fsz-time-v">32px</span></div></div>
-  <div class="p-row"><label>Ukuran Hari</label><div class="slider-row"><input type="range" id="sl-fsz-day" min="18" max="120" value="56" oninput="setSWSize('day',this.value)"><span class="slider-val" id="sl-fsz-day-v">56px</span></div></div>
-  <div class="p-row"><label>Ukuran Tanggal</label><div class="slider-row"><input type="range" id="sl-fsz-date" min="10" max="60" value="14" oninput="setSWSize('date',this.value)"><span class="slider-val" id="sl-fsz-date-v">14px</span></div></div>
-  <div class="p-row"><label>Ukuran Greeting</label><div class="slider-row"><input type="range" id="sl-fsz-greeting" min="10" max="40" value="12" oninput="setSWSize('greeting',this.value)"><span class="slider-val" id="sl-fsz-greeting-v">12px</span></div></div>
+  <div class="p-row"><label>Ukuran Jam (SW)</label><div class="slider-row"><input type="range" id="sl-fsz-time" min="16" max="140" value="32" oninput="setSWSize('time',this.value)" onchange="setSWSize('time',this.value)"><span class="slider-val" id="sl-fsz-time-v">32px</span></div></div>
+  <div class="p-row"><label>Ukuran Hari</label><div class="slider-row"><input type="range" id="sl-fsz-day" min="18" max="120" value="56" oninput="setSWSize('day',this.value)" onchange="setSWSize('day',this.value)"><span class="slider-val" id="sl-fsz-day-v">56px</span></div></div>
+  <div class="p-row"><label>Ukuran Tanggal</label><div class="slider-row"><input type="range" id="sl-fsz-date" min="10" max="60" value="14" oninput="setSWSize('date',this.value)" onchange="setSWSize('date',this.value)"><span class="slider-val" id="sl-fsz-date-v">14px</span></div></div>
+  <div class="p-row"><label>Ukuran Greeting</label><div class="slider-row"><input type="range" id="sl-fsz-greeting" min="10" max="40" value="12" oninput="setSWSize('greeting',this.value)" onchange="setSWSize('greeting',this.value)"><span class="slider-val" id="sl-fsz-greeting-v">12px</span></div></div>
 </div>
 
 <!-- Search -->
@@ -1536,8 +1536,6 @@ function init(){
   });
   reapplySWSizes();
   updateSW(new Date());
-  // DEBUG: tampilkan nilai tersimpan
-  setTimeout(()=>toast(`fszTime: ${S.fszTime} | fszDay: ${S.fszDay}`),500);
   setupOpSliders();
   document.getElementById('w-clock').style.opacity=(S.opClock||100)/100;
   document.getElementById('w-search').style.opacity=(S.opSearch||100)/100;
