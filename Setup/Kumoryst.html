@@ -626,7 +626,7 @@ function loadLocalBg(input){
   input.value='';
 }
 function renderGreeting(){const el=document.getElementById('greeting');if(S.greetingCustom){el.textContent=S.greetingCustom;return;}if(S.name){const h=new Date().getHours();el.textContent=`${h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam'}, ${S.name} ✦`;}else el.textContent='';}
-function tick(){const n=new Date();const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?'PM':'AM';hh=hh%12||12;}let t=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)t+=':'+String(ss).padStart(2,'0');document.getElementById('day-name').textContent=DAYS[n.getDay()].toUpperCase();document.getElementById('date').textContent=n.getDate()+' '+MF[n.getMonth()]+', '+n.getFullYear()+'.';document.getElementById('clock').textContent=suf?'- '+t+' '+suf+' -':'- '+t+' -';renderGreeting();if(S.showSecBar){document.getElementById('sec-bar').style.width=(ss/60*100)+'%';const ck=document.getElementById('clock');if(ck)document.documentElement.style.setProperty('--sec-bar-w',ck.offsetWidth+'px');}  }
+function tick(){const n=new Date();const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?'PM':'AM';hh=hh%12||12;}let t=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)t+=':'+String(ss).padStart(2,'0');document.getElementById('day-name').textContent=DAYS[n.getDay()].toUpperCase();document.getElementById('date').textContent=n.getDate()+' '+MF[n.getMonth()]+', '+n.getFullYear()+'.';document.getElementById('clock').textContent=suf?'- '+t+' '+suf+' -':'- '+t+' -';renderGreeting();if(S.showSecBar){const ck=document.getElementById('clock');if(ck){const w=ck.offsetWidth;if(w>0)document.documentElement.style.setProperty('--sec-bar-w',w+'px');}const bar=document.getElementById('sec-bar');if(ss===0){bar.style.transition='none';bar.style.width='0%';requestAnimationFrame(()=>{bar.style.transition='';bar.style.width='0%';});}else{bar.style.width=(ss/60*100)+'%';}}  }
 setInterval(tick,1000);tick();
 function toggle12h(){S.use12h=!S.use12h;save();document.getElementById('tog-12h').classList.toggle('on',S.use12h);}
 function toggleSecs(){S.showSecs=!S.showSecs;save();document.getElementById('tog-sec').classList.toggle('on',S.showSecs);}
@@ -1303,7 +1303,14 @@ function checkOrientation(){
   // Update orientation lock based on setting
   applyOrientLock();syncOrientBtns();
 }
-window.addEventListener('resize',()=>{clearTimeout(_orientT);_orientT=setTimeout(checkOrientation,250);});
+let _lastResizeW=window.innerWidth,_lastResizeH=window.innerHeight;
+window.addEventListener('resize',()=>{
+  const dw=Math.abs(window.innerWidth-_lastResizeW);
+  const dh=Math.abs(window.innerHeight-_lastResizeH);
+  if(dw<5&&dh<120)return;
+  _lastResizeW=window.innerWidth;_lastResizeH=window.innerHeight;
+  clearTimeout(_orientT);_orientT=setTimeout(checkOrientation,300);
+});
 window.addEventListener('orientationchange',()=>{
   setTimeout(checkOrientation,350);
   // Re-lock segera setelah orientasi berubah
