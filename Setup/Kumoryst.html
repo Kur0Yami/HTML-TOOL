@@ -973,12 +973,9 @@ function saveLayout(){
   save();
 }
 function restoreFontVars(){
-  // Hanya set CSS var jika S punya nilai tersimpan (bukan undefined)
-  // Kalau undefined, biarkan nilai dari :root CSS (hasil edit manual) tetap berlaku
-  if(S.fsDay!=null)document.documentElement.style.setProperty('--fs-day',S.fsDay+'px');
-  if(S.fsTime!=null)document.documentElement.style.setProperty('--fs-time',S.fsTime+'px');
-  if(S.fsDate!=null)document.documentElement.style.setProperty('--fs-date',S.fsDate+'px');
-  if(S.fsGreeting!=null)document.documentElement.style.setProperty('--fs-greeting',S.fsGreeting+'px');
+  // CSS :root adalah sumber kebenaran — tidak override dari S
+  // Font vars diset hanya oleh: CSS :root (edit manual) atau drag resize
+  // clockGap saja yang dari S karena ada slider-nya
   if(S.clockGap!=null)document.documentElement.style.setProperty('--clock-gap',S.clockGap+'px');
 }
 function applyLayout(){
@@ -991,17 +988,8 @@ function applyLayout(){
     if(l.width)w.style.width=l.width;if(l.height)w.style.height=l.height;
     if(l.transform!=null)w.style.transform=l.transform;
   });
-  // Sinkronisasi: kalau S belum punya font sizes tersimpan, baca dari CSS :root
-  // Ini penting supaya edit manual CSS :root diakui oleh sistem
-  (function syncFontVarsFromCSS(){
-    const cs=getComputedStyle(document.documentElement);
-    if(S.fsDay==null)S.fsDay=parseFloat(cs.getPropertyValue('--fs-day'))||72;
-    if(S.fsTime==null)S.fsTime=parseFloat(cs.getPropertyValue('--fs-time'))||27;
-    if(S.fsDate==null)S.fsDate=parseFloat(cs.getPropertyValue('--fs-date'))||13;
-    if(S.fsGreeting==null)S.fsGreeting=parseFloat(cs.getPropertyValue('--fs-greeting'))||15;
-    if(S.clockGap==null)S.clockGap=parseFloat(cs.getPropertyValue('--clock-gap'))||10;
-  })();
-  restoreFontVars();
+  // clockGap dari S (ada slider), font sizes dari CSS :root langsung
+  if(S.clockGap!=null)document.documentElement.style.setProperty('--clock-gap',S.clockGap+'px');
 }
 function setDefaultLayout(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const cw=document.getElementById('w-clock'),sw=document.getElementById('w-search'),bw=document.getElementById('w-bookmarks');if(D&&L){cw.style.cssText='left:50%;top:8%;transform:translateX(-50%);width:420px;';sw.style.cssText='left:50%;top:52%;transform:translateX(-50%);width:600px;';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:700px;';}else if(L){cw.style.cssText='left:50%;top:4%;transform:translateX(-50%);width:280px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(460px,85vw);';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:min(520px,90vw);';}else{cw.style.cssText='left:50%;top:12%;transform:translateX(-50%);width:320px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(500px,90vw);';bw.style.cssText='left:50%;top:70%;transform:translateX(-50%);width:min(560px,94vw);';restoreFontVars();}}
 function resetLayout(){
@@ -1013,7 +1001,7 @@ function centerWidget(wid){const w=document.getElementById(wid);const wr=w.getBo
 const guideH=document.getElementById('guide-h'),guideV=document.getElementById('guide-v'),SNAP=12;
 (function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy;
 // font sizes snapshot saat mulai resize
-let _rsInitW=0,_rsInitDay=72,_rsInitTime=27,_rsInitDate=13,_rsInitGreeting=15;
+let _rsInitW=0,_rsInitDay=0,_rsInitTime=0,_rsInitDate=0,_rsInitGreeting=0;
 function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}
 function getCSSPx(v){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v))||0;}
 function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){
@@ -1021,10 +1009,11 @@ function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||
   // snapshot font sizes hanya untuk w-clock
   if(w.id==='w-clock'){
     _rsInitW=r.width||ow;
-    _rsInitDay=getCSSPx('--fs-day')||72;
-    _rsInitTime=getCSSPx('--fs-time')||27;
-    _rsInitDate=getCSSPx('--fs-date')||13;
-    _rsInitGreeting=getCSSPx('--fs-greeting')||15;
+    const _cs=getComputedStyle(document.documentElement);
+    _rsInitDay=parseFloat(_cs.getPropertyValue('--fs-day'))||50;
+    _rsInitTime=parseFloat(_cs.getPropertyValue('--fs-time'))||27;
+    _rsInitDate=parseFloat(_cs.getPropertyValue('--fs-date'))||13;
+    _rsInitGreeting=parseFloat(_cs.getPropertyValue('--fs-greeting'))||15;
   }
 }else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}}
 function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);dr.style.left=nx+'px';dr.style.top=ny+'px';}
@@ -1040,11 +1029,8 @@ if(rs){e.preventDefault();const nw=Math.max(100,ow+(p.x-ox));rs.style.width=nw+'
   }
 }}
 function onE(){if(rs&&rs.id==='w-clock'){
-  // simpan font sizes ke S setelah resize selesai
-  S.fsDay=Math.round(getCSSPx('--fs-day')||72);
-  S.fsTime=Math.round(getCSSPx('--fs-time')||27);
-  S.fsDate=Math.round(getCSSPx('--fs-date')||13);
-  S.fsGreeting=Math.round(getCSSPx('--fs-greeting')||15);
+  // Setelah resize, update CSS var langsung — tidak simpan ke S
+  // CSS var sudah terupdate realtime di onM(), tidak perlu sync ulang
 }
 if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
 // ── Draggable: gear, r-btn icons, BGM player ──
