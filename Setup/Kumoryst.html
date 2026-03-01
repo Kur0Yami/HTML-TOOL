@@ -1197,56 +1197,69 @@ function updateRadialAngles(){
 /* ── Orientation Lock: JS Transform (bekerja saat API diblok browser) ── */
 function _jsOrientApply(){
   const mode = S.orientLock||'auto';
-  // Hapus wrapper lama jika ada
   let wrap = document.getElementById('_orient-wrap');
-  if(mode==='auto'){
-    if(wrap){
-      // Kembalikan semua children ke body
-      while(wrap.firstChild) document.body.appendChild(wrap.firstChild);
-      wrap.remove();
-    }
+
+  function removeWrap(){
+    if(wrap){while(wrap.firstChild)document.body.appendChild(wrap.firstChild);wrap.remove();wrap=null;}
     document.documentElement.style.cssText='';
     document.body.style.cssText='';
-    return;
   }
-  const isLandscapeNow = window.innerWidth > window.innerHeight;
-  const needRotate = (mode==='portrait' && isLandscapeNow) || (mode==='landscape' && !isLandscapeNow);
-  if(!needRotate){
-    // Orientasi sudah sesuai, hapus transform
-    if(wrap){
-      while(wrap.firstChild) document.body.appendChild(wrap.firstChild);
-      wrap.remove();
-    }
-    document.documentElement.style.cssText='';
-    document.body.style.cssText='';
-    return;
+
+  if(mode==='auto'){removeWrap();return;}
+
+  // Deteksi orientasi FISIK layar sekarang (bukan window yang sudah di-transform)
+  // Gunakan screen.orientation.angle jika tersedia — paling akurat
+  let isLandscapeNow;
+  if(screen.orientation && screen.orientation.type){
+    isLandscapeNow = screen.orientation.type.startsWith('landscape');
+  } else if(typeof screen.orientation?.angle === 'number'){
+    isLandscapeNow = screen.orientation.angle===90 || screen.orientation.angle===270;
+  } else {
+    // Fallback: pakai window.innerWidth/Height SEBELUM ada transform
+    // Kalau wrap sudah ada, ukuran window sudah berubah — pakai screen langsung
+    const sw=screen.width||0, sh=screen.height||0;
+    if(sw>0&&sh>0) isLandscapeNow = sw>sh;
+    else isLandscapeNow = window.innerWidth>window.innerHeight;
   }
-  const sw = screen.width  || window.innerWidth;   // layar fisik lebar
-  const sh = screen.height || window.innerHeight;  // layar fisik tinggi
-  const vw = Math.min(sw,sh); // dimensi portrait: lebar = sisi pendek
-  const vh = Math.max(sw,sh); // dimensi portrait: tinggi = sisi panjang
-  const angle = (mode==='portrait') ? -90 : 90;
-  // Paksa html/body jadi ukuran layar fisik portrait/landscape yang benar
-  document.documentElement.style.cssText=`width:${vw}px!important;height:${vh}px!important;overflow:hidden!important;background:#080810;`;
-  document.body.style.cssText=`width:${vw}px!important;height:${vh}px!important;overflow:hidden!important;`;
-  // Buat atau update wrapper yang dirotasi
+
+  const needRotate = (mode==='portrait'&&isLandscapeNow)||(mode==='landscape'&&!isLandscapeNow);
+  if(!needRotate){removeWrap();return;}
+
+  // Dimensi fisik layar — selalu ambil yang lebih kecil sebagai portrait-width
+  const sw = screen.width  || window.innerWidth;
+  const sh = screen.height || window.innerHeight;
+  const pW = Math.min(sw,sh); // portrait width  = sisi pendek
+  const pH = Math.max(sw,sh); // portrait height = sisi panjang
+
+  // Tentukan arah rotasi berdasarkan angle orientasi saat ini
+  // Landscape-primary (90°) → perlu rotate -90° untuk portrait
+  // Landscape-secondary (270°) → perlu rotate +90° untuk portrait
+  let angle = -90; // default
+  if(screen.orientation && typeof screen.orientation.angle==='number'){
+    const a = screen.orientation.angle;
+    if(mode==='portrait') angle = (a===270||a===90) ? (a===270?90:-90) : -90;
+    if(mode==='landscape') angle = 90;
+  }
+
+  // Set html/body ke dimensi portrait
+  document.documentElement.style.cssText=`width:${pW}px!important;height:${pH}px!important;overflow:hidden!important;background:#080810;`;
+  document.body.style.cssText=`width:${pW}px!important;height:${pH}px!important;overflow:hidden!important;`;
+
   if(!wrap){
     wrap=document.createElement('div');
     wrap.id='_orient-wrap';
-    // Pindahkan semua children body ke wrapper
-    while(document.body.firstChild) wrap.appendChild(document.body.firstChild);
+    while(document.body.firstChild)wrap.appendChild(document.body.firstChild);
     document.body.appendChild(wrap);
   }
-  // Rotasi wrapper di tengah viewport yang sudah ter-swap dimensinya
-  // Setelah rotate 90deg: lebar jadi vh, tinggi jadi vw — kita perlu offset supaya pas
-  const dx = (vw - vh) / 2;
-  const dy = (vh - vw) / 2;
+
+  // Wrapper berukuran landscape (pH x pW), lalu dirotasi ke portrait
+  // translate supaya tepat di tengah viewport portrait (pW x pH)
+  const dx = (pW - pH) / 2;
+  const dy = (pH - pW) / 2;
   wrap.style.cssText=`
-    position:fixed;
-    top:0;left:0;
-    width:${vh}px;
-    height:${vw}px;
-    transform-origin:${vh/2}px ${vw/2}px;
+    position:fixed;top:0;left:0;
+    width:${pH}px;height:${pW}px;
+    transform-origin:${pH/2}px ${pW/2}px;
     transform:translate(${dx}px,${dy}px) rotate(${angle}deg);
     overflow:hidden;
   `;
