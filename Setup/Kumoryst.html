@@ -59,7 +59,7 @@ body.edit-mode .edit-handle{display:block}
 #day-name{font-family:'Anurati',sans-serif;font-size:var(--fs-day);color:var(--text);letter-spacing:10px;text-transform:uppercase;text-align:center;line-height:1}
 #date{font-family:var(--font-ui);font-size:var(--fs-date);color:var(--muted);letter-spacing:3px;font-weight:300;text-align:center}
 #clock{font-family:var(--font-ui);font-size:var(--fs-time);color:var(--muted);letter-spacing:3px;line-height:1;white-space:nowrap;text-align:center;font-weight:300}
-#sec-bar-wrap{width:100%;max-width:var(--sec-bar-w,280px);height:3px;background:rgba(var(--accent),0.12);border-radius:2px;overflow:hidden;margin-top:2px;align-self:center}
+#sec-bar-wrap{width:100%;height:3px;background:rgba(var(--accent),0.12);border-radius:2px;overflow:hidden;margin-top:2px}
 #sec-bar{height:100%;background:rgba(var(--accent),0.6);border-radius:2px;width:0%;transition:width .95s linear}
 #sec-bar-wrap.hidden-bar{display:none}
 
@@ -430,8 +430,12 @@ body.edit-mode #edit-bar{display:block}
   </div>
   <div class="p-row">
     <label>Upload file (gambar/video)</label>
-    <label class="p-btn" for="bg-file" style="cursor:pointer">📁 Pilih File</label>
-    <input id="bg-file" type="file" class="p-file" accept="image/*,video/*,.webm,.mp4,.mkv">
+    <div style="display:flex;gap:8px">
+      <label class="p-btn" for="bg-file" style="cursor:pointer;flex:1">🖼 Galeri</label>
+      <label class="p-btn" for="bg-file-mgr" style="cursor:pointer;flex:1">📁 File Manager</label>
+    </div>
+    <input id="bg-file" type="file" class="p-file" accept="image/*,video/*">
+    <input id="bg-file-mgr" type="file" class="p-file" accept="*/*">
   </div>
   <div class="p-row"><label>Waktu slideshow</label><div class="slider-row"><input type="range" id="sl-bgtrans" min="3" max="120" value="10"><span class="slider-val" id="sl-bgtrans-v">10s</span></div></div>
   <div class="p-row"><label>Durasi fade</label><div class="slider-row"><input type="range" id="sl-bgfade" min="0" max="3" step="0.1" value="0.8"><span class="slider-val" id="sl-bgfade-v">0.8s</span></div></div>
@@ -517,12 +521,6 @@ body.edit-mode #edit-bar{display:block}
   <div class="toggle-row"><span>Progress bar detik</span><div class="tog" id="tog-secbar" onclick="toggleSecBar()"></div></div>
   <div class="toggle-row"><span>Card / blur jam</span><div class="tog" id="tog-card" onclick="toggleClockCard()"></div></div>
   <div class="p-row"><label>Opacity Clock</label><div class="slider-row"><input type="range" id="sl-op-clock" min="10" max="100" value="100"><span class="slider-val" id="sl-op-clock-v">100%</span></div></div>
-  <div class="hr"></div>
-  <h2>Ukuran Teks</h2>
-  <div class="p-row"><label>Hari</label><div class="slider-row"><input type="range" id="sl-fs-day" min="20" max="160" value="72"><span class="slider-val" id="sl-fs-day-v">72px</span></div></div>
-  <div class="p-row"><label>Jam</label><div class="slider-row"><input type="range" id="sl-fs-time" min="10" max="80" value="27"><span class="slider-val" id="sl-fs-time-v">27px</span></div></div>
-  <div class="p-row"><label>Tanggal</label><div class="slider-row"><input type="range" id="sl-fs-date" min="8" max="40" value="13"><span class="slider-val" id="sl-fs-date-v">13px</span></div></div>
-  <div class="p-row"><label>Greeting</label><div class="slider-row"><input type="range" id="sl-fs-greeting" min="8" max="36" value="15"><span class="slider-val" id="sl-fs-greeting-v">15px</span></div></div>
 </div>
 
 <!-- Search -->
@@ -620,22 +618,14 @@ function applyAppName(){
 
 function loadLocalBg(input){
   const file=input.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    idbSet('bg',ev.target.result).then(()=>{
-      S.bgLocal='idb:bg';S.bgUrls=[];S.bgType=file.type.startsWith('video')?'video':'img';
-      _bgLocalData=ev.target.result;
-      applyBg();save();toast('Background diterapkan!');
-    });
-  };
-  r.readAsDataURL(file);
+  const url=URL.createObjectURL(file);
+  if(file.type.startsWith('video/')){S.bgType='vid';S.bgLocal=url;}
+  else{S.bgType='img';S.bgLocal=url;}
+  applyBg();toast('Background diterapkan!');
   input.value='';
 }
 function renderGreeting(){const el=document.getElementById('greeting');if(S.greetingCustom){el.textContent=S.greetingCustom;return;}if(S.name){const h=new Date().getHours();el.textContent=`${h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam'}, ${S.name} ✦`;}else el.textContent='';}
-function tick(){const n=new Date();const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?'PM':'AM';hh=hh%12||12;}let t=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)t+=':'+String(ss).padStart(2,'0');document.getElementById('day-name').textContent=DAYS[n.getDay()].toUpperCase();document.getElementById('date').textContent=n.getDate()+' '+MF[n.getMonth()]+', '+n.getFullYear()+'.';document.getElementById('clock').textContent=suf?'- '+t+' '+suf+' -':'- '+t+' -';renderGreeting();if(S.showSecBar){document.getElementById('sec-bar').style.width=(ss/60*100)+'%';
-  // sync lebar bar dengan lebar teks jam
-  const ck=document.getElementById('clock');if(ck){document.documentElement.style.setProperty('--sec-bar-w',ck.offsetWidth+'px');}
-}}
+function tick(){const n=new Date();const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];let hh=n.getHours(),mm=n.getMinutes(),ss=n.getSeconds();let suf='';if(S.use12h){suf=hh>=12?'PM':'AM';hh=hh%12||12;}let t=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');if(S.showSecs)t+=':'+String(ss).padStart(2,'0');document.getElementById('day-name').textContent=DAYS[n.getDay()].toUpperCase();document.getElementById('date').textContent=n.getDate()+' '+MF[n.getMonth()]+', '+n.getFullYear()+'.';document.getElementById('clock').textContent=suf?'- '+t+' '+suf+' -':'- '+t+' -';renderGreeting();if(S.showSecBar)document.getElementById('sec-bar').style.width=(ss/59*100)+'%';}
 setInterval(tick,1000);tick();
 function toggle12h(){S.use12h=!S.use12h;save();document.getElementById('tog-12h').classList.toggle('on',S.use12h);}
 function toggleSecs(){S.showSecs=!S.showSecs;save();document.getElementById('tog-sec').classList.toggle('on',S.showSecs);}
@@ -713,18 +703,22 @@ function applyBg(){
   bgSlideIdx=0;showSlide(bgSlideIdx);startSlideTimer();
 }
 function applyBgUrls(){const raw=document.getElementById('bg-urls').value.trim();const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;S.bgUrls=lines;S.bgLocal='';S.bgType=/\.(webm|mp4|ogg|mkv)(\?.*)?$/i.test(lines[0])?'video':'img';applyBg();save();toast('Background diterapkan!');}
-document.getElementById('bg-file').addEventListener('change',function(e){
-  const f=e.target.files[0];if(!f)return;
+function handleBgFile(f){
+  if(!f)return;
+  // detect video by type or extension
+  const isVid=f.type.startsWith('video/')||/\.(webm|mp4|mkv|ogg|mov)$/i.test(f.name);
   const r=new FileReader();
   r.onload=ev=>{
     idbSet('bg',ev.target.result).then(()=>{
-      S.bgLocal='idb:bg';S.bgUrls=[];S.bgType=f.type.startsWith('video')?'video':'img';
+      S.bgLocal='idb:bg';S.bgUrls=[];S.bgType=isVid?'video':'img';
       _bgLocalData=ev.target.result;
       applyBg();save();toast('File disimpan!');
     });
   };
   r.readAsDataURL(f);
-});
+}
+document.getElementById('bg-file').addEventListener('change',function(e){handleBgFile(e.target.files[0]);});
+document.getElementById('bg-file-mgr').addEventListener('change',function(e){handleBgFile(e.target.files[0]);});
 function resetBg(){S.bgUrls=[];S.bgLocal='';S.bgX=50;S.bgY=50;S.bgZ=100;_bgLocalData='';clearInterval(bgSlideTimer);bgImg.style.backgroundImage='';bgImg2.style.backgroundImage='';bgVid.style.display='none';bgVid.src='';document.getElementById('bg-urls').value='';syncBgSliders();idbDel('bg');save();toast('Background direset!');}
 function toggleBgLoop(){S.bgLoop=!S.bgLoop;save();document.getElementById('tog-bgloop').classList.toggle('on',S.bgLoop);}
 function toggleBgLoopRange(){
@@ -826,7 +820,7 @@ function renderPresets(){const grid=document.getElementById('preset-grid');grid.
 document.getElementById('sl-blur').addEventListener('input',function(){S.blur=+this.value;document.documentElement.style.setProperty('--blur',S.blur+'px');document.getElementById('sl-blur-v').textContent=S.blur+'px';save();});
 document.querySelectorAll('.swatch').forEach(sw=>{sw.addEventListener('click',()=>{S.accent=sw.dataset.rgb;document.documentElement.style.setProperty('--accent',S.accent);document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));sw.classList.add('on');save();});});
 document.getElementById('sl-fs-ui').addEventListener('input',function(){S.fsUI=+this.value;document.documentElement.style.setProperty('--fs-ui',S.fsUI+'px');document.getElementById('sl-fs-ui-v').textContent=S.fsUI+'px';save();});
-document.getElementById('sl-fs-clock').addEventListener('input',function(){S.fsClock=+this.value;document.documentElement.style.setProperty('--fs-clock',S.fsClock+'px');document.getElementById('sl-fs-clock-v').textContent=S.fsClock+'px';save();const ck=document.getElementById('clock');if(ck)setTimeout(()=>document.documentElement.style.setProperty('--sec-bar-w',ck.offsetWidth+'px'),50);});
+document.getElementById('sl-fs-clock').addEventListener('input',function(){S.fsClock=+this.value;document.documentElement.style.setProperty('--fs-clock',S.fsClock+'px');document.getElementById('sl-fs-clock-v').textContent=S.fsClock+'px';save();});
 function applyFontUI(){const p=parseFontInput(document.getElementById('font-ui-input').value);const nf=document.getElementById('font-ui-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-ui-name').value=p.name;document.getElementById('font-main-link').href=url;document.documentElement.style.setProperty('--font-ui',`'${name}',sans-serif`);S.fontUIUrl=url;S.fontUIName=name;save();toast('Font UI diterapkan!');}
 function resetFontUI(){document.getElementById('font-main-link').href='https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap';document.documentElement.style.setProperty('--font-ui',"'Outfit',sans-serif");S.fontUIUrl='';S.fontUIName='';save();document.getElementById('font-ui-input').value='';document.getElementById('font-ui-name').value='';toast('Font UI direset');}
 function applyFontClock(){const p=parseFontInput(document.getElementById('font-clock-input').value);const nf=document.getElementById('font-clock-name').value.trim();const name=nf||(p?p.name:'');const url=p?p.url:null;if(!url||!name)return toast('Tidak bisa parse font!');if(p.name&&!nf)document.getElementById('font-clock-name').value=p.name;document.getElementById('font-clock-link').href=url;document.documentElement.style.setProperty('--font-clock',`'${name}',monospace`);S.fontClockUrl=url;S.fontClockName=name;save();toast('Font jam diterapkan!');}
@@ -973,6 +967,11 @@ function applyLayout(){
     if(l.width)w.style.width=l.width;if(l.height)w.style.height=l.height;
     if(l.transform!=null)w.style.transform=l.transform;
   });
+  // restore saved font sizes
+  document.documentElement.style.setProperty('--fs-day',(S.fsDay||72)+'px');
+  document.documentElement.style.setProperty('--fs-time',(S.fsTime||27)+'px');
+  document.documentElement.style.setProperty('--fs-date',(S.fsDate||13)+'px');
+  document.documentElement.style.setProperty('--fs-greeting',(S.fsGreeting||15)+'px');
 }
 function setDefaultLayout(){const L=window.innerWidth>window.innerHeight,D=window.innerWidth>=768;const cw=document.getElementById('w-clock'),sw=document.getElementById('w-search'),bw=document.getElementById('w-bookmarks');if(D&&L){cw.style.cssText='left:50%;top:8%;transform:translateX(-50%);width:420px;';sw.style.cssText='left:50%;top:52%;transform:translateX(-50%);width:600px;';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:700px;';}else if(L){cw.style.cssText='left:50%;top:4%;transform:translateX(-50%);width:280px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(460px,85vw);';bw.style.cssText='left:50%;top:72%;transform:translateX(-50%);width:min(520px,90vw);';}else{cw.style.cssText='left:50%;top:12%;transform:translateX(-50%);width:320px;';sw.style.cssText='left:50%;top:50%;transform:translateX(-50%);width:min(500px,90vw);';bw.style.cssText='left:50%;top:70%;transform:translateX(-50%);width:min(560px,94vw);';}}
 function resetLayout(){
@@ -982,7 +981,42 @@ function resetLayout(){
 }
 function centerWidget(wid){const w=document.getElementById(wid);const wr=w.getBoundingClientRect();w.style.transform='none';w.style.left=((window.innerWidth-wr.width)/2)+'px';saveLayout();toast('Widget dicenterin!');}
 const guideH=document.getElementById('guide-h'),guideV=document.getElementById('guide-v'),SNAP=12;
-(function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy;function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;}else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}}function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);dr.style.left=nx+'px';dr.style.top=ny+'px';}if(rs){e.preventDefault();rs.style.width=Math.max(100,ow+(p.x-ox))+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';}}function onE(){if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
+(function(){let dr=null,rs=null,ox,oy,ow,oh,wx,wy;
+// font sizes snapshot saat mulai resize
+let _rsInitW=0,_rsInitDay=72,_rsInitTime=27,_rsInitDate=13,_rsInitGreeting=15;
+function gP(e){const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}
+function getCSSPx(v){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v))||0;}
+function onS(e,w){if(!editMode)return;if(e.target.classList.contains('bm-del')||e.target.classList.contains('cen'))return;const r=w.getBoundingClientRect(),p=gP(e);e.preventDefault();e.stopPropagation();w.style.transform='none';if(p.x>r.right-32&&p.y>r.bottom-32){
+  rs=w;ox=p.x;oy=p.y;ow=r.width;oh=r.height;
+  // snapshot font sizes hanya untuk w-clock
+  if(w.id==='w-clock'){
+    _rsInitW=r.width||ow;
+    _rsInitDay=getCSSPx('--fs-day')||72;
+    _rsInitTime=getCSSPx('--fs-time')||27;
+    _rsInitDate=getCSSPx('--fs-date')||13;
+    _rsInitGreeting=getCSSPx('--fs-greeting')||15;
+  }
+}else{dr=w;ox=p.x;oy=p.y;wx=r.left;wy=r.top;w.style.left=wx+'px';w.style.top=wy+'px';}}
+function onM(e){const p=gP(e);if(dr){e.preventDefault();let nx=wx+(p.x-ox),ny=wy+(p.y-oy);const r=dr.getBoundingClientRect();const cx=nx+r.width/2,cy=ny+r.height/2,mx=window.innerWidth/2,my=window.innerHeight/2;let sx=Math.abs(cx-mx)<SNAP,sy=Math.abs(cy-my)<SNAP;if(sx)nx=mx-r.width/2;if(sy)ny=my-r.height/2;guideV.classList.toggle('show',sx);guideH.classList.toggle('show',sy);dr.style.left=nx+'px';dr.style.top=ny+'px';}
+if(rs){e.preventDefault();const nw=Math.max(100,ow+(p.x-ox));rs.style.width=nw+'px';rs.style.height=Math.max(36,oh+(p.y-oy))+'px';
+  // scale font proporsional untuk w-clock
+  if(rs.id==='w-clock'&&_rsInitW>0){
+    const ratio=nw/_rsInitW;
+    const nd=Math.round(_rsInitDay*ratio),nt=Math.round(_rsInitTime*ratio),ndate=Math.round(_rsInitDate*ratio),ng=Math.round(_rsInitGreeting*ratio);
+    document.documentElement.style.setProperty('--fs-day',nd+'px');
+    document.documentElement.style.setProperty('--fs-time',nt+'px');
+    document.documentElement.style.setProperty('--fs-date',ndate+'px');
+    document.documentElement.style.setProperty('--fs-greeting',ng+'px');
+  }
+}}
+function onE(){if(rs&&rs.id==='w-clock'){
+  // simpan font sizes ke S setelah resize selesai
+  S.fsDay=Math.round(getCSSPx('--fs-day')||72);
+  S.fsTime=Math.round(getCSSPx('--fs-time')||27);
+  S.fsDate=Math.round(getCSSPx('--fs-date')||13);
+  S.fsGreeting=Math.round(getCSSPx('--fs-greeting')||15);
+}
+if(dr||rs){guideH.classList.remove('show');guideV.classList.remove('show');saveLayout();}dr=null;rs=null;}document.querySelectorAll('.widget').forEach(w=>{w.addEventListener('mousedown',e=>onS(e,w));w.addEventListener('touchstart',e=>onS(e,w),{passive:false});});document.addEventListener('mousemove',onM);document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('mouseup',onE);document.addEventListener('touchend',onE);})();
 // ── Draggable: gear, r-btn icons, BGM player ──
 (function(){
   const gear=document.getElementById('gear');
@@ -1374,28 +1408,8 @@ function init(){
   document.querySelectorAll('.swatch').forEach(sw=>sw.classList.toggle('on',sw.dataset.rgb===S.accent));
   document.documentElement.style.setProperty('--fs-ui',(S.fsUI||15)+'px');
   document.documentElement.style.setProperty('--fs-clock',(S.fsClock||72)+'px');
-  document.documentElement.style.setProperty('--fs-day',(S.fsDay||72)+'px');
-  document.documentElement.style.setProperty('--fs-time',(S.fsTime||27)+'px');
-  document.documentElement.style.setProperty('--fs-date',(S.fsDate||13)+'px');
-  document.documentElement.style.setProperty('--fs-greeting',(S.fsGreeting||15)+'px');
   document.getElementById('sl-fs-ui').value=S.fsUI||15;document.getElementById('sl-fs-ui-v').textContent=(S.fsUI||15)+'px';
   document.getElementById('sl-fs-clock').value=S.fsClock||72;document.getElementById('sl-fs-clock-v').textContent=(S.fsClock||72)+'px';
-  // slider ukuran teks clock
-  (['day','time','date','greeting']).forEach(k=>{
-    const kc=k.charAt(0).toUpperCase()+k.slice(1);
-    const def={day:72,time:27,date:13,greeting:15}[k];
-    const sl=document.getElementById('sl-fs-'+k);
-    const sv=document.getElementById('sl-fs-'+k+'-v');
-    if(sl){sl.value=S['fs'+kc]||def;sv.textContent=(S['fs'+kc]||def)+'px';
-      sl.addEventListener('input',function(){
-        S['fs'+kc]=+this.value;
-        document.documentElement.style.setProperty('--fs-'+k,this.value+'px');
-        sv.textContent=this.value+'px';save();
-        // sync sec-bar width setelah font change
-        if(k==='time'){const ck=document.getElementById('clock');if(ck)setTimeout(()=>document.documentElement.style.setProperty('--sec-bar-w',ck.offsetWidth+'px'),50);}
-      });
-    }
-  });
   if(S.fontUIUrl&&S.fontUIName){document.getElementById('font-main-link').href=S.fontUIUrl;document.documentElement.style.setProperty('--font-ui',`'${S.fontUIName}',sans-serif`);document.getElementById('font-ui-name').value=S.fontUIName;}
   if(S.fontClockUrl&&S.fontClockName){document.getElementById('font-clock-link').href=S.fontClockUrl;document.documentElement.style.setProperty('--font-clock',`'${S.fontClockName}',monospace`);document.getElementById('font-clock-name').value=S.fontClockName;}
   document.querySelectorAll('.eng-item').forEach(i=>i.classList.toggle('on',i.dataset.url===S.engine));
