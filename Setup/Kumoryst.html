@@ -317,8 +317,10 @@ body.edit-mode #edit-bar{display:block}
       <div id="greeting"></div>
       <div id="day-name">MINGGU</div>
       <div id="date">1 Maret, 2026.</div>
+      <div id="clock-time-wrap" style="display:flex;flex-direction:column;align-items:stretch">
       <div id="clock">- 00:00 -</div>
       <div id="sec-bar-wrap" class="hidden-bar"><div id="sec-bar"></div></div>
+      </div>
     </div>
   </div>
   <div class="widget" id="w-search">
@@ -656,7 +658,7 @@ function showSlide(idx){const url=S.bgUrls[idx];if(!url)return;const isVid=/\.(w
     };
     bgVid.oncanplay=()=>{bgVid.oncanplay=null;if(S.bgLoopRangeActive&&S.bgLoopStart>0)bgVid.currentTime=S.bgLoopStart;};
     return;
-  }const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
+  }const fd=S.bgFadeSec||0.8;bgImg2.style.transition=`opacity ${fd}s ease`;bgImg.style.transition=`opacity ${fd}s ease`;const cur=bgImg.style.backgroundImage;if(cur&&cur!=='none'&&bgImg.style.opacity!=='0'){bgImg2.style.backgroundImage=`url('${url}')`;bgImg2.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg2.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg2.style.opacity='1';setTimeout(()=>{bgImg.style.opacity='0';setTimeout(()=>{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';},fd*1000);},50);}else{bgImg.style.backgroundImage=`url('${url}')`;bgImg.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;bgImg.style.backgroundSize=S.bgZ>100?`${S.bgZ}%`:'cover';bgImg.style.opacity='1';bgImg2.style.opacity='0';}bgVid.style.display='none';bgVid.src='';}
 function startSlideTimer(){
   clearInterval(bgSlideTimer);
   if(!S.bgUrls||S.bgUrls.length<=1)return;
@@ -1298,23 +1300,20 @@ function checkOrientation(){
   b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);
   applyOrientLock();syncOrientBtns();
 }
-// Hanya re-apply layout saat orientasi benar-benar berubah (landscape↔portrait)
-let _lastOrientIsLand=window.innerWidth>window.innerHeight;
+// Hanya re-apply layout saat orientasi benar-benar berubah (portrait <-> landscape)
+let _lastOrientLand=window.innerWidth>window.innerHeight;
 window.addEventListener('resize',()=>{
   const nowLand=window.innerWidth>window.innerHeight;
-  // Jika orientasi berubah, apply layout sesuai key baru
-  if(nowLand!==_lastOrientIsLand){
-    _lastOrientIsLand=nowLand;
+  if(nowLand!==_lastOrientLand){
+    // Orientasi berubah: apply layout yang sesuai
+    _lastOrientLand=nowLand;
     clearTimeout(_orientT);_orientT=setTimeout(()=>{
       checkOrientation();
       const key=curLayoutKey();
-      if(S[key]&&Object.keys(S[key]).length)applyLayout();
-      else setDefaultLayout();
+      if(S[key]&&Object.keys(S[key]).length)applyLayout();else setDefaultLayout();
     },300);
-  }else{
-    // Resize minor (address bar, keyboard) — hanya update orient lock
-    clearTimeout(_orientT);_orientT=setTimeout(checkOrientation,250);
   }
+  // Resize minor (address bar, keyboard) diabaikan — tidak re-apply layout
 });
 window.addEventListener('orientationchange',()=>{
   setTimeout(checkOrientation,350);
