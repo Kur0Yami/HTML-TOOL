@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRX Downloader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #f43f5e;
+      --success: #10b981;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      animation: gridPan 20s linear infinite;
+    }
+
+    @keyframes gridPan {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      padding: 4px 14px;
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    /* Input area */
+    .input-wrap {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .input-label {
+      font-size: 0.75rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .input-field {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 1rem 0.9rem 3rem;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.1);
+    }
+
+    .input-field::placeholder { color: var(--muted); }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .input-clear {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      display: none;
+      transition: color 0.2s;
+    }
+
+    .input-clear:hover { color: var(--danger); }
+
+    /* Extension ID preview */
+    .ext-id-wrap {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      margin-bottom: 1.2rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ext-id-wrap.show { display: flex; }
+
+    .ext-id-label {
+      font-size: 0.65rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .ext-id-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--accent);
+      word-break: break-all;
+    }
+
+    /* Version select */
+    .version-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .select-field {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+      appearance: none;
+      transition: border-color 0.2s;
+    }
+
+    .select-field:focus { border-color: var(--accent); }
+
+    .select-wrap { position: relative; }
+    .select-arrow {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+
+    /* Button */
+    .btn-download {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border: none;
+      border-radius: 12px;
+      padding: 1rem;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+
+    .btn-download::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.2s;
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,229,255,0.25);
+    }
+
+    .btn-download:hover::after { background: rgba(255,255,255,0.07); }
+    .btn-download:active { transform: translateY(0); }
+    .btn-download:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Progress */
+    .progress-wrap {
+      margin-top: 1.2rem;
+      display: none;
+    }
+
+    .progress-wrap.show { display: block; }
+
+    .progress-bar-track {
+      background: var(--bg);
+      border-radius: 100px;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 0.4rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      width: 0%;
+      transition: width 0.3s ease;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .progress-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Status */
+    .status-box {
+      margin-top: 1rem;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      display: none;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .status-box.show { display: flex; }
+    .status-box.error { background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); color: var(--danger); }
+    .status-box.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--success); }
+    .status-box.info { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); color: var(--accent); }
+
+    /* Methods info */
+    .methods {
+      margin-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.2rem;
+    }
+
+    .methods-title {
+      font-size: 0.65rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.8rem;
+    }
+
+    .method-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .method-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .method-item:hover { border-color: var(--border); color: var(--text); }
+    .method-item.active { border-color: var(--accent); color: var(--accent); }
+
+    .method-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* Footer note */
+    .footer-note {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      line-height: 1.6;
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Glow pulse on card when active */
+    .card.glowing {
+      box-shadow: 0 0 40px rgba(0,229,255,0.08);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="logo-badge">⬡ CRX Downloader</div>
+    <h1>Chrome <span>Extension</span><br>Downloader</h1>
+    <p class="subtitle">// paste link → download .crx</p>
+  </div>
+
+  <div class="card" id="mainCard">
+    <label class="input-label">Chrome Web Store URL</label>
+    <div class="input-wrap">
+      <span class="input-icon">🔗</span>
+      <input
+        type="text"
+        class="input-field"
+        id="urlInput"
+        placeholder="https://chrome.google.com/webstore/detail/..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="input-clear" id="clearBtn" title="Clear">✕</button>
+    </div>
+
+    <div class="ext-id-wrap" id="extIdWrap">
+      <span class="ext-id-label">Extension ID →</span>
+      <span class="ext-id-val" id="extIdVal">–</span>
+    </div>
+
+    <div class="version-row">
+      <div>
+        <label class="input-label">Chrome Version</label>
+        <div class="select-wrap">
+          <select class="select-field" id="chromeVersion">
+            <option value="126.0">126.0 (Latest)</option>
+            <option value="125.0">125.0</option>
+            <option value="120.0">120.0</option>
+            <option value="110.0">110.0</option>
+            <option value="100.0">100.0</option>
+            <option value="80.0">80.0</option>
+          </select>
+          <span class="select-arrow">▼</span>
+        </div>
+      </div>
+      <div>
+        <label class="input-label">Platform</label>
+        <div class="select-wrap">
+          <select class="select-field" id="platform">
+            <option value="x86-64">x86-64 (PC)</option>
+            <option value="arm">ARM</option>
+            <option value="x86-32">x86-32</option>
+          </select>
+          <span class="select-arrow">▼</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-download" id="downloadBtn" disabled>
+      ↓ Download .CRX
+    </button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">Menghubungi server...</div>
+    </div>
+
+    <div class="status-box" id="statusBox">
+      <span id="statusIcon">⚠</span>
+      <span id="statusMsg">–</span>
+    </div>
+
+    <div class="methods">
+      <div class="methods-title">// Metode Download</div>
+      <div class="method-list">
+        <div class="method-item active" id="m1" onclick="selectMethod(1)">
+          <span class="method-dot"></span>
+          crxextractor.com (Recommended)
+        </div>
+        <div class="method-item" id="m2" onclick="selectMethod(2)">
+          <span class="method-dot"></span>
+          chrome-stats.com API
+        </div>
+        <div class="method-item" id="m3" onclick="selectMethod(3)">
+          <span class="method-dot"></span>
+          Direct Google API (experimental)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    ⚠ Tool ini menggunakan layanan pihak ketiga untuk mengambil file CRX.<br>
+    Gunakan hanya untuk keperluan pribadi & development. Hormati ToS Chrome Web Store.
+  </div>
+</div>
+
+<script>
+  let selectedMethod = 1;
+  let currentExtId = null;
+
+  const urlInput = document.getElementById('urlInput');
+  const clearBtn = document.getElementById('clearBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const extIdWrap = document.getElementById('extIdWrap');
+  const extIdVal = document.getElementById('extIdVal');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const statusBox = document.getElementById('statusBox');
+  const statusIcon = document.getElementById('statusIcon');
+  const statusMsg = document.getElementById('statusMsg');
+  const mainCard = document.getElementById('mainCard');
+
+  // Extract extension ID from Chrome Web Store URL
+  function extractExtId(url) {
+    const patterns = [
+      /chromewebstore\.google\.com\/detail\/[^/]+\/([a-z]{32})/,
+      /chrome\.google\.com\/webstore\/detail\/[^/]+\/([a-z]{32})/,
+      /^([a-z]{32})$/, // raw ID
+    ];
+    for (const p of patterns) {
+      const m = url.trim().match(p);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  urlInput.addEventListener('input', () => {
+    const val = urlInput.value.trim();
+    clearBtn.style.display = val ? 'block' : 'none';
+
+    const id = extractExtId(val);
+    if (id) {
+      currentExtId = id;
+      extIdVal.textContent = id;
+      extIdWrap.classList.add('show');
+      downloadBtn.disabled = false;
+      mainCard.classList.add('glowing');
+      hideStatus();
+    } else {
+      currentExtId = null;
+      extIdWrap.classList.remove('show');
+      downloadBtn.disabled = true;
+      mainCard.classList.remove('glowing');
+      if (val.length > 10) {
+        showStatus('error', '✕', 'URL tidak valid. Pastikan dari Chrome Web Store.');
+      } else {
+        hideStatus();
+      }
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    urlInput.value = '';
+    clearBtn.style.display = 'none';
+    currentExtId = null;
+    extIdWrap.classList.remove('show');
+    downloadBtn.disabled = true;
+    mainCard.classList.remove('glowing');
+    hideStatus();
+    resetProgress();
+  });
+
+  function selectMethod(n) {
+    selectedMethod = n;
+    document.querySelectorAll('.method-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('m' + n).classList.add('active');
+  }
+
+  function showStatus(type, icon, msg) {
+    statusBox.className = 'status-box show ' + type;
+    statusIcon.textContent = icon;
+    statusMsg.textContent = msg;
+  }
+
+  function hideStatus() {
+    statusBox.className = 'status-box';
+  }
+
+  function showProgress(pct, text) {
+    progressWrap.classList.add('show');
+    progressBar.style.width = pct + '%';
+    progressText.textContent = text;
+  }
+
+  function resetProgress() {
+    progressWrap.classList.remove('show');
+    progressBar.style.width = '0%';
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    if (!currentExtId) return;
+    doDownload(currentExtId);
+  });
+
+  async function doDownload(extId) {
+    downloadBtn.disabled = true;
+    hideStatus();
+    showProgress(10, 'Memproses request...');
+
+    const chromeVer = document.getElementById('chromeVersion').value;
+    const platform = document.getElementById('platform').value;
+
+    if (selectedMethod === 1) {
+      // Method 1: crxextractor.com - redirect to their site
+      showProgress(40, 'Membuka crxextractor.com...');
+      setTimeout(() => {
+        showProgress(80, 'Mengalihkan...');
+        setTimeout(() => {
+          const url = `https://crxextractor.com/?id=${extId}`;
+          window.open(url, '_blank');
+          resetProgress();
+          showStatus('success', '✓', `Halaman download dibuka! Extension ID: ${extId}`);
+          downloadBtn.disabled = false;
+        }, 600);
+      }, 500);
+
+    } else if (selectedMethod === 2) {
+      // Method 2: chrome-stats.com
+      showProgress(40, 'Membuka chrome-stats.com...');
+      setTimeout(() => {
+        showProgress(80, 'Mengalihkan...');
+        setTimeout(() => {
+          const url = `https://chrome-stats.com/d/${extId}`;
+          window.open(url, '_blank');
+          resetProgress();
+          showStatus('success', '✓', `Halaman download dibuka! Extension ID: ${extId}`);
+          downloadBtn.disabled = false;
+        }, 600);
+      }, 500);
+
+    } else if (selectedMethod === 3) {
+      // Method 3: Direct Google API CRX download URL
+      showProgress(30, 'Membangun URL download...');
+      const prodver = chromeVer + '.0.0';
+      // Google's CRX download endpoint
+      const crxUrl = `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=${prodver}&acceptformat=crx3&x=id%3D${extId}%26uc&nacl_arch=${platform}`;
+
+      showProgress(60, 'Mencoba direct download...');
+      setTimeout(() => {
+        showProgress(90, 'Mendownload file...');
+        // Try fetch to check if accessible
+        const a = document.createElement('a');
+        a.href = crxUrl;
+        a.download = `${extId}.crx`;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => {
+          resetProgress();
+          showStatus('info', 'ℹ', 'Download dimulai (atau dibuka di tab baru). Jika gagal, coba metode 1 atau 2.');
+          downloadBtn.disabled = false;
+        }, 800);
+      }, 700);
+    }
+  }
+
+  // Paste shortcut hint
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      if (document.activeElement !== urlInput) {
+        urlInput.focus();
+      }
+    }
+  });
+</script>
+</body>
+</html>
