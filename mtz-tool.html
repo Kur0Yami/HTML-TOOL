@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MTZ Theme Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg: #0a0b0f;
+  --bg2: #111318;
+  --bg3: #181b22;
+  --bg4: #1e2230;
+  --border: #2a2f3d;
+  --border2: #363c4e;
+  --accent: #a3cfff;
+  --accent2: #91f0d4;
+  --accent3: #c4a3ff;
+  --text: #e8eaf0;
+  --text2: #8b91a8;
+  --text3: #5a6070;
+  --danger: #ff6b7a;
+  --warn: #ffd166;
+  --success: #06d6a0;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sora', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --tab-h: 56px;
+  --header-h: 60px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--sans); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+/* ── LAYOUT ── */
+#app { display:flex; flex-direction:column; height:100vh; }
+
+/* ── HEADER ── */
+#header {
+  height: var(--header-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  position: relative;
+  flex-shrink: 0;
+}
+#logo {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+#file-info { flex:1; min-width:0; }
+#file-name { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#file-meta { font-size:10px; color:var(--text3); margin-top:1px; }
+#open-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  color: #000; border:none; border-radius:var(--radius-sm);
+  padding: 8px 14px; font-size:12px; font-weight:700;
+  font-family:var(--sans); cursor:pointer; white-space:nowrap;
+  flex-shrink: 0;
+}
+#open-btn:active { transform:scale(0.96); }
+
+/* ── CONTENT ── */
+#content { flex:1; overflow:hidden; position:relative; }
+.tab-panel { display:none; height:100%; overflow:hidden; flex-direction:column; }
+.tab-panel.active { display:flex; }
+
+/* ── BOTTOM TABS ── */
+#tabs {
+  height: var(--tab-h);
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+}
+.tab {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; cursor:pointer;
+  border:none; background:transparent; color:var(--text3);
+  font-family:var(--sans); font-size:9px; font-weight:600;
+  letter-spacing:0.3px; transition: color .2s;
+  position:relative;
+}
+.tab svg { width:20px; height:20px; }
+.tab.active { color:var(--accent); }
+.tab.active::before {
+  content:''; position:absolute; top:0; left:20%; right:20%; height:2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 0 0 2px 2px;
+}
+
+/* ── WELCOME SCREEN ── */
+#welcome {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;
+  padding:32px; text-align:center;
+}
+#welcome-icon { font-size:64px; line-height:1; }
+#welcome h2 { font-size:20px; font-weight:700; }
+#welcome p { font-size:13px; color:var(--text2); line-height:1.6; }
+#welcome-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#000; border:none; border-radius:var(--radius);
+  padding:14px 28px; font-size:15px; font-weight:700;
+  font-family:var(--sans); cursor:pointer; width:100%;
+}
+
+/* ── LOADING ── */
+#loading {
+  position:fixed; inset:0; background:rgba(10,11,15,0.92);
+  display:none; align-items:center; justify-content:center;
+  flex-direction:column; gap:16px; z-index:999; backdrop-filter:blur(4px);
+}
+#loading.show { display:flex; }
+.spinner {
+  width:48px; height:48px; border:3px solid var(--border2);
+  border-top-color:var(--accent); border-radius:50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+#loading-text { font-size:13px; color:var(--text2); }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(16px);
+  background:var(--bg4); border:1px solid var(--border2);
+  padding:10px 20px; border-radius:var(--radius); font-size:12px;
+  opacity:0; transition:all .3s; z-index:998; white-space:nowrap;
+  box-shadow:var(--shadow);
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── SECTION HEADER ── */
+.sec-header {
+  padding:12px 16px 8px;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
+}
+.sec-title { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1px; }
+.sec-count { font-size:10px; color:var(--text3); background:var(--bg3); padding:2px 8px; border-radius:20px; }
+
+/* ── SEARCH BAR ── */
+.search-wrap { padding:0 16px 10px; flex-shrink:0; }
+.search-input {
+  width:100%; background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:9px 14px;
+  color:var(--text); font-family:var(--sans); font-size:13px;
+  outline:none;
+}
+.search-input:focus { border-color:var(--accent); }
+.search-input::placeholder { color:var(--text3); }
+
+/* ── TREE VIEW ── */
+#tree-panel { overflow:hidden; }
+#tree-scroll { flex:1; overflow-y:auto; padding-bottom:16px; }
+.tree-node { user-select:none; }
+.tree-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 16px; cursor:pointer; font-size:12px;
+  border-bottom:1px solid transparent;
+  transition:background .15s;
+}
+.tree-item:active { background:var(--bg3); }
+.tree-item.selected { background:rgba(163,207,255,0.08); border-left:2px solid var(--accent); }
+.tree-icon { flex-shrink:0; font-size:14px; }
+.tree-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tree-size { font-size:10px; color:var(--text3); flex-shrink:0; }
+.tree-arrow { font-size:10px; color:var(--text3); transition:transform .2s; }
+.tree-arrow.open { transform:rotate(90deg); }
+.tree-children { display:none; }
+.tree-children.open { display:block; }
+.tree-item.pkg { background:var(--bg2); border-bottom:1px solid var(--border); }
+.tree-item.dir { color:var(--accent); }
+.tree-item.xml-file { color:var(--accent2); }
+.tree-item.img-file { color:var(--accent3); }
+.tree-badge {
+  font-size:9px; padding:1px 6px; border-radius:10px; font-weight:700;
+}
+.badge-nightmode { background:rgba(145,240,212,0.15); color:var(--accent2); }
+.badge-dark { background:rgba(196,163,255,0.15); color:var(--accent3); }
+
+/* ── VIEWER PANEL ── */
+#viewer-panel {
+  position:fixed; inset:0; background:var(--bg);
+  z-index:100; display:none; flex-direction:column;
+}
+#viewer-panel.open { display:flex; }
+#viewer-header {
+  height:52px; background:var(--bg2); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; padding:0 16px; flex-shrink:0;
+}
+#viewer-back {
+  background:var(--bg3); border:none; border-radius:var(--radius-sm);
+  color:var(--text); width:34px; height:34px; font-size:18px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+#viewer-title { flex:1; min-width:0; font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#viewer-actions { display:flex; gap:8px; }
+.vbtn {
+  background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm);
+  color:var(--text2); padding:6px 12px; font-size:11px; font-weight:600;
+  font-family:var(--sans); cursor:pointer;
+}
+.vbtn:active { background:var(--bg4); }
+.vbtn.primary { background:rgba(163,207,255,0.15); border-color:var(--accent); color:var(--accent); }
+#viewer-body { flex:1; overflow:auto; padding:16px; }
+#viewer-body pre {
+  font-family:var(--mono); font-size:11px; line-height:1.7;
+  white-space:pre-wrap; word-break:break-all;
+}
+#viewer-img-wrap { display:flex; align-items:center; justify-content:center; height:100%; }
+#viewer-img-wrap img { max-width:100%; max-height:100%; object-fit:contain; border-radius:var(--radius-sm); }
+.xml-tag { color:#79b8ff; }
+.xml-attr { color:#ffab70; }
+.xml-val { color:var(--accent2); }
+.xml-comment { color:var(--text3); font-style:italic; }
+.xml-text { color:var(--text); }
+.color-swatch {
+  display:inline-block; width:12px; height:12px;
+  border-radius:3px; margin-right:4px; vertical-align:middle;
+  border:1px solid rgba(255,255,255,0.2);
+}
+
+/* ── ANALYZER PANEL ── */
+#analyzer-scroll { flex:1; overflow-y:auto; padding:0 16px 24px; }
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.stat-card {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px;
+}
+.stat-val { font-size:22px; font-weight:700; }
+.stat-label { font-size:10px; color:var(--text3); margin-top:3px; }
+.stat-val.accent { color:var(--accent); }
+.stat-val.accent2 { color:var(--accent2); }
+.stat-val.accent3 { color:var(--accent3); }
+.stat-val.danger { color:var(--danger); }
+
+.section-block { margin-bottom:16px; }
+.section-block h3 { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+
+.pkg-row {
+  background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:10px 12px; margin-bottom:6px;
+  display:flex; align-items:center; gap:10px;
+}
+.pkg-name { flex:1; font-size:11px; font-family:var(--mono); color:var(--text2); }
+.pkg-files { font-size:10px; color:var(--text3); }
+.night-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.night-dot.yes { background:var(--accent2); }
+.night-dot.no { background:var(--border2); }
+
+.color-palette { display:flex; flex-wrap:wrap; gap:8px; }
+.color-chip {
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:6px 10px;
+  font-size:10px; font-family:var(--mono); cursor:pointer;
+}
+.color-chip-dot { width:20px; height:20px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); flex-shrink:0; }
+.color-chip:active { background:var(--bg4); }
+
+.issue-row {
+  background:var(--bg3); border-left:3px solid var(--danger);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  padding:9px 12px; margin-bottom:6px; font-size:11px; line-height:1.5;
+}
+.issue-row.warn { border-left-color:var(--warn); }
+.issue-row.ok { border-left-color:var(--success); }
+.issue-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text3); margin-bottom:3px; }
+
+/* ── EDITOR PANEL ── */
+#editor-scroll { flex:1; overflow-y:auto; padding:0 16px 24px; }
+.editor-section { margin-bottom:20px; }
+.editor-section h3 { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+.editor-file-select {
+  width:100%; background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:9px 12px;
+  color:var(--text); font-family:var(--sans); font-size:12px;
+  outline:none; margin-bottom:10px;
+}
+.field-row {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px;
+}
+.field-label { font-size:10px; color:var(--text3); margin-bottom:5px; font-family:var(--mono); }
+.field-input {
+  width:100%; background:var(--bg4); border:1px solid var(--border);
+  border-radius:6px; padding:7px 10px;
+  color:var(--text); font-family:var(--mono); font-size:12px; outline:none;
+}
+.field-input:focus { border-color:var(--accent); }
+.field-row.color-row { display:flex; align-items:center; gap:10px; }
+.color-preview { width:36px; height:36px; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; cursor:pointer; }
+.color-input-wrap { flex:1; }
+.color-hex-input {
+  width:100%; background:var(--bg4); border:1px solid var(--border);
+  border-radius:6px; padding:7px 10px;
+  color:var(--text); font-family:var(--mono); font-size:12px; outline:none;
+}
+.color-hex-input:focus { border-color:var(--accent); }
+input[type="color"] { opacity:0; position:absolute; width:36px; height:36px; cursor:pointer; }
+
+.action-row { display:flex; gap:8px; margin-top:10px; }
+.action-btn {
+  flex:1; background:var(--bg3); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); padding:10px;
+  font-size:12px; font-weight:600; font-family:var(--sans); cursor:pointer; text-align:center;
+}
+.action-btn:active { background:var(--bg4); }
+.action-btn.primary { background:rgba(163,207,255,0.12); border-color:var(--accent); color:var(--accent); }
+.action-btn.success { background:rgba(6,214,160,0.12); border-color:var(--success); color:var(--success); }
+.action-btn.danger { background:rgba(255,107,122,0.12); border-color:var(--danger); color:var(--danger); }
+
+/* ── CLEANUP PANEL ── */
+#cleanup-scroll { flex:1; overflow-y:auto; padding:0 16px 24px; }
+.cleanup-card {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px; margin-bottom:12px;
+}
+.cleanup-card h4 { font-size:13px; font-weight:700; margin-bottom:4px; }
+.cleanup-card p { font-size:11px; color:var(--text2); line-height:1.5; margin-bottom:12px; }
+.cleanup-stats { font-size:11px; color:var(--text3); margin-bottom:10px; font-family:var(--mono); }
+.cleanup-stats span { color:var(--accent); font-weight:700; }
+.toggle-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; background:var(--bg4); border-radius:var(--radius-sm); margin-bottom:8px;
+}
+.toggle-label { font-size:12px; }
+.toggle-sub { font-size:10px; color:var(--text3); margin-top:2px; }
+.toggle {
+  width:44px; height:24px; background:var(--border2); border-radius:12px;
+  position:relative; cursor:pointer; transition:background .2s; flex-shrink:0;
+}
+.toggle.on { background:var(--accent); }
+.toggle::after {
+  content:''; position:absolute; top:3px; left:3px;
+  width:18px; height:18px; background:#fff; border-radius:50%;
+  transition:transform .2s;
+}
+.toggle.on::after { transform:translateX(20px); }
+.run-cleanup-btn {
+  width:100%; background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#000; border:none; border-radius:var(--radius);
+  padding:14px; font-size:14px; font-weight:700; font-family:var(--sans);
+  cursor:pointer; margin-top:16px;
+}
+.run-cleanup-btn:active { transform:scale(0.98); }
+.run-cleanup-btn:disabled { opacity:0.4; }
+
+/* ── EXPORT PANEL ── */
+#export-scroll { flex:1; overflow-y:auto; padding:0 16px 24px; }
+.export-pkg-list { margin-bottom:16px; }
+.export-pkg-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius-sm); margin-bottom:6px;
+}
+.checkbox {
+  width:20px; height:20px; border-radius:5px; border:2px solid var(--border2);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;
+  transition:all .15s;
+}
+.checkbox.checked { background:var(--accent); border-color:var(--accent); }
+.checkbox.checked::after { content:'✓'; font-size:12px; color:#000; font-weight:700; }
+.export-pkg-name { flex:1; font-size:11px; font-family:var(--mono); color:var(--text2); }
+.export-pkg-size { font-size:10px; color:var(--text3); }
+.export-btn {
+  width:100%; background:linear-gradient(135deg, var(--accent3), var(--accent));
+  color:#000; border:none; border-radius:var(--radius);
+  padding:14px; font-size:14px; font-weight:700; font-family:var(--sans);
+  cursor:pointer;
+}
+.export-btn:active { transform:scale(0.98); }
+.export-btn:disabled { opacity:0.4; }
+
+/* ── MODAL ── */
+#modal {
+  position:fixed; inset:0; z-index:200; display:none;
+  align-items:flex-end; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+}
+#modal.open { display:flex; }
+#modal-box {
+  background:var(--bg2); border-top:1px solid var(--border);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%; padding:20px 20px 36px; max-height:80vh; overflow-y:auto;
+}
+#modal-title { font-size:15px; font-weight:700; margin-bottom:16px; }
+#modal-body { font-size:13px; color:var(--text2); line-height:1.6; }
+#modal-close {
+  width:100%; background:var(--bg3); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); padding:12px;
+  font-size:13px; font-weight:600; font-family:var(--sans); cursor:pointer; margin-top:16px;
+}
+
+/* ICON GRID */
+.icon-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:0 16px; }
+.icon-item {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:10px 6px; cursor:pointer;
+}
+.icon-item:active { background:var(--bg4); }
+.icon-item img { width:48px; height:48px; object-fit:contain; border-radius:10px; }
+.icon-item span { font-size:8px; color:var(--text3); text-align:center; word-break:break-all; line-height:1.3; }
+.icon-placeholder { width:48px; height:48px; background:var(--bg4); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+
+/* PILL TABS */
+.pill-tabs { display:flex; gap:6px; padding:8px 16px; overflow-x:auto; flex-shrink:0; }
+.pill-tab {
+  background:var(--bg3); border:1px solid var(--border); border-radius:20px;
+  color:var(--text2); padding:6px 14px; font-size:11px; font-weight:600;
+  font-family:var(--sans); cursor:pointer; white-space:nowrap;
+}
+.pill-tab.active { background:rgba(163,207,255,0.15); border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div id="logo">MTZ<br>STUDIO</div>
+    <div id="file-info">
+      <div id="file-name">Belum ada file</div>
+      <div id="file-meta">Buka file .mtz untuk mulai</div>
+    </div>
+    <button id="open-btn" onclick="triggerOpen()">📂 Buka</button>
+    <input type="file" id="file-input" accept=".mtz,.zip" style="display:none" onchange="loadFile(this)">
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- WELCOME -->
+    <div id="welcome">
+      <div id="welcome-icon">🎨</div>
+      <h2>MTZ Theme Studio</h2>
+      <p>Tool analisis, edit, cleanup, dan repack tema MIUI/HyperOS. Buka file .mtz untuk mulai.</p>
+      <button id="welcome-btn" onclick="triggerOpen()">📂 Buka File .mtz</button>
+    </div>
+
+    <!-- TAB: TREE -->
+    <div class="tab-panel" id="panel-tree">
+      <div class="sec-header">
+        <span class="sec-title">Struktur File</span>
+        <span class="sec-count" id="tree-count">-</span>
+      </div>
+      <div class="search-wrap">
+        <input class="search-input" placeholder="🔍 Cari file..." oninput="filterTree(this.value)" id="tree-search">
+      </div>
+      <div id="tree-scroll"></div>
+    </div>
+
+    <!-- TAB: ANALYZER -->
+    <div class="tab-panel" id="panel-analyzer">
+      <div class="sec-header">
+        <span class="sec-title">Analisis Tema</span>
+      </div>
+      <div id="analyzer-scroll"></div>
+    </div>
+
+    <!-- TAB: EDITOR -->
+    <div class="tab-panel" id="panel-editor">
+      <div class="sec-header">
+        <span class="sec-title">Editor XML & Warna</span>
+      </div>
+      <div class="pill-tabs" id="editor-pills">
+        <div class="pill-tab active" onclick="switchEditorTab('colors')">🎨 Warna</div>
+        <div class="pill-tab" onclick="switchEditorTab('strings')">📝 Teks</div>
+        <div class="pill-tab" onclick="switchEditorTab('fallback')">🔧 Fallback</div>
+      </div>
+      <div id="editor-scroll"></div>
+    </div>
+
+    <!-- TAB: ICONS -->
+    <div class="tab-panel" id="panel-icons">
+      <div class="sec-header">
+        <span class="sec-title">Icon Pack</span>
+        <span class="sec-count" id="icon-count">-</span>
+      </div>
+      <div class="search-wrap">
+        <input class="search-input" placeholder="🔍 Cari package..." oninput="filterIcons(this.value)" id="icon-search">
+      </div>
+      <div id="icon-grid-wrap" style="flex:1;overflow-y:auto;padding-bottom:16px;"></div>
+    </div>
+
+    <!-- TAB: CLEANUP -->
+    <div class="tab-panel" id="panel-cleanup">
+      <div class="sec-header">
+        <span class="sec-title">Cleanup & Perbaikan</span>
+      </div>
+      <div id="cleanup-scroll"></div>
+    </div>
+
+    <!-- TAB: EXPORT -->
+    <div class="tab-panel" id="panel-export">
+      <div class="sec-header">
+        <span class="sec-title">Export .mtz</span>
+      </div>
+      <div id="export-scroll"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM TABS -->
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab('tree')" id="tab-tree">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v6H3zM15 3h6v6h-6zM15 15h6v6h-6zM3 15h6v6H3z"/></svg>
+      FILE
+    </button>
+    <button class="tab" onclick="switchTab('analyzer')" id="tab-analyzer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      ANALISIS
+    </button>
+    <button class="tab" onclick="switchTab('editor')" id="tab-editor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      EDITOR
+    </button>
+    <button class="tab" onclick="switchTab('icons')" id="tab-icons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      IKON
+    </button>
+    <button class="tab" onclick="switchTab('cleanup')" id="tab-cleanup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      CLEANUP
+    </button>
+    <button class="tab" onclick="switchTab('export')" id="tab-export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      EXPORT
+    </button>
+  </div>
+</div>
+
+<!-- VIEWER PANEL -->
+<div id="viewer-panel">
+  <div id="viewer-header">
+    <button id="viewer-back" onclick="closeViewer()">‹</button>
+    <div id="viewer-title">File Viewer</div>
+    <div id="viewer-actions">
+      <button class="vbtn" id="viewer-translate-btn" onclick="translateViewer()" style="display:none">🌐 ID</button>
+      <button class="vbtn primary" id="viewer-copy-btn" onclick="copyViewer()">Salin</button>
+    </div>
+  </div>
+  <div id="viewer-body"></div>
+</div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loading-text">Memuat file...</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL -->
+<div id="modal" onclick="closeModal()">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-title"></div>
+    <div id="modal-body"></div>
+    <button id="modal-close" onclick="closeModal()">Tutup</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+const S = {
+  zip: null,
+  packages: {},       // pkgName -> {files: {path->blob}, hasNightmode, totalFiles}
+  allFiles: {},       // fullpath -> {blob, pkgName}
+  description: null,
+  modifications: {},  // path -> new content string
+  cleanupOpts: {
+    removeDuplicates: true,
+    fixDarkFallback: true,
+    cleanInvalidColors: true,
+    formatXml: true,
+    translateVi: true,
+    translateZh: true,
+  },
+  exportSelected: new Set(),
+  currentEditorTab: 'colors',
+  currentViewerContent: '',
+  currentViewerIsXml: false,
+  viewerTranslated: false,
+  iconData: [],      // {pkg, files:[]}
+  allColors: [],
+  allStrings: [],
+  issues: [],
+  fileCount: 0,
+};
+
+// ══════════════════════════════════════════
+// TRANSLATIONS
+// ══════════════════════════════════════════
+const VI_ID = {
+  // Config lockscreen
+  "Hình nền tủy chỉnh": "Wallpaper Kustom",
+  "Giải pháp tạm thời cho MIUI14，Không thể thay đổi trực tiếp hình nền": "Solusi sementara untuk MIUI14, tidak bisa ubah wallpaper langsung",
+  "Chọn hình nền tùy chỉnh": "Pilih Wallpaper Kustom",
+  "Khuyến khích chọn ảnh có độ phân giải đúng với điện thoại,tránh ảnh quá lớn gây đơ màn hình khoá,nên dưới 3MB。": "Disarankan pilih gambar resolusi sesuai layar, hindari gambar terlalu besar (maks 3MB)",
+  "Hiện thị FPS trên màn hình khoá": "Tampilkan FPS di Layar Kunci",
+  "Hiển thị FPS ở góc phải màn hình khoá": "Tampilkan FPS di pojok kanan layar kunci",
+  "Ẩn hiệu ứng sạc của hệ thống": "Sembunyikan Efek Charging Sistem",
+  "Chặn hiệu ứng sạc của hệ thống": "Blokir efek charging bawaan sistem",
+  "Hiệu ứng sạc hình tròn": "Efek Charging Lingkaran",
+  "Nếu bật vân tay trong màn hình，nó sẽ hòa hợp với vân tay（Nhất định phải dùng thanh trạng thái của theme này）": "Jika fingerprint in-display aktif, efek akan menyatu dengan fingerprint (wajib pakai status bar tema ini)",
+  "Chọn Avatar trung tâm điều khiển tùy chỉnh": "Pilih Avatar Control Center Kustom",
+  "Trước khi chọn cắt ảnh theo tỉ lệ 1:1，nếu không sẽ bị méo ảnh": "Crop gambar 1:1 sebelum dipilih, jika tidak gambar akan terdistorsi",
+  "Tùy chọn âm nhạc màn hình khoá": "Opsi Musik Layar Kunci",
+  "Có thể không áp dụng ngay khi đang phát nhạc": "Mungkin tidak langsung berlaku saat musik sedang diputar",
+  "Hiển thị nhạc": "Tampilkan Widget Musik",
+  "Tắt để không hiển thị nhạc trên màn hình khoá": "Matikan untuk menyembunyikan musik di layar kunci",
+  "Giữ sáng khi phát nhạc": "Layar Tetap Menyala Saat Putar Musik",
+  "Màn hình sáng khi đang phát nhạc": "Layar tetap menyala selama musik diputar",
+  "Cảm ơn bạn đã tải và sử dụng theme này，sự ủng hộ của bạn là lớn nhất cho tôi。Nếu bạn có ý kiến hay hãy phản hồi": "Terima kasih telah menggunakan tema ini, dukunganmu sangat berarti. Silakan beri masukan!",
+  "Việt hoá bởi Xiao Yi Xian": "Diterjemahkan oleh Xiao Yi Xian",
+  "Nhấn để sao chép": "Ketuk untuk salin",
+  "Thiết kế khoá màn hình bởi Akino": "Desain layar kunci oleh Akino",
+  "Theo dõi tác giả!": "Ikuti pembuatnya!",
+  "Ủng hộ tác giả": "Dukung Pembuat",
+  "Tùy chọn nâng cao màn hình khoá": "Opsi Lanjutan Layar Kunci",
+  "Hyper Os không thể dùng hình nền tùy chỉnh": "Hyper OS tidak mendukung wallpaper kustom",
+  "Chức năng này chỉ hỗ trợ MIUI14/MIUI13": "Fitur ini hanya mendukung MIUI14/MIUI13",
+  // Bilibili strings
+  "Có người đến hóng drama": "Ada yang datang nonton drama",
+  "Dân xài chùa": "Pengguna gratisan",
+  "Quét mã đi": "Scan kode QR",
+  "Dịch vụ miễn phí data": "Layanan data gratis",
+  "Xóa ký ức": "Hapus riwayat",
+  "UP cảm thấy rất phèn": "UP merasa sangat kampungan",
+  // AOD Chinese
+  "查询通知": "Cek notifikasi",
+  // Common
+  "Chủ đề": "Tema",
+  "chỉ áp dụng cho hệ điều hành": "hanya untuk sistem operasi",
+  "Tùy chỉnh bởi": "Dikustomisasi oleh",
+  "Đặc biệt cảm ơn": "Terima kasih khusus kepada",
+  "Một phần mã được tham khảo từ": "Sebagian kode direferensikan dari",
+  "Module biểu tượng pin đến từ": "Modul ikon baterai dari",
+  "Kiểu khóa màn hình đến từ": "Desain layar kunci dari",
+};
+
+const ZH_ID = {
+  "类型": "Tipe",
+  "百变框架": "Framework fleksibel",
+  "是否支持显示农历开关": "Dukung tampilkan kalender lunar",
+  "支持": "Ya",
+  "不支持": "Tidak",
+  "默认为": "Default",
+  "是否支持显示电量开关": "Dukung tampilkan baterai",
+  "是否支持显示通知开关": "Dukung tampilkan notifikasi",
+  "开关初始状态": "Status awal toggle",
+  "显示农历-开启": "Tampil kalender lunar - Aktif",
+  "显示电量-开启": "Tampil baterai - Aktif",
+  "显示通知-开启": "Tampil notifikasi - Aktif",
+  "查询通知": "Cek notifikasi",
+  "日期": "Tanggal",
+  "农历": "Kalender lunar",
+  "电量": "Baterai",
+  "通知图标之间的间隙": "Jarak antar ikon notifikasi",
+  "预览模式通知": "Notifikasi mode preview",
+  "息屏真实通知": "Notifikasi AOD nyata",
+  "尊重原作者，请勿修改代码": "Hormati pembuat asli, jangan ubah kode",
+  "本代码由weeazn进行汉化": "Kode ini dilokalisasi oleh weeazn",
+  "本锁屏代码由秋野(JellyBeans)設計": "Kode layar kunci ini dirancang oleh Akino (JellyBeans)",
+  "开屏刷新": "Refresh saat layar menyala",
+  "音乐": "Musik",
+  "主题色": "Warna tema",
+  "开关背景": "Background toggle",
+};
+
+function translateText(text) {
+  let result = text;
+  for (const [from, to] of Object.entries(VI_ID)) {
+    result = result.split(from).join(to);
+  }
+  for (const [from, to] of Object.entries(ZH_ID)) {
+    result = result.split(from).join(to);
+  }
+  return result;
+}
+
+// ══════════════════════════════════════════
+// FILE LOADING
+// ══════════════════════════════════════════
+function triggerOpen() { document.getElementById('file-input').click(); }
+
+async function loadFile(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  showLoading('Membuka file .mtz...');
+  try {
+    const buf = await file.arrayBuffer();
+    S.zip = await JSZip.loadAsync(buf);
+
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('welcome').style.display = 'none';
+
+    showLoading('Mengekstrak packages...');
+    await extractPackages();
+
+    showLoading('Membangun pohon file...');
+    buildTree();
+
+    showLoading('Menganalisis tema...');
+    buildAnalyzer();
+
+    showLoading('Memuat editor...');
+    buildEditor();
+
+    showLoading('Memuat ikon...');
+    await buildIcons();
+
+    buildCleanup();
+    buildExport();
+
+    document.getElementById('file-meta').textContent = `${S.fileCount.toLocaleString()} file · ${formatSize(file.size)}`;
+
+    hideLoading();
+    switchTab('tree');
+    toast('✅ Tema berhasil dimuat!');
+  } catch(e) {
+    hideLoading();
+    toast('❌ Gagal membaca file: ' + e.message);
+    console.error(e);
+  }
+}
+
+async function extractPackages() {
+  S.packages = {};
+  S.allFiles = {};
+  S.fileCount = 0;
+
+  // Read description.xml
+  const descFile = S.zip.file('description.xml');
+  if (descFile) {
+    S.description = await descFile.async('string');
+  }
+
+  // Each file in root zip
+  const zipFiles = Object.keys(S.zip.files);
+
+  for (const name of zipFiles) {
+    const entry = S.zip.files[name];
+    if (entry.dir) continue;
+
+    if (name === 'description.xml') continue;
+
+    // Preview & wallpaper treated as special
+    if (name.startsWith('preview/') || name.startsWith('wallpaper/')) {
+      const blob = await entry.async('blob');
+      S.allFiles[name] = { blob, pkgName: name.startsWith('preview/') ? '__preview' : '__wallpaper' };
+      S.fileCount++;
+      continue;
+    }
+
+    // Try to parse as sub-zip
+    try {
+      const buf = await entry.async('arraybuffer');
+      const subZip = await JSZip.loadAsync(buf);
+      const pkg = { files: {}, hasNightmode: false, hasNightmodeFiles: 0, totalFiles: 0, size: buf.byteLength };
+
+      for (const [subName, subEntry] of Object.entries(subZip.files)) {
+        if (subEntry.dir) continue;
+        const blob = await subEntry.async('blob');
+        pkg.files[subName] = blob;
+        S.allFiles[`${name}/${subName}`] = { blob, pkgName: name };
+        S.fileCount++;
+        pkg.totalFiles++;
+        if (subName.startsWith('nightmode/') || subName.includes('/nightmode/')) {
+          pkg.hasNightmode = true;
+          pkg.hasNightmodeFiles++;
+        }
+      }
+      S.packages[name] = pkg;
+    } catch(e) {
+      // Not a zip — treat as regular file
+      const blob = await entry.async('blob');
+      S.allFiles[name] = { blob, pkgName: '__root' };
+      S.fileCount++;
+    }
+  }
+
+  // Parse all XML for colors & strings
+  await parseAllXml();
+}
+
+async function parseAllXml() {
+  S.allColors = [];
+  S.allStrings = [];
+  S.issues = [];
+
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    for (const [path, blob] of Object.entries(pkg.files)) {
+      if (!path.endsWith('.xml')) continue;
+      try {
+        const text = await blob.text();
+
+        // Extract colors
+        const colorRe = /<color[^>]+name="([^"]*)"[^>]*>([^<]+)<\/color>/g;
+        let m;
+        while ((m = colorRe.exec(text)) !== null) {
+          const [, cname, cval] = m;
+          S.allColors.push({ pkg: pkgName, path, name: cname, value: cval.trim() });
+          if (cname === '789' || /^\d+$/.test(cname)) {
+            S.issues.push({ type:'error', pkg: pkgName, path, msg: `Color name tidak valid: "${cname}"` });
+          }
+        }
+
+        // Extract strings
+        const strRe = /<string[^>]+name="([^"]*)"[^>]*>([^<]+)<\/string>/g;
+        while ((m = strRe.exec(text)) !== null) {
+          const [, sname, sval] = m;
+          const sv = sval.trim();
+          const hasVi = /[àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(sv);
+          const hasZh = /[\u4e00-\u9fff]/.test(sv);
+          S.allStrings.push({ pkg: pkgName, path, name: sname, value: sv, hasVi, hasZh });
+        }
+
+        // Check dark fallback issues
+        if (path.includes('theme_fallback.xml')) {
+          const darkToLight = /<drawable[^>]+name="[^"]*_dark[^"]*"[^>]*>[^<]*_light[^<]*<\/drawable>/g;
+          let dm;
+          let darkLightCount = 0;
+          while ((dm = darkToLight.exec(text)) !== null) darkLightCount++;
+          if (darkLightCount > 0) {
+            S.issues.push({ type:'warn', pkg: pkgName, path, msg: `${darkLightCount} drawable dark diredirect ke light` });
+          }
+        }
+
+        // Check DarkTemplate missing
+        if (path.endsWith('theme_values.xml') && text.includes('LightTemplate') && !text.includes('DarkTemplate')) {
+          S.issues.push({ type:'warn', pkg: pkgName, path, msg: 'DarkTemplate tidak ditemukan' });
+        }
+
+        // Check duplicate colors
+        const seen = {};
+        const colRe2 = /<color[^>]+name="([^"]*)"[^>]*>/g;
+        while ((m = colRe2.exec(text)) !== null) {
+          const cn = m[1];
+          if (seen[cn]) {
+            S.issues.push({ type:'warn', pkg: pkgName, path, msg: `Duplikat color: "${cn}"` });
+          }
+          seen[cn] = true;
+        }
+
+      } catch(e) {}
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// TREE
+// ══════════════════════════════════════════
+function buildTree() {
+  const container = document.getElementById('tree-scroll');
+  container.innerHTML = '';
+  let count = 0;
+
+  // Description
+  const descNode = makeTreeItem('📄', 'description.xml', 'xml-file', '', () => viewFile('description.xml', S.description, true));
+  container.appendChild(descNode);
+  count++;
+
+  // Packages
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    const pkgEl = document.createElement('div');
+    pkgEl.className = 'tree-node';
+
+    const hasNight = pkg.hasNightmode;
+    const badges = hasNight ? `<span class="tree-badge badge-nightmode">nightmode</span>` : '';
+    const nightCount = pkg.hasNightmodeFiles > 0 ? ` (${pkg.hasNightmodeFiles} malam)` : '';
+
+    const header = document.createElement('div');
+    header.className = 'tree-item pkg';
+    header.innerHTML = `
+      <span class="tree-icon">📦</span>
+      <span class="tree-name">${pkgName}</span>
+      ${badges}
+      <span class="tree-size">${pkg.totalFiles}f${nightCount}</span>
+      <span class="tree-arrow" id="arr-${pkgName}">›</span>
+    `;
+
+    const children = document.createElement('div');
+    children.className = 'tree-children';
+    children.id = `ch-${pkgName}`;
+
+    // Group by folder
+    const folders = {};
+    for (const [path] of Object.entries(pkg.files)) {
+      const parts = path.split('/');
+      const folder = parts.length > 1 ? parts[0] : '__root__';
+      if (!folders[folder]) folders[folder] = [];
+      folders[folder].push(path);
+    }
+
+    for (const [folder, paths] of Object.entries(folders)) {
+      if (folder === '__root__') {
+        for (const p of paths) {
+          const item = buildFileItem(pkgName, p, pkg.files[p]);
+          children.appendChild(item);
+          count++;
+        }
+      } else {
+        const folderEl = document.createElement('div');
+        folderEl.className = 'tree-node';
+        const fh = document.createElement('div');
+        fh.className = 'tree-item dir';
+        fh.style.paddingLeft = '32px';
+        const isNight = folder === 'nightmode';
+        fh.innerHTML = `
+          <span class="tree-icon">${isNight ? '🌙' : '📁'}</span>
+          <span class="tree-name">${folder}</span>
+          <span class="tree-size">${paths.length}</span>
+          <span class="tree-arrow" id="arr-${pkgName}-${folder}">›</span>
+        `;
+        const fc = document.createElement('div');
+        fc.className = 'tree-children';
+        for (const p of paths) {
+          const item = buildFileItem(pkgName, p, pkg.files[p]);
+          item.querySelector('.tree-item').style.paddingLeft = '48px';
+          fc.appendChild(item);
+          count++;
+        }
+        fh.onclick = () => {
+          fc.classList.toggle('open');
+          document.getElementById(`arr-${pkgName}-${folder}`).classList.toggle('open');
+        };
+        folderEl.appendChild(fh);
+        folderEl.appendChild(fc);
+        children.appendChild(folderEl);
+      }
+    }
+
+    header.onclick = () => {
+      children.classList.toggle('open');
+      document.getElementById(`arr-${pkgName}`).classList.toggle('open');
+    };
+
+    pkgEl.appendChild(header);
+    pkgEl.appendChild(children);
+    container.appendChild(pkgEl);
+  }
+
+  document.getElementById('tree-count').textContent = count.toLocaleString();
+}
+
+function buildFileItem(pkgName, path, blob) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tree-node';
+  const name = path.split('/').pop();
+  const isXml = name.endsWith('.xml');
+  const isImg = /\.(png|jpg|jpeg|webp)$/i.test(name);
+  const icon = isXml ? '📝' : isImg ? '🖼️' : '📄';
+  const cls = isXml ? 'xml-file' : isImg ? 'img-file' : '';
+  const item = makeTreeItem(icon, name, cls, formatSize(blob.size), async () => {
+    if (isXml) {
+      const text = await blob.text();
+      viewFile(path, text, true);
+    } else if (isImg) {
+      viewImage(path, blob);
+    } else {
+      try {
+        const text = await blob.text();
+        viewFile(path, text, false);
+      } catch(e) { toast('Tidak bisa membaca file binary'); }
+    }
+  });
+  wrap.appendChild(item);
+  return wrap;
+}
+
+function makeTreeItem(icon, name, cls, size, onclick) {
+  const el = document.createElement('div');
+  el.className = 'tree-node';
+  const item = document.createElement('div');
+  item.className = `tree-item${cls ? ' '+cls : ''}`;
+  item.style.paddingLeft = '32px';
+  item.innerHTML = `
+    <span class="tree-icon">${icon}</span>
+    <span class="tree-name">${name}</span>
+    <span class="tree-size">${size}</span>
+  `;
+  if (onclick) item.addEventListener('click', onclick);
+  el.appendChild(item);
+  return el;
+}
+
+function filterTree(q) {
+  q = q.toLowerCase();
+  const items = document.querySelectorAll('#tree-scroll .tree-item');
+  items.forEach(item => {
+    const name = item.querySelector('.tree-name')?.textContent.toLowerCase() || '';
+    const show = !q || name.includes(q);
+    item.parentElement.style.display = show ? '' : 'none';
+  });
+}
+
+// ══════════════════════════════════════════
+// FILE VIEWER
+// ══════════════════════════════════════════
+function viewFile(path, content, isXml) {
+  S.currentViewerContent = content;
+  S.currentViewerIsXml = isXml;
+  S.viewerTranslated = false;
+  document.getElementById('viewer-title').textContent = path.split('/').pop();
+  document.getElementById('viewer-body').innerHTML = isXml ? highlightXml(content) : `<pre>${escapeHtml(content)}</pre>`;
+  document.getElementById('viewer-translate-btn').style.display = isXml ? 'block' : 'none';
+  document.getElementById('viewer-panel').classList.add('open');
+}
+
+function viewImage(path, blob) {
+  const url = URL.createObjectURL(blob);
+  document.getElementById('viewer-title').textContent = path.split('/').pop();
+  document.getElementById('viewer-translate-btn').style.display = 'none';
+  document.getElementById('viewer-body').innerHTML = `
+    <div id="viewer-img-wrap">
+      <img src="${url}" alt="${path}">
+    </div>
+    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text3)">${path}</div>
+  `;
+  document.getElementById('viewer-panel').classList.add('open');
+}
+
+function closeViewer() {
+  document.getElementById('viewer-panel').classList.remove('open');
+}
+
+function translateViewer() {
+  if (!S.currentViewerContent) return;
+  if (!S.viewerTranslated) {
+    const translated = translateText(S.currentViewerContent);
+    document.getElementById('viewer-body').innerHTML = S.currentViewerIsXml ? highlightXml(translated) : `<pre>${escapeHtml(translated)}</pre>`;
+    document.getElementById('viewer-translate-btn').textContent = '🔄 Asli';
+    S.viewerTranslated = true;
+  } else {
+    document.getElementById('viewer-body').innerHTML = S.currentViewerIsXml ? highlightXml(S.currentViewerContent) : `<pre>${escapeHtml(S.currentViewerContent)}</pre>`;
+    document.getElementById('viewer-translate-btn').textContent = '🌐 ID';
+    S.viewerTranslated = false;
+  }
+}
+
+function copyViewer() {
+  navigator.clipboard?.writeText(S.currentViewerContent).then(() => toast('✅ Tersalin!')).catch(() => toast('❌ Gagal salin'));
+}
+
+function highlightXml(xml) {
+  const escaped = escapeHtml(xml);
+  return `<pre>${escaped
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="xml-comment">$1</span>')
+    .replace(/(&lt;\/?[a-zA-Z][a-zA-Z0-9_:-]*)/g, '<span class="xml-tag">$1</span>')
+    .replace(/([a-zA-Z][a-zA-Z0-9_:-]*)=/g, '<span class="xml-attr">$1</span>=')
+    .replace(/="([^"]*)"/g, (_, v) => {
+      const isColor = /^#[0-9a-fA-F]{6,8}$/.test(v);
+      const swatch = isColor ? `<span class="color-swatch" style="background:${v}"></span>` : '';
+      return `="<span class="xml-val">${swatch}${v}</span>"`;
+    })
+  }</pre>`;
+}
+
+// ══════════════════════════════════════════
+// ANALYZER
+// ══════════════════════════════════════════
+function buildAnalyzer() {
+  const el = document.getElementById('analyzer-scroll');
+  const pkgCount = Object.keys(S.packages).length;
+  const nightCount = Object.values(S.packages).filter(p => p.hasNightmode).length;
+  const colorCount = S.allColors.length;
+  const issueCount = S.issues.filter(i => i.type === 'error').length;
+
+  // Stats
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val accent">${pkgCount}</div>
+        <div class="stat-label">Package</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val accent2">${S.fileCount.toLocaleString()}</div>
+        <div class="stat-label">Total File</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val accent3">${colorCount}</div>
+        <div class="stat-label">Definisi Warna</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val ${issueCount > 0 ? 'danger' : 'accent2'}">${issueCount}</div>
+        <div class="stat-label">Error Ditemukan</div>
+      </div>
+    </div>
+  `;
+
+  // Description info
+  if (S.description) {
+    const title = (S.description.match(/<title[^>]*><!\[CDATA\[([^\]]*)\]\]>/) || [])[1] || '-';
+    const author = (S.description.match(/<author[^>]*><!\[CDATA\[([^\]]*)\]\]>/) || [])[1] || '-';
+    const uiVer = (S.description.match(/<uiVersion>([^<]+)<\/uiVersion>/) || [])[1] || '-';
+    html += `
+      <div class="section-block">
+        <h3>Info Tema</h3>
+        <div class="pkg-row"><span class="pkg-name">Judul</span><span class="pkg-files">${title}</span></div>
+        <div class="pkg-row"><span class="pkg-name">Author</span><span class="pkg-files">${author}</span></div>
+        <div class="pkg-row"><span class="pkg-name">UI Version</span><span class="pkg-files">${uiVer}</span></div>
+      </div>
+    `;
+  }
+
+  // Dark mode coverage
+  html += `<div class="section-block"><h3>Cakupan Dark Mode</h3>`;
+  for (const [name, pkg] of Object.entries(S.packages)) {
+    const short = name.replace('com.android.', '').replace('com.miui.', 'miui.').replace('com.xiaomi.', 'xi.');
+    html += `
+      <div class="pkg-row">
+        <div class="night-dot ${pkg.hasNightmode ? 'yes' : 'no'}"></div>
+        <span class="pkg-name">${short}</span>
+        <span class="pkg-files">${pkg.hasNightmode ? pkg.hasNightmodeFiles + ' file' : 'Tidak ada'}</span>
+      </div>
+    `;
+  }
+  html += `</div>`;
+
+  // Issues
+  if (S.issues.length) {
+    html += `<div class="section-block"><h3>Masalah Terdeteksi (${S.issues.length})</h3>`;
+    for (const iss of S.issues) {
+      const short = iss.path.split('/').slice(-1)[0];
+      html += `
+        <div class="issue-row ${iss.type}">
+          <div class="issue-label">${iss.pkg} · ${short}</div>
+          ${iss.msg}
+        </div>
+      `;
+    }
+    html += `</div>`;
+  }
+
+  // Color palette
+  const uniqueColors = [...new Set(S.allColors.map(c => c.value))].filter(v => /^#[0-9a-fA-F]{6,8}$/.test(v));
+  if (uniqueColors.length) {
+    html += `<div class="section-block"><h3>Palet Warna (${uniqueColors.length})</h3><div class="color-palette">`;
+    for (const c of uniqueColors.slice(0, 40)) {
+      html += `
+        <div class="color-chip" onclick="copyToClip('${c}')">
+          <div class="color-chip-dot" style="background:${c}"></div>
+          ${c}
+        </div>
+      `;
+    }
+    html += `</div></div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// EDITOR
+// ══════════════════════════════════════════
+function buildEditor() {
+  switchEditorTab('colors');
+}
+
+function switchEditorTab(tab) {
+  S.currentEditorTab = tab;
+  document.querySelectorAll('.pill-tab').forEach((el, i) => {
+    const tabs = ['colors','strings','fallback'];
+    el.classList.toggle('active', tabs[i] === tab);
+  });
+  renderEditorContent();
+}
+
+function renderEditorContent() {
+  const el = document.getElementById('editor-scroll');
+  if (S.currentEditorTab === 'colors') renderColorEditor(el);
+  else if (S.currentEditorTab === 'strings') renderStringEditor(el);
+  else renderFallbackEditor(el);
+}
+
+function renderColorEditor(el) {
+  // Group unique colors by package
+  const byPkg = {};
+  for (const c of S.allColors) {
+    if (!byPkg[c.pkg]) byPkg[c.pkg] = [];
+    byPkg[c.pkg].push(c);
+  }
+
+  let html = '';
+  for (const [pkg, colors] of Object.entries(byPkg)) {
+    const unique = [];
+    const seen = new Set();
+    for (const c of colors) {
+      if (!seen.has(c.name)) { unique.push(c); seen.add(c.name); }
+    }
+    if (!unique.length) continue;
+    const short = pkg.replace('com.android.','').replace('com.miui.','miui.').replace('com.xiaomi.','xi.');
+    html += `<div class="editor-section"><h3>${short}</h3>`;
+    for (const c of unique) {
+      if (!/^#[0-9a-fA-F]{6,8}$/.test(c.value)) continue;
+      const previewColor = c.value.length === 9 ? '#' + c.value.slice(3) : c.value;
+      const uid = `${pkg}|${c.path}|${c.name}`;
+      html += `
+        <div class="field-row color-row" id="cr-${btoa(uid).replace(/[+/=]/g,'')}">
+          <div class="color-preview" style="background:${previewColor}" onclick="triggerColorPicker(this)">
+            <input type="color" value="${previewColor.slice(0,7)}" oninput="onColorPick(this,'${escapeHtml(uid)}')" onchange="onColorPick(this,'${escapeHtml(uid)}')">
+          </div>
+          <div class="color-input-wrap">
+            <div class="field-label">${c.name}</div>
+            <input class="color-hex-input" value="${c.value}" oninput="onHexInput(this,'${escapeHtml(uid)}')" placeholder="#RRGGBB">
+          </div>
+        </div>
+      `;
+    }
+    html += `</div>`;
+  }
+
+  el.innerHTML = html + `<div class="action-row">
+    <button class="action-btn success" onclick="applyColorChanges()">💾 Terapkan</button>
+    <button class="action-btn danger" onclick="resetColors()">↺ Reset</button>
+  </div>`;
+}
+
+function triggerColorPicker(el) {
+  el.querySelector('input[type="color"]').click();
+}
+
+function onColorPick(input, uid) {
+  const hex = input.value;
+  const wrap = input.closest('.field-row');
+  wrap.querySelector('.color-preview').style.background = hex;
+  wrap.querySelector('.color-hex-input').value = hex;
+  storeColorEdit(uid, hex);
+}
+
+function onHexInput(input, uid) {
+  const val = input.value.trim();
+  if (/^#[0-9a-fA-F]{6,8}$/.test(val)) {
+    const wrap = input.closest('.field-row');
+    const previewColor = val.length === 9 ? '#' + val.slice(3) : val;
+    wrap.querySelector('.color-preview').style.background = previewColor;
+    storeColorEdit(uid, val);
+  }
+}
+
+function storeColorEdit(uid, newVal) {
+  if (!S.modifications.__colors) S.modifications.__colors = {};
+  S.modifications.__colors[uid] = newVal;
+}
+
+async function applyColorChanges() {
+  const edits = S.modifications.__colors;
+  if (!edits || !Object.keys(edits).length) { toast('Belum ada perubahan warna'); return; }
+  showLoading('Menerapkan perubahan...');
+  let changed = 0;
+  for (const [uid, newVal] of Object.entries(edits)) {
+    const [pkg, path, cname] = uid.split('|');
+    if (!S.packages[pkg]?.files[path]) continue;
+    let text = await S.packages[pkg].files[path].text();
+    const re = new RegExp(`(<color[^>]+name="${escapeRe(cname)}"[^>]*>)[^<]*(</color>)`, 'g');
+    text = text.replace(re, `$1${newVal}$2`);
+    S.packages[pkg].files[path] = new Blob([text], { type: 'text/xml' });
+    changed++;
+  }
+  S.modifications.__colors = {};
+  hideLoading();
+  toast(`✅ ${changed} warna diperbarui`);
+}
+
+function resetColors() {
+  S.modifications.__colors = {};
+  renderColorEditor(document.getElementById('editor-scroll'));
+  toast('↺ Reset');
+}
+
+function renderStringEditor(el) {
+  const forTranslate = S.allStrings.filter(s => s.hasVi || s.hasZh);
+  let html = `<div class="editor-section"><h3>Teks yang Perlu Terjemahan (${forTranslate.length})</h3>`;
+  if (!forTranslate.length) {
+    html += `<div class="issue-row ok">Semua teks sudah dalam bahasa yang dikenali</div>`;
+  } else {
+    for (const s of forTranslate.slice(0, 60)) {
+      const translated = translateText(s.value);
+      const needsWork = translated === s.value;
+      html += `
+        <div class="field-row">
+          <div class="field-label">${s.pkg.split('.').slice(-1)[0]} · ${s.name}</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">${escapeHtml(s.value)}</div>
+          <input class="field-input" value="${escapeHtml(translated)}" data-pkg="${s.pkg}" data-path="${s.path}" data-name="${s.name}" style="${needsWork ? 'border-color:var(--warn)' : ''}">
+        </div>
+      `;
+    }
+  }
+  html += `</div>
+  <div class="action-row">
+    <button class="action-btn primary" onclick="autoTranslateAll()">🌐 Terjemahkan Semua</button>
+    <button class="action-btn success" onclick="applyStringChanges()">💾 Terapkan</button>
+  </div>`;
+  el.innerHTML = html;
+}
+
+async function autoTranslateAll() {
+  showLoading('Menerjemahkan...');
+  let count = 0;
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    for (const [path, blob] of Object.entries(pkg.files)) {
+      if (!path.endsWith('.xml')) continue;
+      let text = await blob.text();
+      const translated = translateText(text);
+      if (translated !== text) {
+        S.packages[pkgName].files[path] = new Blob([translated], { type: 'text/xml' });
+        count++;
+      }
+    }
+  }
+  hideLoading();
+  toast(`✅ ${count} file diterjemahkan`);
+  renderStringEditor(document.getElementById('editor-scroll'));
+}
+
+async function applyStringChanges() {
+  const inputs = document.querySelectorAll('#editor-scroll .field-input[data-pkg]');
+  let changed = 0;
+  for (const input of inputs) {
+    const { pkg, path, name } = input.dataset;
+    if (!S.packages[pkg]?.files[path]) continue;
+    let text = await S.packages[pkg].files[path].text();
+    const re = new RegExp(`(<string[^>]+name="${escapeRe(name)}"[^>]*>)[^<]*(</string>)`, 'g');
+    const newText = text.replace(re, `$1${escapeHtml(input.value)}$2`);
+    if (newText !== text) {
+      S.packages[pkg].files[path] = new Blob([newText], { type: 'text/xml' });
+      changed++;
+    }
+  }
+  toast(`✅ ${changed} teks diperbarui`);
+}
+
+function renderFallbackEditor(el) {
+  let html = `<div class="editor-section"><h3>Mapping Fallback Dark → Light</h3>`;
+  // Show dark->light redirects
+  let found = 0;
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    for (const [path] of Object.entries(pkg.files)) {
+      if (!path.includes('theme_fallback.xml')) continue;
+      html += `
+        <div class="pkg-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <div style="font-size:11px;font-weight:700;">${pkgName}</div>
+          <div style="font-size:10px;color:var(--text3);">${path}</div>
+          <div class="action-row" style="width:100%;margin-top:6px;">
+            <button class="action-btn primary" onclick="viewFallback('${pkgName}','${path}')">👁 Lihat</button>
+            <button class="action-btn danger" onclick="fixFallback('${pkgName}','${path}')">🔧 Fix Dark</button>
+          </div>
+        </div>
+      `;
+      found++;
+    }
+  }
+  if (!found) html += `<div class="issue-row ok">Tidak ada file fallback ditemukan</div>`;
+  html += `</div>
+  <div class="action-row">
+    <button class="action-btn danger" onclick="fixAllFallbacks()">🔧 Fix Semua Fallback</button>
+  </div>`;
+  el.innerHTML = html;
+}
+
+async function viewFallback(pkg, path) {
+  const blob = S.packages[pkg]?.files[path];
+  if (!blob) return;
+  const text = await blob.text();
+  viewFile(path, text, true);
+}
+
+async function fixFallback(pkgName, path) {
+  const blob = S.packages[pkgName]?.files[path];
+  if (!blob) return;
+  let text = await blob.text();
+  const { fixed, count } = fixDarkFallbackText(text);
+  S.packages[pkgName].files[path] = new Blob([fixed], { type: 'text/xml' });
+  toast(`✅ ${count} mapping dark diperbaiki`);
+}
+
+async function fixAllFallbacks() {
+  showLoading('Memperbaiki fallback...');
+  let total = 0;
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    for (const [path, blob] of Object.entries(pkg.files)) {
+      if (!path.includes('theme_fallback.xml')) continue;
+      const text = await blob.text();
+      const { fixed, count } = fixDarkFallbackText(text);
+      if (count > 0) {
+        S.packages[pkgName].files[path] = new Blob([fixed], { type: 'text/xml' });
+        total += count;
+      }
+    }
+  }
+  hideLoading();
+  toast(`✅ ${total} mapping dark diperbaiki`);
+}
+
+function fixDarkFallbackText(text) {
+  let count = 0;
+  // Fix: drawable name contains "_dark" but points to "_light" asset
+  const fixed = text.replace(
+    /(<drawable[^>]+name="([^"]*_dark[^"]*)"[^>]*>)([^<]*_light[^<]*)(<\/drawable>)/g,
+    (match, open, name, val, close) => {
+      // Create dark version name from light version
+      const darkVal = val.replace(/_light/g, '_dark');
+      count++;
+      return `${open}${darkVal}${close}`;
+    }
+  );
+  return { fixed, count };
+}
+
+// ══════════════════════════════════════════
+// ICONS
+// ══════════════════════════════════════════
+async function buildIcons() {
+  S.iconData = [];
+  const iconPkg = S.packages['icons'];
+  if (!iconPkg) return;
+
+  const fancyFolders = {};
+  for (const [path, blob] of Object.entries(iconPkg.files)) {
+    if (path.startsWith('fancy_icons/')) {
+      const parts = path.split('/');
+      if (parts.length >= 3) {
+        const pkg = parts[1];
+        if (!fancyFolders[pkg]) fancyFolders[pkg] = [];
+        fancyFolders[pkg].push({ path, blob });
+      }
+    }
+  }
+
+  for (const [pkg, files] of Object.entries(fancyFolders)) {
+    S.iconData.push({ pkg, files });
+  }
+
+  renderIconGrid('');
+  document.getElementById('icon-count').textContent = S.iconData.length;
+}
+
+function renderIconGrid(filter) {
+  const wrap = document.getElementById('icon-grid-wrap');
+  const filtered = filter ? S.iconData.filter(d => d.pkg.toLowerCase().includes(filter)) : S.iconData;
+  const grid = document.createElement('div');
+  grid.className = 'icon-grid';
+
+  for (const { pkg, files } of filtered) {
+    const imgFile = files.find(f => /\.(png|jpg)$/i.test(f.path));
+    const shortName = pkg.split('.').slice(-1)[0];
+    const item = document.createElement('div');
+    item.className = 'icon-item';
+    item.onclick = () => showModal(pkg, `Package: ${pkg}\n${files.length} file`);
+
+    if (imgFile) {
+      const url = URL.createObjectURL(imgFile.blob);
+      item.innerHTML = `<img src="${url}" alt="${shortName}" loading="lazy"><span>${shortName}</span>`;
+    } else {
+      item.innerHTML = `<div class="icon-placeholder">📦</div><span>${shortName}</span>`;
+    }
+    grid.appendChild(item);
+  }
+
+  wrap.innerHTML = '';
+  wrap.appendChild(grid);
+}
+
+function filterIcons(q) {
+  renderIconGrid(q.toLowerCase());
+}
+
+// ══════════════════════════════════════════
+// CLEANUP
+// ══════════════════════════════════════════
+function buildCleanup() {
+  const dupCount = S.issues.filter(i => i.msg.includes('Duplikat')).length;
+  const darkCount = S.issues.filter(i => i.msg.includes('dark diredirect')).length;
+  const invalidCount = S.issues.filter(i => i.msg.includes('tidak valid')).length;
+  const viCount = S.allStrings.filter(s => s.hasVi).length;
+  const zhCount = S.allStrings.filter(s => s.hasZh).length;
+
+  const el = document.getElementById('cleanup-scroll');
+  el.innerHTML = `
+    <div class="cleanup-card">
+      <h4>🔄 Hapus Duplikat</h4>
+      <p>Menghapus entri warna & drawable yang muncul lebih dari sekali dalam file yang sama.</p>
+      <div class="cleanup-stats">Terdeteksi: <span>${dupCount}</span> duplikat</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Aktifkan</div></div>
+        <div class="toggle ${S.cleanupOpts.removeDuplicates ? 'on' : ''}" onclick="toggleCleanup('removeDuplicates', this)"></div>
+      </div>
+    </div>
+    <div class="cleanup-card">
+      <h4>🌙 Perbaiki Dark Fallback</h4>
+      <p>Drawable dengan nama <code>_dark</code> yang diredirect ke aset <code>_light</code> akan diperbaiki ke versi dark yang sesuai.</p>
+      <div class="cleanup-stats">Terdeteksi: <span>${darkCount}</span> package terpengaruh</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Aktifkan</div></div>
+        <div class="toggle ${S.cleanupOpts.fixDarkFallback ? 'on' : ''}" onclick="toggleCleanup('fixDarkFallback', this)"></div>
+      </div>
+    </div>
+    <div class="cleanup-card">
+      <h4>🧹 Bersihkan Color Invalid</h4>
+      <p>Color dengan name tidak valid (seperti <code>"789"</code> yang diulang 50x di Bilibili) akan dihapus.</p>
+      <div class="cleanup-stats">Terdeteksi: <span>${invalidCount}</span> entri invalid</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Aktifkan</div></div>
+        <div class="toggle ${S.cleanupOpts.cleanInvalidColors ? 'on' : ''}" onclick="toggleCleanup('cleanInvalidColors', this)"></div>
+      </div>
+    </div>
+    <div class="cleanup-card">
+      <h4>📐 Format Ulang XML</h4>
+      <p>Merapihkan indentasi dan whitespace pada semua file XML.</p>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Aktifkan</div></div>
+        <div class="toggle ${S.cleanupOpts.formatXml ? 'on' : ''}" onclick="toggleCleanup('formatXml', this)"></div>
+      </div>
+    </div>
+    <div class="cleanup-card">
+      <h4>🌐 Terjemahkan Vietnam → Indonesia</h4>
+      <p>Menerjemahkan teks berbahasa Vietnam di config, values, dan string XML ke Bahasa Indonesia.</p>
+      <div class="cleanup-stats">Terdeteksi: <span>${viCount}</span> teks Vietnam</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Aktifkan</div></div>
+        <div class="toggle ${S.cleanupOpts.translateVi ? 'on' : ''}" onclick="toggleCleanup('translateVi', this)"></div>
+      </div>
+    </div>
+    <div class="cleanup-card">
+      <h4>🌐 Terjemahkan Mandarin → Indonesia</h4>
+      <p>Menerjemahkan komentar dan teks berbahasa Mandarin di XML ke Bahasa Indonesia.</p>
+      <div class="cleanup-stats">Terdeteksi: <span>${zhCount}</span> teks Mandarin</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Aktifkan</div></div>
+        <div class="toggle ${S.cleanupOpts.translateZh ? 'on' : ''}" onclick="toggleCleanup('translateZh', this)"></div>
+      </div>
+    </div>
+    <button class="run-cleanup-btn" onclick="runCleanup()">⚡ Jalankan Cleanup</button>
+  `;
+}
+
+function toggleCleanup(key, el) {
+  S.cleanupOpts[key] = !S.cleanupOpts[key];
+  el.classList.toggle('on', S.cleanupOpts[key]);
+}
+
+async function runCleanup() {
+  showLoading('Menjalankan cleanup...');
+  let stats = { duplicates: 0, darkFixed: 0, invalidRemoved: 0, formatted: 0, translated: 0 };
+
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    for (const [path, blob] of Object.entries(pkg.files)) {
+      if (!path.endsWith('.xml')) continue;
+      let text = await blob.text();
+      let changed = false;
+
+      // Remove duplicates
+      if (S.cleanupOpts.removeDuplicates) {
+        const { text: t, count } = removeDuplicateEntries(text);
+        if (count > 0) { text = t; stats.duplicates += count; changed = true; }
+      }
+
+      // Fix dark fallback
+      if (S.cleanupOpts.fixDarkFallback && path.includes('theme_fallback.xml')) {
+        const { fixed, count } = fixDarkFallbackText(text);
+        if (count > 0) { text = fixed; stats.darkFixed += count; changed = true; }
+      }
+
+      // Clean invalid colors
+      if (S.cleanupOpts.cleanInvalidColors) {
+        const { text: t, count } = removeInvalidColors(text);
+        if (count > 0) { text = t; stats.invalidRemoved += count; changed = true; }
+      }
+
+      // Translate
+      if (S.cleanupOpts.translateVi || S.cleanupOpts.translateZh) {
+        const translated = translateText(text);
+        if (translated !== text) { text = translated; stats.translated++; changed = true; }
+      }
+
+      // Format XML
+      if (S.cleanupOpts.formatXml && changed) {
+        text = formatXml(text);
+        stats.formatted++;
+      }
+
+      if (changed) {
+        S.packages[pkgName].files[path] = new Blob([text], { type: 'text/xml' });
+      }
+    }
+  }
+
+  // Re-analyze
+  await parseAllXml();
+  buildAnalyzer();
+  buildCleanup();
+
+  hideLoading();
+  showModal('✅ Cleanup Selesai', `
+    <div style="font-family:var(--mono);font-size:12px;line-height:2">
+      🔄 Duplikat dihapus: <strong>${stats.duplicates}</strong><br>
+      🌙 Dark fallback diperbaiki: <strong>${stats.darkFixed}</strong><br>
+      🧹 Color invalid dihapus: <strong>${stats.invalidRemoved}</strong><br>
+      🌐 File diterjemahkan: <strong>${stats.translated}</strong><br>
+      📐 File diformat: <strong>${stats.formatted}</strong>
+    </div>
+  `);
+}
+
+function removeDuplicateEntries(xml) {
+  let count = 0;
+  const seenColors = new Set();
+  const seenDrawables = new Set();
+
+  // Remove duplicate colors
+  xml = xml.replace(/<color[^>]+name="([^"]*)"[^>]*>[^<]*<\/color>/g, (match, name) => {
+    if (seenColors.has(name)) { count++; return `<!-- removed duplicate color: ${name} -->`; }
+    seenColors.add(name);
+    return match;
+  });
+
+  // Remove duplicate drawables
+  xml = xml.replace(/<drawable[^>]+name="([^"]*)"[^>]*>[^<]*<\/drawable>/g, (match, name) => {
+    if (seenDrawables.has(name)) { count++; return `<!-- removed duplicate drawable: ${name} -->`; }
+    seenDrawables.add(name);
+    return match;
+  });
+
+  return { text: xml, count };
+}
+
+function removeInvalidColors(xml) {
+  let count = 0;
+  // Remove colors with purely numeric names or single-char invalid names
+  xml = xml.replace(/<color[^>]+name="(\d+|[^a-zA-Z_][^"]*)"[^>]*>[^<]*<\/color>/g, (match, name) => {
+    count++;
+    return `<!-- removed invalid color: ${name} -->`;
+  });
+  return { text: xml, count };
+}
+
+function formatXml(xml) {
+  // Basic XML formatter
+  xml = xml.replace(/>\s*</g, '>\n<');
+  const lines = xml.split('\n');
+  let indent = 0;
+  return lines.map(line => {
+    line = line.trim();
+    if (!line) return '';
+    if (line.startsWith('</')) indent = Math.max(0, indent - 1);
+    const result = '\t'.repeat(indent) + line;
+    if (!line.startsWith('</') && !line.endsWith('/>') && !line.startsWith('<!--') && line.includes('<') && !line.includes('</')) indent++;
+    return result;
+  }).filter(Boolean).join('\n');
+}
+
+// ══════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════
+function buildExport() {
+  S.exportSelected = new Set(Object.keys(S.packages));
+  const el = document.getElementById('export-scroll');
+  let html = `
+    <div style="padding:12px 0 4px">
+      <div class="action-row" style="margin-bottom:12px">
+        <button class="action-btn" onclick="selectAllExport(true)">✅ Pilih Semua</button>
+        <button class="action-btn" onclick="selectAllExport(false)">☐ Hapus Semua</button>
+      </div>
+    </div>
+    <div class="export-pkg-list" id="export-pkg-list">
+  `;
+
+  for (const [name, pkg] of Object.entries(S.packages)) {
+    const short = name.replace('com.android.','').replace('com.miui.','miui.').replace('com.xiaomi.','xi.');
+    html += `
+      <div class="export-pkg-item">
+        <div class="checkbox checked" id="cb-${name}" onclick="toggleExport('${name}', this)">✓</div>
+        <span class="export-pkg-name">${short}</span>
+        <span class="export-pkg-size">${formatSize(pkg.size || 0)}</span>
+      </div>
+    `;
+  }
+
+  html += `</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--text2);line-height:1.7">
+        📦 File akan diekspor sebagai <strong>.mtz</strong><br>
+        📝 Semua modifikasi warna, teks, dan cleanup akan disertakan<br>
+        💾 Nama file: <strong>Shorekeeper_edited.mtz</strong>
+      </div>
+    </div>
+    <button class="export-btn" onclick="exportMtz()">📦 Export .mtz</button>
+  `;
+  el.innerHTML = html;
+}
+
+function toggleExport(name, el) {
+  if (S.exportSelected.has(name)) {
+    S.exportSelected.delete(name);
+    el.classList.remove('checked');
+    el.textContent = '';
+  } else {
+    S.exportSelected.add(name);
+    el.classList.add('checked');
+    el.textContent = '✓';
+  }
+}
+
+function selectAllExport(all) {
+  for (const name of Object.keys(S.packages)) {
+    const cb = document.getElementById(`cb-${name}`);
+    if (all) { S.exportSelected.add(name); cb.classList.add('checked'); cb.textContent = '✓'; }
+    else { S.exportSelected.delete(name); cb.classList.remove('checked'); cb.textContent = ''; }
+  }
+}
+
+async function exportMtz() {
+  if (!S.zip) { toast('Belum ada file dimuat'); return; }
+  showLoading('Membuat file .mtz...');
+  try {
+    const newMtz = new JSZip();
+
+    // Add description.xml
+    if (S.description) newMtz.file('description.xml', S.description);
+
+    // Add preview & wallpaper
+    for (const [path, { blob, pkgName }] of Object.entries(S.allFiles)) {
+      if (pkgName === '__preview' || pkgName === '__wallpaper') {
+        newMtz.file(path, blob);
+      }
+    }
+
+    // Repack each selected package
+    for (const pkgName of S.exportSelected) {
+      const pkg = S.packages[pkgName];
+      if (!pkg) continue;
+      showLoading(`Repack: ${pkgName}...`);
+      const subZip = new JSZip();
+      for (const [path, blob] of Object.entries(pkg.files)) {
+        subZip.file(path, blob);
+      }
+      const subBuf = await subZip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      newMtz.file(pkgName, subBuf);
+    }
+
+    showLoading('Mengompresi .mtz...');
+    const blob = await newMtz.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+
+    // Download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Shorekeeper_edited.mtz';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    hideLoading();
+    toast(`✅ Export berhasil (${formatSize(blob.size)})`);
+  } catch(e) {
+    hideLoading();
+    toast('❌ Export gagal: ' + e.message);
+    console.error(e);
+  }
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+function showLoading(text) {
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('loading-text').textContent = text || 'Memuat...';
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+
+function toast(msg, dur = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function showModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function copyToClip(text) {
+  navigator.clipboard?.writeText(text).then(() => toast('✅ Tersalin: ' + text));
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '0B';
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + 'K';
+  return (bytes/1024/1024).toFixed(1) + 'M';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+</script>
+</body>
+</html>
