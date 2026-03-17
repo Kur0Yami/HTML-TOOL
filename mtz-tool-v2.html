@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MTZ Theme Studio</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MTZ Studio">
+<meta name="theme-color" content="#0a0b0f">
+<link rel="manifest" id="pwa-manifest">
+<script>
+const _m={name:"MTZ Theme Studio",short_name:"MTZ Studio",start_url:location.href,display:"standalone",background_color:"#0a0b0f",theme_color:"#0a0b0f",orientation:"portrait",icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%230a0b0f'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle'%3E%F0%9F%8E%A8%3C/text%3E%3C/svg%3E",sizes:"192x192",type:"image/svg+xml"}]};
+document.getElementById('pwa-manifest').href=URL.createObjectURL(new Blob([JSON.stringify(_m)],{type:'application/json'}));
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700&display=swap');
+:root{
+  --bg:#0a0b0f;--bg2:#111318;--bg3:#181b22;--bg4:#1e2230;--bg5:#242838;
+  --border:#2a2f3d;--border2:#363c4e;
+  --accent:#a3cfff;--accent2:#91f0d4;--accent3:#c4a3ff;
+  --text:#e8eaf0;--text2:#8b91a8;--text3:#5a6070;
+  --danger:#ff6b7a;--warn:#ffd166;--success:#06d6a0;
+  --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+  --r:12px;--rs:8px;--shadow:0 4px 24px rgba(0,0,0,.4);
+  --tab-h:56px;--hdr-h:60px;
+  --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;height:100dvh}
+body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* APP */
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+#header{
+  height:calc(var(--hdr-h) + var(--st));padding-top:var(--st);
+  padding-left:14px;padding-right:14px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+#logo{font-size:12px;font-weight:800;letter-spacing:.5px;line-height:1.2;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;flex-shrink:0}
+#file-info{flex:1;min-width:0}
+#file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#file-meta{font-size:10px;color:var(--text3);margin-top:1px}
+.hbtn{border:none;border-radius:var(--rs);font-family:var(--sans);cursor:pointer;font-weight:700;font-size:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#open-btn{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#000;padding:8px 13px}
+#pwa-hint-btn{background:rgba(163,207,255,.15);border:1px solid var(--accent);color:var(--accent);width:34px;height:34px;font-size:15px}
+#undo-btn,#redo-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);width:30px;height:30px;font-size:14px}
+#undo-btn.active,#redo-btn.active{color:var(--text)}
+
+/* CONTENT */
+#content{flex:1;overflow:hidden;position:relative}
+.tab-panel{display:none;height:100%;overflow:hidden;flex-direction:column}
+.tab-panel.active{display:flex}
+
+/* BOTTOM TABS */
+#tabs{
+  height:calc(var(--tab-h) + var(--sb));padding-bottom:var(--sb);
+  background:var(--bg2);border-top:1px solid var(--border);
+  display:flex;flex-shrink:0;position:relative;z-index:10
+}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  cursor:pointer;border:none;background:transparent;color:var(--text3);
+  font-family:var(--sans);font-size:8px;font-weight:700;letter-spacing:.3px;position:relative}
+.tab svg{width:18px;height:18px}
+.tab.active{color:var(--accent)}
+.tab.active::before{content:'';position:absolute;top:0;left:15%;right:15%;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:0 0 2px 2px}
+.tab-badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--danger);
+  color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:6px;min-width:14px;text-align:center}
+
+/* WELCOME */
+#welcome{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;padding:32px;text-align:center}
+#welcome h2{font-size:20px;font-weight:700}
+#welcome p{font-size:12px;color:var(--text2);line-height:1.7;max-width:320px}
+#welcome-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;
+  border:none;border-radius:var(--r);padding:14px 28px;font-size:15px;font-weight:700;font-family:var(--sans);cursor:pointer;width:100%}
+.feature-pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px}
+.feature-pill{background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  padding:5px 12px;font-size:10px;color:var(--text2)}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:rgba(10,11,15,.92);display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  z-index:999;backdrop-filter:blur(4px)}
+#loading.show{display:flex}
+.spinner{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-text{font-size:12px;color:var(--text2)}
+#loading-bar{width:200px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+#loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  width:0%;transition:width .3s;border-radius:2px}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(var(--tab-h) + var(--sb) + 10px);left:50%;
+  transform:translateX(-50%) translateY(14px);
+  background:var(--bg4);border:1px solid var(--border2);
+  padding:9px 18px;border-radius:var(--r);font-size:12px;
+  opacity:0;transition:all .25s;z-index:998;white-space:nowrap;box-shadow:var(--shadow)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SECTION HEADER */
+.sec-hdr{padding:10px 14px 6px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sec-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.sec-right{display:flex;align-items:center;gap:8px}
+.sec-count{font-size:10px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:20px}
+
+/* SEARCH */
+.search-wrap{padding:0 14px 8px;flex-shrink:0}
+.search-input{width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--rs);padding:8px 13px;color:var(--text);
+  font-family:var(--sans);font-size:12px;outline:none}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--text3)}
+
+/* TREE */
+#tree-scroll{flex:1;overflow-y:auto;padding-bottom:16px}
+.tree-node{user-select:none}
+.tree-item{display:flex;align-items:center;gap:7px;padding:7px 14px;cursor:pointer;
+  font-size:12px;border-bottom:1px solid transparent;transition:background .1s;position:relative}
+.tree-item:active{background:var(--bg3)}
+.tree-item.pkg{background:var(--bg2);border-bottom:1px solid var(--border);font-weight:600}
+.tree-item.dir{color:var(--accent)}
+.tree-item.xml-file{color:var(--accent2)}
+.tree-item.img-file{color:var(--accent3)}
+.tree-item.modified{border-left:2px solid var(--warn)}
+.tree-icon{flex-shrink:0;font-size:13px}
+.tree-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-size{font-size:10px;color:var(--text3);flex-shrink:0}
+.tree-arrow{font-size:10px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.tree-arrow.open{transform:rotate(90deg)}
+.tree-children{display:none}
+.tree-children.open{display:block}
+.tree-badge{font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;flex-shrink:0}
+.badge-nm{background:rgba(145,240,212,.15);color:var(--accent2)}
+.tree-more-btn{background:transparent;border:none;color:var(--text3);font-size:17px;
+  width:26px;height:26px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
+.tree-more-btn:active{background:var(--bg4);color:var(--text)}
+
+/* FILE MENU */
+.file-menu{position:fixed;z-index:300;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--r);overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:175px;
+  animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.file-menu-item{display:flex;align-items:center;gap:11px;padding:11px 15px;font-size:12px;
+  cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.file-menu-item:last-child{border-bottom:none}
+.file-menu-item:active{background:var(--bg4)}
+.file-menu-item.danger{color:var(--danger)}
+
+/* VIEWER */
+#viewer-panel{position:fixed;inset:0;background:var(--bg);z-index:100;display:none;
+  flex-direction:column;padding-bottom:var(--sb)}
+#viewer-panel.open{display:flex}
+#viewer-hdr{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:9px;padding:0 14px;flex-shrink:0}
+#viewer-back{background:var(--bg3);border:none;border-radius:var(--rs);color:var(--text);
+  width:32px;height:32px;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#viewer-title{flex:1;min-width:0;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vbtn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  color:var(--text2);padding:5px 10px;font-size:10px;font-weight:700;font-family:var(--sans);cursor:pointer}
+.vbtn:active{background:var(--bg4)}
+.vbtn.pri{background:rgba(163,207,255,.15);border-color:var(--accent);color:var(--accent)}
+.vbtn.dng{background:rgba(255,107,122,.12);border-color:var(--danger);color:var(--danger)}
+#viewer-body{flex:1;overflow:auto;padding:14px}
+#viewer-body pre{font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.xml-tag{color:#79b8ff}.xml-attr{color:#ffab70}.xml-val{color:var(--accent2)}
+.xml-comment{color:var(--text3);font-style:italic}.cswatch{display:inline-block;width:11px;height:11px;
+  border-radius:2px;margin-right:3px;vertical-align:middle;border:1px solid rgba(255,255,255,.15)}
+
+/* PILL TABS */
+.pill-tabs{display:flex;gap:5px;padding:6px 14px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.pill-tabs::-webkit-scrollbar{display:none}
+.pill-tab{background:var(--bg3);border:1px solid var(--border);border-radius:20px;color:var(--text2);
+  padding:5px 13px;font-size:10px;font-weight:700;font-family:var(--sans);cursor:pointer;white-space:nowrap}
+.pill-tab.active{background:rgba(163,207,255,.15);border-color:var(--accent);color:var(--accent)}
+
+/* ANALYZER */
+#analyzer-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.stat-val{font-size:20px;font-weight:700}.stat-label{font-size:10px;color:var(--text3);margin-top:2px}
+.stat-val.a{color:var(--accent)}.stat-val.a2{color:var(--accent2)}.stat-val.a3{color:var(--accent3)}.stat-val.d{color:var(--danger)}
+.sec-block{margin-bottom:14px}
+.sec-block h3{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.pkg-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  padding:9px 11px;margin-bottom:5px;display:flex;align-items:center;gap:9px}
+.pkg-name{flex:1;font-size:11px;font-family:var(--mono);color:var(--text2)}
+.pkg-files{font-size:10px;color:var(--text3)}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ndot.yes{background:var(--accent2)}.ndot.no{background:var(--border2)}
+.color-palette{display:flex;flex-wrap:wrap;gap:7px}
+.color-chip{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--rs);padding:5px 9px;font-size:10px;font-family:var(--mono);cursor:pointer}
+.color-chip-dot{width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.issue-row{background:var(--bg3);border-left:3px solid var(--danger);border-radius:0 var(--rs) var(--rs) 0;
+  padding:8px 11px;margin-bottom:5px;font-size:11px;line-height:1.5}
+.issue-row.w{border-left-color:var(--warn)}.issue-row.ok{border-left-color:var(--success)}
+.issue-lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+
+/* EDITOR */
+#editor-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.cpkg-block{border-bottom:1px solid var(--border)}
+.cpkg-block .tree-item.pkg{border-bottom:none}
+.field-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:9px 11px;margin-bottom:7px}
+.field-lbl{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:var(--mono)}
+.field-input{width:100%;background:var(--bg4);border:1px solid var(--border);
+  border-radius:6px;padding:6px 9px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none}
+.field-input:focus{border-color:var(--accent)}
+.color-row{display:flex;align-items:center;gap:9px;margin-bottom:0;border-radius:0;border-left:none;border-right:none;border-top:none}
+.color-prev{width:34px;height:34px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.1);flex-shrink:0;cursor:pointer;position:relative}
+.color-prev input[type=color]{opacity:0;position:absolute;inset:0;width:100%;height:100%;cursor:pointer}
+.color-hex{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;
+  padding:6px 9px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none}
+.color-hex:focus{border-color:var(--accent)}
+.action-row{display:flex;gap:7px;margin-top:8px}
+.abtn{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);
+  color:var(--text);padding:9px;font-size:11px;font-weight:700;font-family:var(--sans);cursor:pointer;text-align:center}
+.abtn:active{background:var(--bg4)}
+.abtn.pri{background:rgba(163,207,255,.12);border-color:var(--accent);color:var(--accent)}
+.abtn.suc{background:rgba(6,214,160,.12);border-color:var(--success);color:var(--success)}
+.abtn.dng{background:rgba(255,107,122,.12);border-color:var(--danger);color:var(--danger)}
+.abtn.wrn{background:rgba(255,209,102,.12);border-color:var(--warn);color:var(--warn)}
+
+/* GLOBAL SEARCH */
+#gsearch-results{flex:1;overflow-y:auto;padding:0 14px 24px}
+.gs-result{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  padding:9px 11px;margin-bottom:6px;cursor:pointer}
+.gs-result:active{background:var(--bg4)}
+.gs-pkg{font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px}
+.gs-file{font-size:10px;font-weight:700;color:var(--accent);margin-bottom:3px}
+.gs-match{font-size:11px;font-family:var(--mono);line-height:1.5}
+.gs-match mark{background:rgba(255,209,102,.3);color:var(--warn);border-radius:2px;padding:0 2px}
+.gs-count{font-size:10px;color:var(--text3);text-align:center;padding:12px}
+
+/* DARK GEN */
+#darkgen-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.dg-preview{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:6px}
+.dg-swatch{flex-shrink:0;text-align:center}
+.dg-pair{display:flex;flex-direction:column;gap:3px}
+.dg-color{width:48px;height:36px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.1)}
+.dg-arrow{text-align:center;font-size:10px;color:var(--text3)}
+.slider-row{margin-bottom:12px}
+.slider-lbl{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px}
+.slider-lbl span{color:var(--accent);font-weight:700;font-family:var(--mono)}
+input[type=range]{width:100%;accent-color:var(--accent);height:4px}
+.dg-pkg-list{margin-bottom:14px}
+.dg-pkg-item{display:flex;align-items:center;gap:9px;padding:9px 11px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:5px}
+.dg-cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .15s}
+.dg-cb.on{background:var(--accent2);border-color:var(--accent2)}
+.dg-cb.on::after{content:'✓';font-size:11px;color:#000;font-weight:700}
+.dg-run{width:100%;background:linear-gradient(135deg,var(--accent3),var(--accent));color:#000;
+  border:none;border-radius:var(--r);padding:13px;font-size:14px;font-weight:700;
+  font-family:var(--sans);cursor:pointer;margin-top:12px}
+.dg-run:active{transform:scale(.98)}
+
+/* DIFF */
+#diff-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.diff-drop{border:2px dashed var(--border2);border-radius:var(--r);padding:28px;
+  text-align:center;cursor:pointer;margin-bottom:12px;transition:border-color .2s}
+.diff-drop.has{border-color:var(--accent2);border-style:solid}
+.diff-drop:active{border-color:var(--accent)}
+.diff-drop-icon{font-size:36px;margin-bottom:8px}
+.diff-drop-txt{font-size:12px;color:var(--text2)}
+.diff-section{margin-bottom:12px}
+.diff-section h3{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:7px}
+.diff-item{padding:9px 11px;border-radius:var(--rs);margin-bottom:4px;font-size:11px;font-family:var(--mono)}
+.diff-item.added{background:rgba(6,214,160,.1);border-left:3px solid var(--success)}
+.diff-item.removed{background:rgba(255,107,122,.1);border-left:3px solid var(--danger)}
+.diff-item.changed{background:rgba(255,209,102,.08);border-left:3px solid var(--warn)}
+.diff-lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+
+/* CLEANUP */
+#cleanup-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.cleanup-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px}
+.cleanup-card h4{font-size:13px;font-weight:700;margin-bottom:3px}
+.cleanup-card p{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:10px}
+.cleanup-stats{font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)}
+.cleanup-stats span{color:var(--accent);font-weight:700}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 11px;background:var(--bg4);border-radius:var(--rs);margin-bottom:6px}
+.toggle-lbl{font-size:12px}.toggle-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.toggle{width:42px;height:22px;background:var(--border2);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(20px)}
+.run-btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000;border:none;border-radius:var(--r);padding:13px;font-size:14px;font-weight:700;
+  font-family:var(--sans);cursor:pointer;margin-top:14px}
+.run-btn:active{transform:scale(.98)}
+
+/* EXPORT */
+#export-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.export-item{display:flex;align-items:center;gap:9px;padding:9px 11px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:5px}
+.cb{width:19px;height:19px;border-radius:4px;border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .15s}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:'✓';font-size:11px;color:#000;font-weight:700}
+.export-btn{width:100%;background:linear-gradient(135deg,var(--accent3),var(--accent));
+  color:#000;border:none;border-radius:var(--r);padding:13px;font-size:14px;font-weight:700;
+  font-family:var(--sans);cursor:pointer}
+.export-btn:active{transform:scale(.98)}
+
+/* ICONS */
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 14px}
+.icon-item{display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:9px 5px;cursor:pointer}
+.icon-item:active{background:var(--bg4)}
+.icon-item img{width:46px;height:46px;object-fit:contain;border-radius:10px}
+.icon-item span{font-size:8px;color:var(--text3);text-align:center;word-break:break-all;line-height:1.3}
+.icon-ph{width:46px;height:46px;background:var(--bg4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* AOD PLAYER */
+#aod-panel{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column}
+#aod-panel.open{display:flex}
+#aod-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden}
+#aod-canvas{max-width:100%;max-height:100%}
+#aod-controls{background:var(--bg2);border-top:1px solid var(--border);padding:12px 14px;padding-bottom:calc(12px + var(--sb))}
+.aod-ctrl-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.aod-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  color:var(--text);padding:8px 14px;font-size:12px;font-family:var(--sans);cursor:pointer;font-weight:700}
+.aod-btn:active{background:var(--bg4)}
+#aod-frame-info{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.aod-back{background:var(--bg3);border:none;border-radius:var(--rs);color:var(--text);
+  width:32px;height:32px;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+/* PKG INSPECTOR */
+#inspector-panel{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column}
+#inspector-panel.open{display:flex}
+#inspector-hdr{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:9px;padding:0 14px;flex-shrink:0}
+#inspector-scroll{flex:1;overflow-y:auto;padding:0 14px 24px}
+.insp-tab{padding:5px 13px;font-size:10px;font-weight:700;font-family:var(--sans);cursor:pointer;
+  border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.insp-tab.active{background:rgba(163,207,255,.15);border-color:var(--accent);color:var(--accent)}
+
+/* MODAL */
+#modal{position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+#modal.open{display:flex}
+#modal-box{background:var(--bg2);border-top:1px solid var(--border);
+  border-radius:var(--r) var(--r) 0 0;width:100%;padding:18px 18px calc(28px + var(--sb));
+  max-height:80vh;overflow-y:auto}
+#modal-title{font-size:15px;font-weight:700;margin-bottom:14px}
+#modal-body{font-size:13px;color:var(--text2);line-height:1.6}
+.modal-close{width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--rs);color:var(--text);padding:11px;font-size:12px;font-weight:700;
+  font-family:var(--sans);cursor:pointer;margin-top:14px}
+
+/* PWA BANNER */
+#pwa-banner{display:none;position:fixed;bottom:calc(var(--tab-h) + var(--sb) + 8px);
+  left:12px;right:12px;z-index:500;background:var(--bg4);border:1px solid var(--accent);
+  border-radius:var(--r);padding:13px 15px;box-shadow:0 8px 32px rgba(0,0,0,.5);
+  animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(display-mode:standalone){#pwa-banner,#pwa-hint-btn{display:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div id="logo">MTZ<br>STUDIO</div>
+    <div id="file-info">
+      <div id="file-name">Belum ada file</div>
+      <div id="file-meta">Buka file .mtz untuk mulai</div>
+    </div>
+    <button class="hbtn" id="undo-btn" onclick="undo()" title="Undo">↩</button>
+    <button class="hbtn" id="redo-btn" onclick="redo()" title="Redo">↪</button>
+    <button class="hbtn" id="pwa-hint-btn" onclick="showPwaBanner()" style="display:none">📲</button>
+    <button class="hbtn" id="open-btn" onclick="triggerOpen()">📂 Buka</button>
+    <input type="file" id="file-input" accept=".mtz,.zip" style="display:none" onchange="loadFile(this)">
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+    <!-- WELCOME -->
+    <div id="welcome">
+      <div style="font-size:60px">🎨</div>
+      <h2>MTZ Theme Studio</h2>
+      <p>Tool lengkap untuk analisis, edit, cleanup, dark mode generator, diff, dan repack tema MIUI/HyperOS.</p>
+      <div class="feature-pills">
+        <span class="feature-pill">🌙 Dark Gen</span><span class="feature-pill">🔍 Global Search</span>
+        <span class="feature-pill">📊 Diff</span><span class="feature-pill">⏱ AOD Player</span>
+        <span class="feature-pill">↩ Undo/Redo</span><span class="feature-pill">🔎 Inspector</span>
+      </div>
+      <button id="welcome-btn" onclick="triggerOpen()">📂 Buka File .mtz</button>
+    </div>
+
+    <!-- TAB: FILE -->
+    <div class="tab-panel" id="panel-tree">
+      <div class="sec-hdr">
+        <span class="sec-title">Struktur File</span>
+        <div class="sec-right">
+          <span class="sec-count" id="tree-count">-</span>
+          <button class="pill-tab" style="padding:3px 9px;font-size:9px" onclick="collapseAllTree()">⬆ Tutup</button>
+        </div>
+      </div>
+      <div class="search-wrap">
+        <input class="search-input" placeholder="🔍 Cari file..." oninput="filterTree(this.value)">
+      </div>
+      <div id="tree-scroll"></div>
+    </div>
+
+    <!-- TAB: SEARCH -->
+    <div class="tab-panel" id="panel-search">
+      <div class="sec-hdr"><span class="sec-title">Cari di Semua XML</span></div>
+      <div class="search-wrap" style="padding-bottom:6px">
+        <input class="search-input" id="gsearch-input" placeholder="🔍 Ketik untuk cari..." oninput="globalSearch(this.value)">
+      </div>
+      <div style="padding:0 14px 6px;flex-shrink:0;display:flex;gap:6px">
+        <button class="pill-tab active" id="gst-all" onclick="setGsType('all',this)">Semua</button>
+        <button class="pill-tab" id="gst-color" onclick="setGsType('color',this)">Warna</button>
+        <button class="pill-tab" id="gst-string" onclick="setGsType('string',this)">Teks</button>
+        <button class="pill-tab" id="gst-drawable" onclick="setGsType('drawable',this)">Drawable</button>
+      </div>
+      <div id="gsearch-results"><div class="gs-count">Ketik minimal 2 karakter untuk cari</div></div>
+    </div>
+
+    <!-- TAB: ANALYZER -->
+    <div class="tab-panel" id="panel-analyzer">
+      <div class="sec-hdr"><span class="sec-title">Analisis Tema</span></div>
+      <div id="analyzer-scroll"></div>
+    </div>
+
+    <!-- TAB: EDITOR -->
+    <div class="tab-panel" id="panel-editor">
+      <div class="sec-hdr"><span class="sec-title">Editor XML & Warna</span></div>
+      <div class="pill-tabs" id="editor-pills">
+        <div class="pill-tab active" onclick="switchEditorTab('colors')">🎨 Warna</div>
+        <div class="pill-tab" onclick="switchEditorTab('strings')">📝 Teks</div>
+        <div class="pill-tab" onclick="switchEditorTab('fallback')">🔧 Fallback</div>
+      </div>
+      <div id="editor-scroll"></div>
+    </div>
+
+    <!-- TAB: DARK GEN -->
+    <div class="tab-panel" id="panel-darkgen">
+      <div class="sec-hdr"><span class="sec-title">🌙 Dark Mode Generator</span></div>
+      <div id="darkgen-scroll"></div>
+    </div>
+
+    <!-- TAB: DIFF -->
+    <div class="tab-panel" id="panel-diff">
+      <div class="sec-hdr"><span class="sec-title">📊 Bandingkan 2 Tema</span></div>
+      <div id="diff-scroll"></div>
+    </div>
+
+    <!-- TAB: ICONS -->
+    <div class="tab-panel" id="panel-icons">
+      <div class="sec-hdr">
+        <span class="sec-title">Icon Pack</span>
+        <span class="sec-count" id="icon-count">-</span>
+      </div>
+      <div class="search-wrap">
+        <input class="search-input" placeholder="🔍 Cari package..." oninput="filterIcons(this.value)">
+      </div>
+      <div id="icon-grid-wrap" style="flex:1;overflow-y:auto;padding-bottom:16px"></div>
+    </div>
+
+    <!-- TAB: CLEANUP -->
+    <div class="tab-panel" id="panel-cleanup">
+      <div class="sec-hdr"><span class="sec-title">Cleanup & Perbaikan</span></div>
+      <div id="cleanup-scroll"></div>
+    </div>
+
+    <!-- TAB: EXPORT -->
+    <div class="tab-panel" id="panel-export">
+      <div class="sec-hdr"><span class="sec-title">Export .mtz</span></div>
+      <div id="export-scroll"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM TABS -->
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab('tree')" id="tab-tree">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v6H3zM15 3h6v6h-6zM15 15h6v6h-6zM3 15h6v6H3z"/></svg>FILE
+    </button>
+    <button class="tab" onclick="switchTab('search')" id="tab-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>CARI
+    </button>
+    <button class="tab" onclick="switchTab('analyzer')" id="tab-analyzer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>ANALISIS
+    </button>
+    <button class="tab" onclick="switchTab('editor')" id="tab-editor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>EDITOR
+    </button>
+    <button class="tab" onclick="switchTab('darkgen')" id="tab-darkgen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>DARK
+    </button>
+    <button class="tab" onclick="switchTab('diff')" id="tab-diff">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>DIFF
+    </button>
+    <button class="tab" onclick="switchTab('icons')" id="tab-icons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>IKON
+    </button>
+    <button class="tab" onclick="switchTab('cleanup')" id="tab-cleanup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>CLEANUP
+    </button>
+    <button class="tab" onclick="switchTab('export')" id="tab-export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>EXPORT
+    </button>
+  </div>
+</div>
+
+<!-- VIEWER PANEL -->
+<div id="viewer-panel">
+  <div id="viewer-hdr">
+    <button id="viewer-back" onclick="closeViewer()">‹</button>
+    <div id="viewer-title">Viewer</div>
+    <div style="display:flex;gap:6px">
+      <button class="vbtn" id="vbtn-translate" onclick="translateViewer()" style="display:none">🌐 ID</button>
+      <button class="vbtn dng" id="vbtn-replace" onclick="triggerReplaceFromViewer()" style="display:none">🔄</button>
+      <button class="vbtn pri" onclick="copyViewer()">Salin</button>
+    </div>
+  </div>
+  <div id="viewer-body"></div>
+</div>
+
+<!-- AOD PLAYER -->
+<div id="aod-panel">
+  <div id="viewer-hdr" style="position:relative">
+    <button class="aod-back" onclick="closeAod()">‹</button>
+    <div style="flex:1;font-size:12px;font-weight:700">AOD Preview Player</div>
+  </div>
+  <div id="aod-canvas-wrap"><canvas id="aod-canvas"></canvas></div>
+  <div id="aod-controls">
+    <div class="aod-ctrl-row">
+      <button class="aod-btn" onclick="aodPrev()">◀</button>
+      <button class="aod-btn" id="aod-play-btn" onclick="aodTogglePlay()">▶ Play</button>
+      <button class="aod-btn" onclick="aodNext()">▶</button>
+      <div id="aod-frame-info" style="margin-left:auto">0 / 0</div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>FPS</span><span id="aod-fps-val">12</span></div>
+      <input type="range" min="1" max="30" value="12" oninput="setAodFps(this.value)">
+    </div>
+  </div>
+</div>
+
+<!-- PKG INSPECTOR -->
+<div id="inspector-panel">
+  <div id="inspector-hdr">
+    <button class="aod-back" onclick="closeInspector()">‹</button>
+    <div id="inspector-title" style="flex:1;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+  </div>
+  <div style="display:flex;gap:5px;padding:8px 14px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
+    <button class="insp-tab active" onclick="switchInspTab('assets',this)">📁 Aset</button>
+    <button class="insp-tab" onclick="switchInspTab('colors',this)">🎨 Warna</button>
+    <button class="insp-tab" onclick="switchInspTab('strings',this)">📝 Teks</button>
+    <button class="insp-tab" onclick="switchInspTab('xml',this)">📄 XML</button>
+  </div>
+  <div id="inspector-scroll"></div>
+</div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loading-text">Memuat...</div>
+  <div id="loading-bar"><div id="loading-bar-fill"></div></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL -->
+<div id="modal" onclick="closeModal()">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-title"></div>
+    <div id="modal-body"></div>
+    <button class="modal-close" onclick="closeModal()">Tutup</button>
+  </div>
+</div>
+
+<!-- PWA BANNER -->
+<div id="pwa-banner">
+  <div style="display:flex;align-items:center;gap:11px">
+    <span style="font-size:30px;flex-shrink:0">🎨</span>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700">Instal MTZ Studio</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:1px">Buka seperti aplikasi tanpa browser</div>
+    </div>
+    <button onclick="dismissPwa()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+  </div>
+  <div style="display:flex;gap:7px;margin-top:10px">
+    <button onclick="installPwa()" style="flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;border-radius:var(--rs);padding:9px;font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer">📲 Instal</button>
+    <button onclick="dismissPwa()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text2);padding:9px 14px;font-size:12px;font-family:var(--sans);cursor:pointer">Nanti</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+const S = {
+  zip:null, packages:{}, allFiles:{}, description:null,
+  modifications:{}, fileCount:0,
+  allColors:[], allStrings:[], issues:[],
+  iconData:[], aodFrames:[], aodPlaying:false, aodFps:12, aodFrame:0, aodTimer:null,
+  currentEditorTab:'colors', currentViewerContent:'', currentViewerIsXml:false,
+  currentViewerPath:'', currentViewerPkg:'', viewerTranslated:false,
+  gsType:'all', inspPkg:null, inspTab:'assets',
+  diffZip:null, diffPackages:{},
+  history:[], historyIdx:-1, // undo/redo
+  cleanupOpts:{removeDuplicates:true,fixDarkFallback:true,cleanInvalidColors:true,formatXml:true,translateVi:true,translateZh:true},
+  exportSelected:new Set(),
+  darkgenOpts:{darknessLevel:85,bgThreshold:75,textThreshold:30,keepAccents:true},
+  darkgenSelected:new Set(),
+};
+
+// ══════════════════════════════════════════════════════════
+// TRANSLATIONS
+// ══════════════════════════════════════════════════════════
+const VI_ID={"Hình nền tủy chỉnh":"Wallpaper Kustom","Giải pháp tạm thời cho MIUI14，Không thể thay đổi trực tiếp hình nền":"Solusi sementara MIUI14, tidak bisa ubah wallpaper langsung","Chọn hình nền tùy chỉnh":"Pilih Wallpaper Kustom","Khuyến khích chọn ảnh có độ phân giải đúng với điện thoại,tránh ảnh quá lớn gây đơ màn hình khoá,nên dưới 3MB。":"Disarankan pilih gambar resolusi sesuai layar, hindari gambar >3MB","Hiện thị FPS trên màn hình khoá":"Tampilkan FPS di Layar Kunci","Hiển thị FPS ở góc phải màn hình khoá":"Tampilkan FPS di pojok kanan layar kunci","Ẩn hiệu ứng sạc của hệ thống":"Sembunyikan Efek Charging Sistem","Chặn hiệu ứng sạc của hệ thống":"Blokir efek charging bawaan sistem","Hiệu ứng sạc hình tròn":"Efek Charging Lingkaran","Nếu bật vân tay trong màn hình，nó sẽ hòa hợp với vân tay（Nhất định phải dùng thanh trạng thái của theme này）":"Jika fingerprint in-display aktif, efek akan menyatu (wajib pakai status bar tema ini)","Chọn Avatar trung tâm điều khiển tùy chỉnh":"Pilih Avatar Control Center Kustom","Trước khi chọn cắt ảnh theo tỉ lệ 1:1，nếu không sẽ bị méo ảnh":"Crop gambar 1:1 sebelum dipilih agar tidak distorsi","Tùy chọn âm nhạc màn hình khoá":"Opsi Musik Layar Kunci","Có thể không áp dụng ngay khi đang phát nhạc":"Mungkin tidak langsung berlaku saat musik sedang diputar","Hiển thị nhạc":"Tampilkan Widget Musik","Tắt để không hiển thị nhạc trên màn hình khoá":"Matikan untuk sembunyikan musik di layar kunci","Giữ sáng khi phát nhạc":"Layar Tetap Menyala Saat Putar Musik","Màn hình sáng khi đang phát nhạc":"Layar tetap menyala selama musik diputar","Cảm ơn bạn đã tải và sử dụng theme này，sự ủng hộ của bạn là lớn nhất cho tôi。Nếu bạn có ý kiến hay hãy phản hồi":"Terima kasih telah menggunakan tema ini! Dukunganmu sangat berarti. Silakan beri masukan!","Việt hoá bởi Xiao Yi Xian":"Diterjemahkan oleh Xiao Yi Xian","Nhấn để sao chép":"Ketuk untuk salin","Thiết kế khoá màn hình bởi Akino":"Desain layar kunci oleh Akino","Theo dõi tác giả!":"Ikuti pembuatnya!","Ủng hộ tác giả":"Dukung Pembuat","Tùy chọn nâng cao màn hình khoá":"Opsi Lanjutan Layar Kunci","Hyper Os không thể dùng hình nền tùy chỉnh":"Hyper OS tidak mendukung wallpaper kustom","Chức năng này chỉ hỗ trợ MIUI14/MIUI13":"Fitur ini hanya mendukung MIUI14/MIUI13","Có người đến hóng drama":"Ada yang datang nonton drama","Dân xài chùa":"Pengguna gratisan","Quét mã đi":"Scan kode QR","Dịch vụ miễn phí data":"Layanan data gratis","Xóa ký ức":"Hapus riwayat","UP cảm thấy rất phèn":"UP merasa sangat kampungan"};
+const ZH_ID={"类型":"Tipe","百变框架":"Framework Fleksibel","是否支持显示农历开关":"Dukung kalender lunar","是否支持显示电量开关":"Dukung tampilan baterai","是否支持显示通知开关":"Dukung tampilan notifikasi","开关初始状态":"Status awal toggle","显示农历-开启":"Kalender lunar - Aktif","显示电量-开启":"Baterai - Aktif","显示通知-开启":"Notifikasi - Aktif","查询通知":"Cek notifikasi","日期":"Tanggal","农历":"Kalender lunar","电量":"Baterai","通知图标之间的间隙":"Jarak antar ikon notifikasi","预览模式通知":"Notifikasi preview","息屏真实通知":"Notifikasi AOD nyata","尊重原作者，请勿修改代码":"Hormati pembuat asli, jangan ubah kode","本代码由weeazn进行汉化":"Kode ini dilokalisasi oleh weeazn","本锁屏代码由秋野(JellyBeans)設計":"Kode layar kunci dirancang oleh Akino (JellyBeans)","开屏刷新":"Refresh saat layar menyala","音乐":"Musik","主题色":"Warna tema","开关背景":"Background toggle"};
+function translateText(t){let r=t;for(const[f,to] of Object.entries(VI_ID)) r=r.split(f).join(to);for(const[f,to] of Object.entries(ZH_ID)) r=r.split(f).join(to);return r;}
+
+// ══════════════════════════════════════════════════════════
+// UNDO / REDO
+// ══════════════════════════════════════════════════════════
+function pushHistory(label, snapshot) {
+  S.history = S.history.slice(0, S.historyIdx + 1);
+  S.history.push({ label, snapshot });
+  if (S.history.length > 30) S.history.shift();
+  S.historyIdx = S.history.length - 1;
+  updateUndoRedo();
+}
+
+function snapshotPkg(pkgName) {
+  const snap = {};
+  for (const [k, v] of Object.entries(S.packages[pkgName].files)) snap[k] = v;
+  return snap;
+}
+
+async function undo() {
+  if (S.historyIdx < 0) return;
+  const h = S.history[S.historyIdx];
+  if (h) { restoreSnapshot(h.snapshot); S.historyIdx--; updateUndoRedo(); toast(`↩ Undo: ${h.label}`); }
+}
+async function redo() {
+  if (S.historyIdx >= S.history.length - 1) return;
+  S.historyIdx++;
+  const h = S.history[S.historyIdx];
+  if (h) { restoreSnapshot(h.snapshot); updateUndoRedo(); toast(`↪ Redo: ${h.label}`); }
+}
+function restoreSnapshot(snap) {
+  for (const [pkgName, files] of Object.entries(snap)) {
+    if (S.packages[pkgName]) S.packages[pkgName].files = { ...files };
+  }
+}
+function updateUndoRedo() {
+  document.getElementById('undo-btn').classList.toggle('active', S.historyIdx >= 0);
+  document.getElementById('redo-btn').classList.toggle('active', S.historyIdx < S.history.length - 1);
+}
+
+// ══════════════════════════════════════════════════════════
+// FILE LOADING
+// ══════════════════════════════════════════════════════════
+function triggerOpen() { document.getElementById('file-input').click(); }
+
+async function loadFile(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  showLoading('Membuka file .mtz...', 5);
+  try {
+    const buf = await file.arrayBuffer();
+    S.zip = await JSZip.loadAsync(buf);
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('welcome').style.display = 'none';
+    showLoading('Mengekstrak packages...', 20);
+    await extractPackages();
+    showLoading('Membangun pohon file...', 50);
+    buildTree();
+    showLoading('Menganalisis...', 65);
+    buildAnalyzer();
+    showLoading('Memuat editor...', 75);
+    buildEditor();
+    showLoading('Memuat ikon...', 85);
+    await buildIcons();
+    showLoading('Menyiapkan AOD...', 92);
+    await loadAodFrames();
+    buildCleanup(); buildExport(); buildDarkGen(); buildDiff();
+    document.getElementById('file-meta').textContent = `${S.fileCount.toLocaleString()} file · ${fmtSize(file.size)}`;
+    hideLoading();
+    switchTab('tree');
+    toast('✅ Tema berhasil dimuat!');
+    S.history = []; S.historyIdx = -1; updateUndoRedo();
+  } catch(e) { hideLoading(); toast('❌ Gagal: ' + e.message); console.error(e); }
+}
+
+async function extractPackages() {
+  S.packages = {}; S.allFiles = {}; S.fileCount = 0;
+  const descFile = S.zip.file('description.xml');
+  if (descFile) S.description = await descFile.async('string');
+  for (const [name, entry] of Object.entries(S.zip.files)) {
+    if (entry.dir || name === 'description.xml') continue;
+    if (name.startsWith('preview/') || name.startsWith('wallpaper/')) {
+      const blob = await entry.async('blob');
+      S.allFiles[name] = { blob, pkgName: name.startsWith('preview/') ? '__preview' : '__wallpaper' };
+      S.fileCount++; continue;
+    }
+    try {
+      const buf = await entry.async('arraybuffer');
+      const subZip = await JSZip.loadAsync(buf);
+      const pkg = { files:{}, hasNightmode:false, hasNightmodeFiles:0, totalFiles:0, size:buf.byteLength };
+      for (const [subName, subEntry] of Object.entries(subZip.files)) {
+        if (subEntry.dir) continue;
+        const blob = await subEntry.async('blob');
+        pkg.files[subName] = blob;
+        S.allFiles[`${name}/${subName}`] = { blob, pkgName:name };
+        S.fileCount++; pkg.totalFiles++;
+        if (subName.startsWith('nightmode/') || subName.includes('/nightmode/')) { pkg.hasNightmode = true; pkg.hasNightmodeFiles++; }
+      }
+      S.packages[name] = pkg;
+    } catch(e) {
+      const blob = await entry.async('blob');
+      S.allFiles[name] = { blob, pkgName:'__root' }; S.fileCount++;
+    }
+  }
+  await parseAllXml();
+}
+
+async function parseAllXml() {
+  S.allColors = []; S.allStrings = []; S.issues = [];
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    for (const [path, blob] of Object.entries(pkg.files)) {
+      if (!path.endsWith('.xml')) continue;
+      try {
+        const text = await blob.text();
+        const colorRe = /<color[^>]+name="([^"]*)"[^>]*>([^<]+)<\/color>/g;
+        let m;
+        while ((m = colorRe.exec(text)) !== null) {
+          const [,cn,cv] = m; S.allColors.push({pkg:pkgName,path,name:cn,value:cv.trim()});
+          if (cn === '789' || /^\d+$/.test(cn)) S.issues.push({type:'error',pkg:pkgName,path,msg:`Color name tidak valid: "${cn}"`});
+        }
+        const strRe = /<string[^>]+name="([^"]*)"[^>]*>([^<]+)<\/string>/g;
+        while ((m = strRe.exec(text)) !== null) {
+          const [,sn,sv] = m; const s = sv.trim();
+          const hasVi = /[àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(s);
+          const hasZh = /[\u4e00-\u9fff]/.test(s);
+          S.allStrings.push({pkg:pkgName,path,name:sn,value:s,hasVi,hasZh});
+        }
+        if (path.includes('theme_fallback.xml')) {
+          let cnt = 0; const re = /<drawable[^>]+name="[^"]*_dark[^"]*"[^>]*>[^<]*_light[^<]*<\/drawable>/g;
+          while (re.exec(text) !== null) cnt++;
+          if (cnt > 0) S.issues.push({type:'warn',pkg:pkgName,path,msg:`${cnt} drawable dark → light`});
+        }
+        if (path.endsWith('theme_values.xml') && text.includes('LightTemplate') && !text.includes('DarkTemplate'))
+          S.issues.push({type:'warn',pkg:pkgName,path,msg:'DarkTemplate tidak ada'});
+        const seen = {}; const cr2 = /<color[^>]+name="([^"]*)"[^>]*>/g;
+        while ((m = cr2.exec(text)) !== null) { if (seen[m[1]]) S.issues.push({type:'warn',pkg:pkgName,path,msg:`Duplikat: "${m[1]}"`}); seen[m[1]]=true; }
+      } catch(e) {}
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// TREE
+// ══════════════════════════════════════════════════════════
+function buildTree() {
+  const container = document.getElementById('tree-scroll');
+  container.innerHTML = '';
+  let count = 0;
+  // description
+  const di = mkTreeItem('📄','description.xml','xml-file','',async()=>viewFile('description.xml',S.description,true,null));
+  container.appendChild(di); count++;
+  for (const [pkgName, pkg] of Object.entries(S.packages)) {
+    const pkgEl = document.createElement('div'); pkgEl.className='tree-node';
+    const badges = pkg.hasNightmode ? `<span class="tree-badge badge-nm">🌙${pkg.hasNightmodeFiles}</span>` : '';
+    const hdr = document.createElement('div'); hdr.className='tree-item pkg';
+    hdr.innerHTML=`<span class="tree-icon">📦</span><span class="tree-name">${pkgName}</span>${badges}<span class="tree-size">${pkg.totalFiles}f</span><button class="tree-more-btn" onclick="event.stopPropagation();showPkgMenu('${pkgName}',this)">⋮</button><span class="tree-arrow" id="arr-${pkgName}">›</span>`;
+    const ch = document.createElement('div'); ch.className='tree-children'; ch.id=`ch-${pkgName}`;
+    // group by folder
+    const folders = {};
+    for (const path of Object.keys(pkg.files)) { const f = path.includes('/') ? path.split('/')[0] : '__root'; if(!folders[f]) folders[f]=[]; folders[f].push(path); }
+    for (const [folder, paths] of Object.entries(folders)) {
+      if (folder === '__root') { for (const p of paths) { ch.appendChild(buildFileItem(pkgName,p,pkg.files[p],'32px')); count++; } }
+      else {
+        const fEl = document.createElement('div'); fEl.className='tree-node';
+        const fh = document.createElement('div'); fh.className='tree-item dir'; fh.style.paddingLeft='28px';
+        fh.innerHTML=`<span class="tree-icon">${folder==='nightmode'?'🌙':'📁'}</span><span class="tree-name">${folder}</span><span class="tree-size">${paths.length}</span><span class="tree-arrow" id="arr-${pkgName}-${CSS.escape(folder)}">›</span>`;
+        const fc = document.createElement('div'); fc.className='tree-children';
+        for (const p of paths) { const fi = buildFileItem(pkgName,p,pkg.files[p],'44px'); fc.appendChild(fi); count++; }
+        fh.onclick=()=>{ fc.classList.toggle('open'); document.getElementById(`arr-${pkgName}-${CSS.escape(folder)}`)?.classList.toggle('open'); };
+        fEl.appendChild(fh); fEl.appendChild(fc); ch.appendChild(fEl);
+      }
+    }
+    hdr.onclick=()=>{ ch.classList.toggle('open'); document.getElementById(`arr-${pkgName}`)?.classList.toggle('open'); };
+    pkgEl.appendChild(hdr); pkgEl.appendChild(ch); container.appendChild(pkgEl);
+  }
+  document.getElementById('tree-count').textContent = count.toLocaleString();
+}
+
+function buildFileItem(pkgName, path, blob, paddingLeft='32px') {
+  const wrap = document.createElement('div'); wrap.className='tree-node';
+  const name = path.split('/').pop();
+  const isXml = name.endsWith('.xml'), isImg = /\.(png|jpg|jpeg|webp)$/i.test(name);
+  const icon = isXml?'📝':isImg?'🖼️':'📄';
+  const cls = isXml?'xml-file':isImg?'img-file':'';
+  const isModified = !!S.modifications[`${pkgName}/${path}`];
+  const item = document.createElement('div');
+  item.className=`tree-item${cls?' '+cls:''}${isModified?' modified':''}`;
+  item.style.paddingLeft=paddingLeft;
+  item.innerHTML=`<span class="tree-icon">${icon}</span><span class="tree-name">${name}</span><span class="tree-size">${fmtSize(blob.size)}</span><button class="tree-more-btn" onclick="event.stopPropagation();showFileMenu('${pkgName}','${path}',this)">⋮</button>`;
+  item.addEventListener('click', async()=>{
+    if (isXml) { const t = await blob.text(); viewFile(path,t,true,pkgName); }
+    else if (isImg) viewImage(path,blob,pkgName);
+    else { try{const t=await blob.text();viewFile(path,t,false,pkgName);}catch(e){toast('Tidak bisa baca binary');} }
+  });
+  wrap.appendChild(item); return wrap;
+}
+
+function mkTreeItem(icon, name, cls, size, onclick) {
+  const el=document.createElement('div'); el.className='tree-node';
+  const item=document.createElement('div');
+  item.className=`tree-item${cls?' '+cls:''}`;
+  item.style.paddingLeft='14px';
+  item.innerHTML=`<span class="tree-icon">${icon}</span><span class="tree-name">${name}</span><span class="tree-size">${size}</span>`;
+  if(onclick) item.addEventListener('click',onclick);
+  el.appendChild(item); return el;
+}
+
+function collapseAllTree() { document.querySelectorAll('.tree-children').forEach(e=>e.classList.remove('open')); document.querySelectorAll('.tree-arrow').forEach(e=>e.classList.remove('open')); }
+
+function filterTree(q) {
+  q=q.toLowerCase();
+  document.querySelectorAll('#tree-scroll .tree-node').forEach(node=>{
+    const name = node.querySelector('.tree-name')?.textContent.toLowerCase()||'';
+    node.style.display=(!q||name.includes(q))?'':'none';
+  });
+}
+
+// PKG context menu
+function showPkgMenu(pkgName, btn) {
+  rmMenus();
+  const menu=mkMenu([
+    {icon:'🔎',label:'Inspeksi Package',action:()=>openInspector(pkgName)},
+    {icon:'🎨',label:'Edit Warna',action:()=>{switchTab('editor');switchEditorTab('colors');}},
+  ]);
+  posMenu(menu, btn); document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click',rmMenus,{once:true}),10);
+}
+
+// FILE context menu
+function showFileMenu(pkgName, path, btn) {
+  rmMenus();
+  const name = path.split('/').pop();
+  const isImg = /\.(png|jpg|jpeg|webp)$/i.test(name);
+  const isXml = name.endsWith('.xml');
+  const isModified = !!S.modifications[`${pkgName}/${path}`];
+  const items = [
+    {icon:'👁',label:'Lihat',action:async()=>{
+      const blob=S.packages[pkgName]?.files[path];if(!blob)return;
+      if(isXml){const t=await blob.text();viewFile(path,t,true,pkgName);}
+      else if(isImg) viewImage(path,blob,pkgName);
+      else{try{const t=await blob.text();viewFile(path,t,false,pkgName);}catch(e){toast('Tidak bisa baca binary');}}
+    }},
+    {icon:'🔄',label:'Replace File',action:()=>triggerReplaceFile(pkgName,path)},
+    {icon:'💾',label:'Download',action:()=>downloadFile(pkgName,path)},
+  ];
+  if(isModified) items.push({icon:'↺',label:'Restore Original',action:()=>restoreFile(pkgName,path),danger:true});
+  const menu = mkMenu(items);
+  posMenu(menu, btn); document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click',rmMenus,{once:true}),10);
+}
+
+function mkMenu(items) {
+  const menu=document.createElement('div'); menu.className='file-menu';
+  items.forEach(it=>{
+    const row=document.createElement('div');
+    row.className='file-menu-item'+(it.danger?' danger':'');
+    row.innerHTML=`<span>${it.icon}</span><span>${it.label}</span>`;
+    row.onclick=()=>{rmMenus();it.action();}; menu.appendChild(row);
+  }); return menu;
+}
+function posMenu(menu,btn) {
+  const r=btn.getBoundingClientRect();
+  menu.style.position='fixed'; menu.style.top=(r.bottom+4)+'px';
+  menu.style.right='12px';
+}
+function rmMenus() { document.querySelectorAll('.file-menu').forEach(m=>m.remove()); }
+
+function triggerReplaceFile(pkgName, path) {
+  const input=document.createElement('input'); input.type='file';
+  const name=path.split('/').pop();
+  const isImg=/\.(png|jpg|jpeg|webp)$/i.test(name);
+  input.accept=isImg?'image/*':name.endsWith('.xml')?'.xml,text/xml':'*/*';
+  input.onchange=async()=>{
+    const file=input.files[0]; if(!file) return;
+    // snapshot for undo
+    const snap={[pkgName]:snapshotPkg(pkgName)};
+    pushHistory(`Replace ${name}`,snap);
+    S.packages[pkgName].files[path]=new Blob([await file.arrayBuffer()],{type:file.type});
+    S.modifications[`${pkgName}/${path}`]=true;
+    toast(`✅ "${name}" diganti`); buildTree();
+  }; input.click();
+}
+async function downloadFile(pkgName, path) {
+  const blob=S.packages[pkgName]?.files[path]; if(!blob) return;
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=path.split('/').pop(); a.click(); URL.revokeObjectURL(url);
+  toast('💾 Downloading...');
+}
+function restoreFile(pkgName, path) {
+  delete S.modifications[`${pkgName}/${path}`]; toast('↺ Restored'); buildTree();
+}
+
+// ══════════════════════════════════════════════════════════
+// VIEWER
+// ══════════════════════════════════════════════════════════
+function viewFile(path, content, isXml, pkgName) {
+  S.currentViewerContent=content; S.currentViewerIsXml=isXml;
+  S.currentViewerPath=path; S.currentViewerPkg=pkgName; S.viewerTranslated=false;
+  document.getElementById('viewer-title').textContent=path.split('/').pop();
+  document.getElementById('viewer-body').innerHTML=isXml?hlXml(content):`<pre>${esc(content)}</pre>`;
+  document.getElementById('vbtn-translate').style.display=isXml?'block':'none';
+  document.getElementById('vbtn-replace').style.display=pkgName?'block':'none';
+  document.getElementById('viewer-panel').classList.add('open');
+}
+function viewImage(path, blob, pkgName) {
+  const url=URL.createObjectURL(blob);
+  S.currentViewerPath=path; S.currentViewerPkg=pkgName;
+  document.getElementById('viewer-title').textContent=path.split('/').pop();
+  document.getElementById('vbtn-translate').style.display='none';
+  document.getElementById('vbtn-replace').style.display=pkgName?'block':'none';
+  document.getElementById('viewer-body').innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%"><img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--rs)"></div>`;
+  document.getElementById('viewer-panel').classList.add('open');
+}
+function closeViewer() { document.getElementById('viewer-panel').classList.remove('open'); }
+function translateViewer() {
+  if(!S.viewerTranslated){
+    const t=translateText(S.currentViewerContent);
+    document.getElementById('viewer-body').innerHTML=S.currentViewerIsXml?hlXml(t):`<pre>${esc(t)}</pre>`;
+    document.getElementById('vbtn-translate').textContent='🔄 Asli'; S.viewerTranslated=true;
+  } else {
+    document.getElementById('viewer-body').innerHTML=S.currentViewerIsXml?hlXml(S.currentViewerContent):`<pre>${esc(S.currentViewerContent)}</pre>`;
+    document.getElementById('vbtn-translate').textContent='🌐 ID'; S.viewerTranslated=false;
+  }
+}
+function copyViewer() { navigator.clipboard?.writeText(S.currentViewerContent).then(()=>toast('✅ Tersalin!')); }
+function triggerReplaceFromViewer() { if(S.currentViewerPkg&&S.currentViewerPath){triggerReplaceFile(S.currentViewerPkg,S.currentViewerPath);closeViewer();} }
+
+function hlXml(xml) {
+  return `<pre>${esc(xml)
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="xml-comment">$1</span>')
+    .replace(/(&lt;\/?[a-zA-Z][a-zA-Z0-9_:-]*)/g,'<span class="xml-tag">$1</span>')
+    .replace(/([a-zA-Z][a-zA-Z0-9_:-]*)=/g,'<span class="xml-attr">$1</span>=')
+    .replace(/="([^"]*)"/g,(_,v)=>{
+      const isC=/^#[0-9a-fA-F]{6,8}$/.test(v);
+      const sw=isC?`<span class="cswatch" style="background:${v}"></span>`:'';
+      return `="<span class="xml-val">${sw}${v}</span>"`;
+    })}</pre>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// GLOBAL SEARCH
+// ══════════════════════════════════════════════════════════
+let gsDebounce=null;
+function globalSearch(q) {
+  clearTimeout(gsDebounce);
+  gsDebounce=setTimeout(()=>_doSearch(q),300);
+}
+function setGsType(type,el) {
+  S.gsType=type;
+  document.querySelectorAll('[id^="gst-"]').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  const q=document.getElementById('gsearch-input').value;
+  if(q.length>=2) _doSearch(q);
+}
+async function _doSearch(q) {
+  const el=document.getElementById('gsearch-results');
+  if(q.length<2){el.innerHTML='<div class="gs-count">Ketik minimal 2 karakter</div>';return;}
+  el.innerHTML='<div class="gs-count">🔍 Mencari...</div>';
+  const results=[]; const ql=q.toLowerCase();
+  for(const [pkgName,pkg] of Object.entries(S.packages)){
+    for(const [path,blob] of Object.entries(pkg.files)){
+      if(!path.endsWith('.xml')) continue;
+      const t=await blob.text();
+      const type=S.gsType;
+      const lines=t.split('\n');
+      lines.forEach((line,i)=>{
+        const ll=line.toLowerCase();
+        if(!ll.includes(ql)) return;
+        if(type==='color'&&!line.includes('<color')) return;
+        if(type==='string'&&!line.includes('<string')) return;
+        if(type==='drawable'&&!line.includes('<drawable')) return;
+        const hi=line.replace(new RegExp(esc(q),'gi'),m=>`<mark>${m}</mark>`);
+        results.push({pkg:pkgName,path,line:i+1,text:line.trim(),hi,blob});
+      });
+      if(results.length>200) break;
+    }
+    if(results.length>200) break;
+  }
+  if(!results.length){el.innerHTML=`<div class="gs-count">Tidak ditemukan hasil untuk "<strong>${esc(q)}</strong>"</div>`;return;}
+  let html=`<div class="gs-count">${results.length}${results.length>=200?'+':''} hasil</div>`;
+  for(const r of results.slice(0,100)){
+    const short=r.path.split('/').pop();
+    html+=`<div class="gs-result" onclick="viewFile('${r.path}','__lazy__',true,'${r.pkg}')">
+      <div class="gs-pkg">${r.pkg.replace('com.android.','').replace('com.miui.','miui.')} · baris ${r.line}</div>
+      <div class="gs-file">${short}</div>
+      <div class="gs-match">${r.hi}</div>
+    </div>`;
+  }
+  el.innerHTML=html;
+  // Lazy load viewer
+  el.querySelectorAll('.gs-result').forEach((row,i)=>{
+    const r=results[i];
+    row.onclick=async()=>{const t=await r.blob.text();viewFile(r.path,t,true,r.pkg);};
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// ANALYZER
+// ══════════════════════════════════════════════════════════
+function buildAnalyzer() {
+  const el=document.getElementById('analyzer-scroll');
+  const pkgCount=Object.keys(S.packages).length;
+  const nightCount=Object.values(S.packages).filter(p=>p.hasNightmode).length;
+  const issueCount=S.issues.filter(i=>i.type==='error').length;
+  let html=`<div class="stat-grid">
+    <div class="stat-card"><div class="stat-val a">${pkgCount}</div><div class="stat-label">Package</div></div>
+    <div class="stat-card"><div class="stat-val a2">${S.fileCount.toLocaleString()}</div><div class="stat-label">Total File</div></div>
+    <div class="stat-card"><div class="stat-val a3">${S.allColors.length}</div><div class="stat-label">Definisi Warna</div></div>
+    <div class="stat-card"><div class="stat-val ${issueCount>0?'d':'a2'}">${issueCount}</div><div class="stat-label">Error</div></div>
+  </div>`;
+  if(S.description){
+    const title=(S.description.match(/<title[^>]*><!\[CDATA\[([^\]]*)\]\]>/)||[])[1]||'-';
+    const author=(S.description.match(/<author[^>]*><!\[CDATA\[([^\]]*)\]\]>/)||[])[1]||'-';
+    const uiVer=(S.description.match(/<uiVersion>([^<]+)<\/uiVersion>/)||[])[1]||'-';
+    html+=`<div class="sec-block"><h3>Info Tema</h3>
+      <div class="pkg-row"><span class="pkg-name">Judul</span><span class="pkg-files">${title}</span></div>
+      <div class="pkg-row"><span class="pkg-name">Author</span><span class="pkg-files">${author}</span></div>
+      <div class="pkg-row"><span class="pkg-name">UI Version</span><span class="pkg-files">${uiVer}</span></div>
+    </div>`;
+  }
+  html+=`<div class="sec-block"><h3>Dark Mode Coverage (${nightCount}/${pkgCount})</h3>`;
+  for(const[name,pkg] of Object.entries(S.packages)){
+    const s=name.replace('com.android.','').replace('com.miui.','miui.').replace('com.xiaomi.','xi.');
+    html+=`<div class="pkg-row"><div class="ndot ${pkg.hasNightmode?'yes':'no'}"></div><span class="pkg-name">${s}</span><span class="pkg-files">${pkg.hasNightmode?pkg.hasNightmodeFiles+'f':'—'}</span></div>`;
+  }
+  html+=`</div>`;
+  if(S.issues.length){
+    html+=`<div class="sec-block"><h3>Masalah (${S.issues.length})</h3>`;
+    for(const iss of S.issues){
+      const s=iss.path.split('/').slice(-1)[0];
+      html+=`<div class="issue-row ${iss.type==='warn'?'w':iss.type==='error'?'':'ok'}"><div class="issue-lbl">${iss.pkg.replace('com.','').slice(0,20)} · ${s}</div>${iss.msg}</div>`;
+    }
+    html+=`</div>`;
+  }
+  const uniq=[...new Set(S.allColors.map(c=>c.value))].filter(v=>/^#[0-9a-fA-F]{6,8}$/.test(v));
+  if(uniq.length){
+    html+=`<div class="sec-block"><h3>Palet Warna (${uniq.length})</h3><div class="color-palette">`;
+    for(const c of uniq.slice(0,50)){html+=`<div class="color-chip" onclick="copyClip('${c}')"><div class="color-chip-dot" style="background:${c}"></div>${c}</div>`;}
+    html+=`</div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════
+// EDITOR
+// ══════════════════════════════════════════════════════════
+function buildEditor(){switchEditorTab('colors');}
+function switchEditorTab(tab){
+  S.currentEditorTab=tab;
+  document.querySelectorAll('.pill-tab').forEach((el,i)=>el.classList.toggle('active',['colors','strings','fallback'][i]===tab));
+  renderEditorContent();
+}
+function renderEditorContent(){
+  const el=document.getElementById('editor-scroll');
+  if(S.currentEditorTab==='colors') renderColorEditor(el);
+  else if(S.currentEditorTab==='strings') renderStringEditor(el);
+  else renderFallbackEditor(el);
+}
+
+function renderColorEditor(el) {
+  const byPkg={};
+  for(const c of S.allColors){if(!byPkg[c.pkg])byPkg[c.pkg]=[];byPkg[c.pkg].push(c);}
+  let html='<div id="color-editor-list">';
+  let idx=0;
+  for(const[pkg,colors] of Object.entries(byPkg)){
+    const unique=[]; const seen=new Set();
+    for(const c of colors){if(!seen.has(c.name)){unique.push(c);seen.add(c.name);}}
+    const valid=unique.filter(c=>/^#[0-9a-fA-F]{6,8}$/.test(c.value));
+    if(!valid.length) continue;
+    const s=pkg.replace('com.android.','').replace('com.miui.','miui.').replace('com.xiaomi.','xi.').toUpperCase();
+    const pid=`cpkg-${idx++}`;
+    const swatches=valid.slice(0,6).map(c=>{const p=c.value.length===9?'#'+c.value.slice(3):c.value;return `<span style="display:inline-block;width:13px;height:13px;border-radius:3px;background:${p};border:1px solid rgba(255,255,255,.1)"></span>`;}).join('');
+    html+=`<div class="cpkg-block">
+      <div class="tree-item pkg" onclick="toggleCpkg('${pid}')">
+        <span class="tree-icon">🎨</span><span class="tree-name">${s}</span>
+        <span style="display:flex;gap:2px;align-items:center;flex-shrink:0">${swatches}</span>
+        <span class="tree-size">${valid.length}</span>
+        <span class="tree-arrow" id="arr-${pid}">›</span>
+      </div>
+      <div class="tree-children" id="${pid}">`;
+    for(const c of valid){
+      const p=c.value.length===9?'#'+c.value.slice(3):c.value;
+      const uid=esc(`${pkg}|${c.path}|${c.name}`);
+      html+=`<div class="field-row color-row">
+        <div class="color-prev" style="background:${p}" onclick="this.querySelector('input').click()">
+          <input type="color" value="${p.slice(0,7)}" oninput="onColorPick(this,'${uid}')" onchange="onColorPick(this,'${uid}')">
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="field-lbl">${c.name}</div>
+          <input class="color-hex" value="${c.value}" oninput="onHexInput(this,'${uid}')" placeholder="#RRGGBB">
+        </div>
+      </div>`;
+    }
+    html+=`</div></div>`;
+  }
+  html+=`</div><div class="action-row">
+    <button class="abtn suc" onclick="applyColorChanges()">💾 Terapkan</button>
+    <button class="abtn dng" onclick="resetColors()">↺ Reset</button>
+  </div>`;
+  el.innerHTML=html;
+}
+function toggleCpkg(id){document.getElementById(id).classList.toggle('open');document.getElementById(`arr-${id}`)?.classList.toggle('open');}
+function onColorPick(input,uid){
+  const hex=input.value; const w=input.closest('.field-row');
+  w.querySelector('.color-prev').style.background=hex;
+  w.querySelector('.color-hex').value=hex;
+  storeColorEdit(uid,hex);
+}
+function onHexInput(input,uid){
+  const v=input.value.trim();
+  if(/^#[0-9a-fA-F]{6,8}$/.test(v)){
+    const p=v.length===9?'#'+v.slice(3):v;
+    input.closest('.field-row').querySelector('.color-prev').style.background=p;
+    storeColorEdit(uid,v);
+  }
+}
+function storeColorEdit(uid,val){if(!S.modifications.__colors)S.modifications.__colors={};S.modifications.__colors[uid]=val;}
+async function applyColorChanges(){
+  const edits=S.modifications.__colors;
+  if(!edits||!Object.keys(edits).length){toast('Belum ada perubahan');return;}
+  showLoading('Menerapkan warna...'); let changed=0;
+  const snap={};
+  for(const uid of Object.keys(edits)){const[pkg]=uid.split('|');if(!snap[pkg])snap[pkg]=snapshotPkg(pkg);}
+  pushHistory('Edit Warna',snap);
+  for(const[uid,val] of Object.entries(edits)){
+    const[pkg,path,cname]=uid.split('|');
+    if(!S.packages[pkg]?.files[path]) continue;
+    let t=await S.packages[pkg].files[path].text();
+    t=t.replace(new RegExp(`(<color[^>]+name="${escRe(cname)}"[^>]*>)[^<]*(</color>)`,'g'),`$1${val}$2`);
+    S.packages[pkg].files[path]=new Blob([t],{type:'text/xml'}); changed++;
+  }
+  S.modifications.__colors={}; hideLoading(); toast(`✅ ${changed} warna diperbarui`);
+}
+function resetColors(){S.modifications.__colors={};renderColorEditor(document.getElementById('editor-scroll'));toast('↺ Reset');}
+
+function renderStringEditor(el){
+  const forT=S.allStrings.filter(s=>s.hasVi||s.hasZh);
+  let html=`<div class="sec-block"><h3>Teks Perlu Terjemahan (${forT.length})</h3>`;
+  if(!forT.length) html+=`<div class="issue-row ok">Semua teks sudah oke</div>`;
+  else for(const s of forT.slice(0,60)){
+    const tr=translateText(s.value); const needsWork=tr===s.value;
+    html+=`<div class="field-row"><div class="field-lbl">${s.pkg.split('.').slice(-1)[0]} · ${s.name}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px">${esc(s.value)}</div>
+      <input class="field-input" value="${esc(tr)}" data-pkg="${s.pkg}" data-path="${s.path}" data-name="${s.name}" style="${needsWork?'border-color:var(--warn)':''}">
+    </div>`;
+  }
+  html+=`</div><div class="action-row">
+    <button class="abtn pri" onclick="autoTranslateAll()">🌐 Auto Terjemahkan</button>
+    <button class="abtn suc" onclick="applyStringChanges()">💾 Terapkan</button>
+  </div>`;
+  el.innerHTML=html;
+}
+async function autoTranslateAll(){
+  showLoading('Menerjemahkan...'); let count=0;
+  const snap={};
+  for(const[pkgName,pkg] of Object.entries(S.packages)){
+    for(const[path,blob] of Object.entries(pkg.files)){
+      if(!path.endsWith('.xml')) continue;
+      const t=await blob.text(); const tr=translateText(t);
+      if(tr!==t){if(!snap[pkgName])snap[pkgName]=snapshotPkg(pkgName);S.packages[pkgName].files[path]=new Blob([tr],{type:'text/xml'});count++;}
+    }
+  }
+  if(Object.keys(snap).length) pushHistory('Auto Translate',snap);
+  hideLoading(); toast(`✅ ${count} file diterjemahkan`); renderStringEditor(document.getElementById('editor-scroll'));
+}
+async function applyStringChanges(){
+  const inputs=document.querySelectorAll('#editor-scroll .field-input[data-pkg]'); let changed=0;
+  for(const input of inputs){
+    const{pkg,path,name}=input.dataset;
+    if(!S.packages[pkg]?.files[path]) continue;
+    let t=await S.packages[pkg].files[path].text();
+    const nt=t.replace(new RegExp(`(<string[^>]+name="${escRe(name)}"[^>]*>)[^<]*(</string>)`,'g'),`$1${esc(input.value)}$2`);
+    if(nt!==t){S.packages[pkg].files[path]=new Blob([nt],{type:'text/xml'});changed++;}
+  }
+  toast(`✅ ${changed} teks diperbarui`);
+}
+
+function renderFallbackEditor(el){
+  let html=`<div class="sec-block"><h3>Mapping Fallback Dark → Light</h3>`;
+  let found=0;
+  for(const[pkgName,pkg] of Object.entries(S.packages)){
+    for(const path of Object.keys(pkg.files)){
+      if(!path.includes('theme_fallback.xml')) continue;
+      const short=pkgName.replace('com.android.','').replace('com.miui.','miui.');
+      html+=`<div class="pkg-row" style="flex-direction:column;align-items:flex-start;gap:4px">
+        <div style="font-size:11px;font-weight:700">${short}</div>
+        <div class="action-row" style="width:100%">
+          <button class="abtn pri" onclick="viewFallback('${pkgName}','${path}')">👁 Lihat</button>
+          <button class="abtn dng" onclick="fixFallback('${pkgName}','${path}')">🔧 Fix Dark</button>
+        </div>
+      </div>`;
+      found++;
+    }
+  }
+  if(!found) html+=`<div class="issue-row ok">Tidak ada fallback</div>`;
+  html+=`</div><div class="action-row">
+    <button class="abtn dng" onclick="fixAllFallbacks()">🔧 Fix Semua Fallback</button>
+  </div>`;
+  el.innerHTML=html;
+}
+async function viewFallback(pkg,path){const blob=S.packages[pkg]?.files[path];if(!blob)return;const t=await blob.text();viewFile(path,t,true,pkg);}
+async function fixFallback(pkgName,path){
+  const blob=S.packages[pkgName]?.files[path];if(!blob)return;
+  let t=await blob.text(); const{fixed,count}=fixDarkFallbackText(t);
+  const snap={[pkgName]:snapshotPkg(pkgName)}; pushHistory(`Fix Fallback ${pkgName}`,snap);
+  S.packages[pkgName].files[path]=new Blob([fixed],{type:'text/xml'});
+  toast(`✅ ${count} mapping diperbaiki`);
+}
+async function fixAllFallbacks(){
+  showLoading('Memperbaiki fallback...'); let total=0; const snap={};
+  for(const[pkgName,pkg] of Object.entries(S.packages)){
+    for(const[path,blob] of Object.entries(pkg.files)){
+      if(!path.includes('theme_fallback.xml')) continue;
+      const t=await blob.text(); const{fixed,count}=fixDarkFallbackText(t);
+      if(count>0){if(!snap[pkgName])snap[pkgName]=snapshotPkg(pkgName);S.packages[pkgName].files[path]=new Blob([fixed],{type:'text/xml'});total+=count;}
+    }
+  }
+  if(Object.keys(snap).length) pushHistory('Fix All Fallbacks',snap);
+  hideLoading(); toast(`✅ ${total} mapping diperbaiki`);
+}
+function fixDarkFallbackText(text){
+  let count=0;
+  const fixed=text.replace(/(<drawable[^>]+name="([^"]*_dark[^"]*)"[^>]*>)([^<]*_light[^<]*)(<\/drawable>)/g,(m,open,name,val,close)=>{
+    const darkVal=val.replace(/_light/g,'_dark'); count++; return `${open}${darkVal}${close}`;
+  });
+  return{fixed,count};
+}
+
+// ══════════════════════════════════════════════════════════
+// DARK MODE GENERATOR
+// ══════════════════════════════════════════════════════════
+function buildDarkGen(){
+  // Pick packages that don't have nightmode yet
+  const noPkg=Object.entries(S.packages).filter(([n,p])=>!p.hasNightmode&&Object.values(p.files).some(b=>b.size>0));
+  S.darkgenSelected=new Set(noPkg.map(([n])=>n));
+  renderDarkGen();
+}
+
+function renderDarkGen(){
+  const noPkg=Object.entries(S.packages).filter(([n])=>!S.packages[n].hasNightmode);
+  const hasPkg=Object.entries(S.packages).filter(([n])=>S.packages[n].hasNightmode);
+  // sample colors preview
+  const sampleColors=S.allColors.filter(c=>/^#[0-9a-fA-F]{6,8}$/.test(c.value)).slice(0,8);
+  let preview='<div class="dg-preview">';
+  for(const c of sampleColors){
+    const orig=c.value.length===9?'#'+c.value.slice(3):c.value;
+    const dark=generateDarkColor(orig,S.darkgenOpts);
+    preview+=`<div class="dg-swatch"><div class="dg-pair">
+      <div class="dg-color" style="background:${orig}" title="${orig}"></div>
+      <div class="dg-arrow">↓</div>
+      <div class="dg-color" style="background:${dark}" title="${dark}"></div>
+    </div><div style="font-size:8px;color:var(--text3);margin-top:3px;font-family:var(--mono)">${c.name.slice(0,8)}</div>
+    </div>`;
+  }
+  preview+=`</div>`;
+
+  let html=`
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;margin-bottom:8px">Preview Transformasi Warna</div>
+    ${preview}
+  </div>
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;margin-bottom:10px">⚙️ Pengaturan</div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Tingkat Kegelapan</span><span id="dg-darkness-val">${S.darkgenOpts.darknessLevel}%</span></div>
+      <input type="range" min="50" max="100" value="${S.darkgenOpts.darknessLevel}" oninput="updateDgOpt('darknessLevel',+this.value,this)">
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Threshold BG (lightness > X = gelap)</span><span id="dg-bg-val">${S.darkgenOpts.bgThreshold}%</span></div>
+      <input type="range" min="50" max="95" value="${S.darkgenOpts.bgThreshold}" oninput="updateDgOpt('bgThreshold',+this.value,this)">
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Threshold Text (lightness < X = terang)</span><span id="dg-text-val">${S.darkgenOpts.textThreshold}%</span></div>
+      <input type="range" min="5" max="50" value="${S.darkgenOpts.textThreshold}" oninput="updateDgOpt('textThreshold',+this.value,this)">
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-lbl">Pertahankan Warna Aksen</div><div class="toggle-sub">Brand/accent color tidak diubah</div></div>
+      <div class="toggle ${S.darkgenOpts.keepAccents?'on':''}" onclick="toggleDgOpt('keepAccents',this)"></div>
+    </div>
+  </div>
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;margin-bottom:8px">Package Target (${noPkg.length} belum punya nightmode)</div>
+    <div style="display:flex;gap:7px;margin-bottom:8px">
+      <button class="pill-tab" onclick="dgSelectAll(true)">✅ Semua</button>
+      <button class="pill-tab" onclick="dgSelectAll(false)">☐ Hapus</button>
+    </div>
+    <div class="dg-pkg-list">`;
+  for(const[name] of noPkg){
+    const short=name.replace('com.android.','').replace('com.miui.','miui.').replace('com.xiaomi.','xi.');
+    const on=S.darkgenSelected.has(name);
+    html+=`<div class="dg-pkg-item">
+      <div class="dg-cb ${on?'on':''}" id="dgcb-${name.replace(/\./g,'-')}" onclick="toggleDgPkg('${name}',this)"></div>
+      <span style="flex:1;font-size:11px;font-family:var(--mono);color:var(--text2)">${short}</span>
+    </div>`;
+  }
+  if(hasPkg.length) html+=`<div style="font-size:10px;color:var(--text3);margin-top:6px">✅ ${hasPkg.length} package sudah punya nightmode (skip)</div>`;
+  html+=`</div></div>
+  <button class="dg-run" onclick="runDarkGen()">🌙 Generate Dark Mode</button>`;
+  document.getElementById('darkgen-scroll').innerHTML=html;
+}
+
+function updateDgOpt(key,val,input){
+  S.darkgenOpts[key]=val;
+  document.getElementById(`dg-${key==='darknessLevel'?'darkness':key==='bgThreshold'?'bg':'text'}-val`).textContent=val+'%';
+  renderDarkGen();
+}
+function toggleDgOpt(key,el){S.darkgenOpts[key]=!S.darkgenOpts[key];el.classList.toggle('on',S.darkgenOpts[key]);renderDarkGen();}
+function toggleDgPkg(name,el){if(S.darkgenSelected.has(name)){S.darkgenSelected.delete(name);el.classList.remove('on');}else{S.darkgenSelected.add(name);el.classList.add('on');}}
+function dgSelectAll(v){const noPkg=Object.entries(S.packages).filter(([n])=>!S.packages[n].hasNightmode);for(const[n] of noPkg){if(v)S.darkgenSelected.add(n);else S.darkgenSelected.delete(n);}renderDarkGen();}
+
+function generateDarkColor(hexColor, opts) {
+  const{darknessLevel,bgThreshold,textThreshold,keepAccents}=opts;
+  const r=parseInt(hexColor.slice(1,3),16),g=parseInt(hexColor.slice(3,5),16),b=parseInt(hexColor.slice(5,7),16);
+  const[h,s,l]=rgbToHsl(r,g,b);
+  // Accent: mid-saturation, mid-lightness → keep or slightly adjust
+  if(keepAccents && s>40 && l>30 && l<70) {
+    // slightly increase brightness for dark bg readability
+    const nl=Math.min(l+10,80);
+    return hslToHex(h,s,nl);
+  }
+  // Background (very light) → make dark
+  if(l>bgThreshold) { const nl=100-l*(darknessLevel/100); return hslToHex(h,s*0.3,nl); }
+  // Text (very dark) → make light
+  if(l<textThreshold) { const nl=100-l*(darknessLevel/100); return hslToHex(h,s*0.8,nl); }
+  // Mid range → gentle invert
+  return hslToHex(h,s,100-l);
+}
+
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){h=s=0;}else{
+    const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}
+    h/=6;
+  }
+  return[h*360,s*100,l*100];
+}
+function hslToRgb(h,s,l){
+  h/=360;s/=100;l/=100;
+  let r,g,b;
+  if(s===0){r=g=b=l;}else{
+    const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+    const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;
+    r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);
+  }
+  return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function hslToHex(h,s,l){const[r,g,b]=hslToRgb(h,s,l);return`#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;}
+
+async function runDarkGen(){
+  if(!S.darkgenSelected.size){toast('Pilih minimal 1 package');return;}
+  showLoading('Generating dark mode...',10); let pkgDone=0;
+  const snap={};
+  const total=S.darkgenSelected.size;
+  for(const pkgName of S.darkgenSelected){
+    snap[pkgName]=snapshotPkg(pkgName);
+    const pkg=S.packages[pkgName];
+    const pct=10+Math.floor((pkgDone/total)*80);
+    showLoading(`🌙 ${pkgName.split('.').slice(-1)[0]}...`,pct);
+    // 1. Clone res → nightmode/res
+    const newFiles={};
+    for(const[path,blob] of Object.entries(pkg.files)){
+      if(path.startsWith('res/')){ newFiles[`nightmode/${path}`]=blob; }
+    }
+    // 2. Clone & transform theme_values.xml
+    for(const[path,blob] of Object.entries(pkg.files)){
+      if(!path.endsWith('theme_values.xml')) continue;
+      let text=await blob.text();
+      // Add DarkTemplate block
+      if(text.includes('LightTemplate')&&!text.includes('DarkTemplate')){
+        let darkBlock=text.replace(/template="LightTemplate"/g,'template="DarkTemplate"');
+        // Transform colors in dark block
+        darkBlock=darkBlock.replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})/g,m=>{
+          const hex=m.length===9?'#'+m.slice(3):m;
+          const dark=generateDarkColor(hex,S.darkgenOpts);
+          return m.length===9?m.slice(0,3)+dark.slice(1):dark;
+        });
+        text=text+'\n\n'+darkBlock;
+        pkg.files[path]=new Blob([text],{type:'text/xml'});
+      }
+    }
+    // 3. Create nightmode/theme_values.xml
+    for(const[path,blob] of Object.entries(pkg.files)){
+      if(!path.endsWith('theme_values.xml')) continue;
+      let text=await blob.text();
+      let nightText=text.replace(/template="LightTemplate"/g,'template="DarkTemplate"');
+      nightText=nightText.replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})/g,m=>{
+        const hex=m.length===9?'#'+m.slice(3):m;
+        const dark=generateDarkColor(hex,S.darkgenOpts);
+        return m.length===9?m.slice(0,3)+dark.slice(1):dark;
+      });
+      newFiles[`nightmode/${path}`]=new Blob([nightText],{type:'text/xml'});
+    }
+    // 4. Merge new files into package
+    for(const[p,b] of Object.entries(newFiles)) pkg.files[p]=b;
+    pkg.hasNightmode=true; pkg.hasNightmodeFiles=Object.keys(newFiles).length; pkg.totalFiles+=Object.keys(newFiles).length;
+    pkgDone++;
+  }
+  pushHistory('Dark Mode Generate',snap);
+  await parseAllXml();
+  buildTree(); buildAnalyzer(); buildDarkGen();
+  showLoading('Selesai!',100);
+  setTimeout(()=>{hideLoading();showModal('🌙 Dark Mode Generated!',`
+    <div style="font-size:13px;line-height:2">
+      ✅ ${pkgDone} package diproses<br>
+      📁 Folder <code>nightmode/</code> dibuat di setiap package<br>
+      🎨 Warna light → dark otomatis<br>
+      📝 DarkTemplate block ditambahkan<br><br>
+      <div style="font-size:11px;color:var(--text2)">
+        💡 Tips: Cek tab EDITOR → Warna untuk fine-tune warna individual,
+        atau tab FILE untuk lihat folder nightmode yang baru.
+        Setelah puas, Export via tab EXPORT.
+      </div>
+    </div>
+  `);},500);
+}
+
+// ══════════════════════════════════════════════════════════
+// DIFF
+// ══════════════════════════════════════════════════════════
+function buildDiff(){
+  document.getElementById('diff-scroll').innerHTML=`
+  <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+    Bandingkan tema yang sudah dibuka dengan file .mtz lain untuk melihat perbedaannya.
+  </div>
+  <div class="diff-drop" id="diff-drop" onclick="triggerDiffOpen()" ondragover="event.preventDefault()" ondrop="onDiffDrop(event)">
+    <div class="diff-drop-icon">📂</div>
+    <div class="diff-drop-txt" id="diff-drop-txt">Ketuk untuk pilih file .mtz ke-2<br><span style="font-size:10px;color:var(--text3)">atau drag & drop</span></div>
+  </div>
+  <input type="file" id="diff-input" accept=".mtz,.zip" style="display:none" onchange="loadDiffFile(this)">
+  <div id="diff-results"></div>`;
+}
+function triggerDiffOpen(){document.getElementById('diff-input').click();}
+async function onDiffDrop(e){e.preventDefault();const file=e.dataTransfer.files[0];if(file) await processDiffFile(file);}
+async function loadDiffFile(input){if(input.files[0]) await processDiffFile(input.files[0]);}
+async function processDiffFile(file){
+  showLoading('Memuat file pembanding...');
+  try{
+    const buf=await file.arrayBuffer();
+    const zip=await JSZip.loadAsync(buf);
+    S.diffPackages={};
+    for(const[name,entry] of Object.entries(zip.files)){
+      if(entry.dir||name==='description.xml'||name.startsWith('preview/')||name.startsWith('wallpaper/')) continue;
+      try{
+        const buf2=await entry.async('arraybuffer');
+        const sub=await JSZip.loadAsync(buf2);
+        const pkg={files:{}};
+        for(const[sn,se] of Object.entries(sub.files)){if(!se.dir)pkg.files[sn]=await se.async('blob');}
+        S.diffPackages[name]=pkg;
+      }catch(e){}
+    }
+    document.getElementById('diff-drop').classList.add('has');
+    document.getElementById('diff-drop-txt').textContent=`✅ ${file.name}`;
+    hideLoading(); await runDiff();
+  }catch(e){hideLoading();toast('❌ Gagal load: '+e.message);}
+}
+async function runDiff(){
+  showLoading('Membandingkan...');
+  const el=document.getElementById('diff-results');
+  const added=[],removed=[],changed=[];
+  const a=S.packages, b=S.diffPackages;
+  // Packages
+  for(const n of Object.keys(b)){if(!a[n]) added.push({type:'pkg',name:n});}
+  for(const n of Object.keys(a)){if(!b[n]) removed.push({type:'pkg',name:n});}
+  // Colors diff
+  const aColors={},bColors={};
+  for(const[pkg,p] of Object.entries(a)){for(const[path,blob] of Object.entries(p.files)){if(!path.endsWith('.xml'))continue;try{const t=await blob.text();const re=/<color[^>]+name="([^"]*)"[^>]*>([^<]+)<\/color>/g;let m;while((m=re.exec(t))!==null)aColors[`${pkg}/${m[1]}`]=m[2].trim();}catch(e){}}}
+  for(const[pkg,p] of Object.entries(b)){for(const[path,blob] of Object.entries(p.files)){if(!path.endsWith('.xml'))continue;try{const t=await blob.text();const re=/<color[^>]+name="([^"]*)"[^>]*>([^<]+)<\/color>/g;let m;while((m=re.exec(t))!==null)bColors[`${pkg}/${m[1]}`]=m[2].trim();}catch(e){}}}
+  for(const[k,v] of Object.entries(bColors)){if(!aColors[k])added.push({type:'color',name:k,val:v});else if(aColors[k]!==v)changed.push({type:'color',name:k,oldVal:aColors[k],newVal:v});}
+  for(const[k] of Object.entries(aColors)){if(!bColors[k])removed.push({type:'color',name:k});}
+  hideLoading();
+  let html='';
+  if(added.length){html+=`<div class="diff-section"><h3>➕ Ditambahkan (${added.length})</h3>`;for(const i of added.slice(0,40)){html+=`<div class="diff-item added"><div class="diff-lbl">${i.type.toUpperCase()}</div>${esc(i.name)}${i.val?` = <span style="color:var(--success)">${i.val}</span>`:''}</div>`;}html+=`</div>`;}
+  if(removed.length){html+=`<div class="diff-section"><h3>➖ Dihapus (${removed.length})</h3>`;for(const i of removed.slice(0,40)){html+=`<div class="diff-item removed"><div class="diff-lbl">${i.type.toUpperCase()}</div>${esc(i.name)}</div>`;}html+=`</div>`;}
+  if(changed.length){html+=`<div class="diff-section"><h3>🔄 Berubah (${changed.length})</h3>`;for(const i of changed.slice(0,40)){const isC=/^#[0-9a-fA-F]{6,8}$/.test(i.oldVal);html+=`<div class="diff-item changed"><div class="diff-lbl">${i.type.toUpperCase()}</div>${esc(i.name)}<br>${isC?`<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${i.oldVal}"></span>`:''}${esc(i.oldVal)} → ${isC?`<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${i.newVal}"></span>`:''}${esc(i.newVal)}</div>`;}html+=`</div>`;}
+  if(!added.length&&!removed.length&&!changed.length) html=`<div class="issue-row ok">Tidak ada perbedaan yang terdeteksi</div>`;
+  el.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════
+// ICONS
+// ══════════════════════════════════════════════════════════
+async function buildIcons(){
+  S.iconData=[];
+  const iconPkg=S.packages['icons']; if(!iconPkg) return;
+  const folders={};
+  for(const[path,blob] of Object.entries(iconPkg.files)){
+    if(path.startsWith('fancy_icons/')){
+      const parts=path.split('/'); if(parts.length>=3){const p=parts[1];if(!folders[p])folders[p]=[];folders[p].push({path,blob});}
+    }
+  }
+  for(const[pkg,files] of Object.entries(folders)) S.iconData.push({pkg,files});
+  renderIconGrid(''); document.getElementById('icon-count').textContent=S.iconData.length;
+}
+function renderIconGrid(filter){
+  const wrap=document.getElementById('icon-grid-wrap');
+  const filtered=filter?S.iconData.filter(d=>d.pkg.toLowerCase().includes(filter)):S.iconData;
+  const grid=document.createElement('div'); grid.className='icon-grid';
+  for(const{pkg,files} of filtered){
+    const imgFile=files.find(f=>/\.(png|jpg)$/i.test(f.path));
+    const short=pkg.split('.').slice(-1)[0];
+    const item=document.createElement('div'); item.className='icon-item';
+    item.onclick=()=>showModal(pkg,`<code style="font-size:11px">${pkg}</code><br><br>${files.length} file asset`);
+    if(imgFile){const url=URL.createObjectURL(imgFile.blob);item.innerHTML=`<img src="${url}" alt="${short}" loading="lazy"><span>${short}</span>`;}
+    else item.innerHTML=`<div class="icon-ph">📦</div><span>${short}</span>`;
+    grid.appendChild(item);
+  }
+  wrap.innerHTML=''; wrap.appendChild(grid);
+}
+function filterIcons(q){renderIconGrid(q.toLowerCase());}
+
+// ══════════════════════════════════════════════════════════
+// AOD PLAYER
+// ══════════════════════════════════════════════════════════
+async function loadAodFrames(){
+  S.aodFrames=[];
+  const aodPkg=S.packages['aod']; if(!aodPkg) return;
+  const frames=Object.entries(aodPkg.files)
+    .filter(([p])=>p.startsWith('content/img/')&&/\.png$/i.test(p))
+    .sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));
+  for(const[,blob] of frames){
+    const url=URL.createObjectURL(blob); S.aodFrames.push(url);
+  }
+}
+function openAodPlayer(){
+  if(!S.aodFrames.length){toast('AOD frames tidak ditemukan');return;}
+  S.aodFrame=0; document.getElementById('aod-panel').classList.add('open');
+  renderAodFrame();
+}
+function closeAod(){stopAod();document.getElementById('aod-panel').classList.remove('open');}
+function renderAodFrame(){
+  if(!S.aodFrames.length) return;
+  const canvas=document.getElementById('aod-canvas');
+  const ctx=canvas.getContext('2d');
+  const img=new Image(); img.src=S.aodFrames[S.aodFrame];
+  img.onload=()=>{canvas.width=img.width;canvas.height=img.height;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);};
+  document.getElementById('aod-frame-info').textContent=`${S.aodFrame+1} / ${S.aodFrames.length}`;
+}
+function aodPrev(){stopAod();S.aodFrame=(S.aodFrame-1+S.aodFrames.length)%S.aodFrames.length;renderAodFrame();}
+function aodNext(){stopAod();S.aodFrame=(S.aodFrame+1)%S.aodFrames.length;renderAodFrame();}
+function aodTogglePlay(){
+  if(S.aodPlaying){stopAod();}
+  else{S.aodPlaying=true;document.getElementById('aod-play-btn').textContent='⏸ Pause';S.aodTimer=setInterval(()=>{S.aodFrame=(S.aodFrame+1)%S.aodFrames.length;renderAodFrame();},1000/S.aodFps);}
+}
+function stopAod(){clearInterval(S.aodTimer);S.aodPlaying=false;document.getElementById('aod-play-btn').textContent='▶ Play';}
+function setAodFps(v){S.aodFps=+v;document.getElementById('aod-fps-val').textContent=v;if(S.aodPlaying){stopAod();aodTogglePlay();}}
+
+// ══════════════════════════════════════════════════════════
+// PACKAGE INSPECTOR
+// ══════════════════════════════════════════════════════════
+function openInspector(pkgName){
+  S.inspPkg=pkgName; S.inspTab='assets';
+  document.getElementById('inspector-title').textContent=pkgName;
+  document.getElementById('inspector-panel').classList.add('open');
+  renderInspector();
+}
+function closeInspector(){document.getElementById('inspector-panel').classList.remove('open');}
+function switchInspTab(tab,el){
+  S.inspTab=tab;
+  document.querySelectorAll('.insp-tab').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active'); renderInspector();
+}
+async function renderInspector(){
+  const el=document.getElementById('inspector-scroll'); el.innerHTML='';
+  const pkg=S.packages[S.inspPkg]; if(!pkg){el.innerHTML='<p>Package tidak ditemukan</p>';return;}
+  if(S.inspTab==='assets'){
+    let html=`<div style="padding:10px 0">`;
+    const byType={xml:[],png:[],other:[]};
+    for(const p of Object.keys(pkg.files)){if(p.endsWith('.xml'))byType.xml.push(p);else if(/\.png$/i.test(p))byType.png.push(p);else byType.other.push(p);}
+    html+=`<div class="sec-block"><h3>XML (${byType.xml.length})</h3>`;
+    for(const p of byType.xml){html+=`<div class="pkg-row" onclick="(async()=>{const t=await S.packages['${S.inspPkg}'].files['${p}'].text();viewFile('${p}',t,true,'${S.inspPkg}');})()" style="cursor:pointer"><span class="pkg-name">${p}</span><span class="pkg-files">${fmtSize(pkg.files[p].size)}</span></div>`;}
+    html+=`</div><div class="sec-block"><h3>PNG (${byType.png.length})</h3>`;
+    const grid=document.createElement('div'); grid.className='icon-grid'; grid.style.padding='0';
+    for(const p of byType.png.slice(0,40)){const url=URL.createObjectURL(pkg.files[p]);const name=p.split('/').pop();const item=document.createElement('div');item.className='icon-item';item.innerHTML=`<img src="${url}" alt="${name}" loading="lazy" style="width:40px;height:40px"><span>${name.slice(0,12)}</span>`;item.onclick=()=>viewImage(p,pkg.files[p],S.inspPkg);grid.appendChild(item);}
+    html+=`</div>`;
+    el.innerHTML=html; el.querySelector('.sec-block:last-child').after(grid);
+  } else if(S.inspTab==='colors'){
+    const colors=S.allColors.filter(c=>c.pkg===S.inspPkg);
+    let html='<div style="padding:10px 0">';
+    for(const c of colors){
+      if(!/^#[0-9a-fA-F]{6,8}$/.test(c.value)) continue;
+      const p=c.value.length===9?'#'+c.value.slice(3):c.value;
+      html+=`<div class="field-row color-row" style="margin-bottom:1px;border-radius:0;border-left:none;border-right:none;border-top:none">
+        <div class="color-prev" style="background:${p}"></div>
+        <div style="flex:1"><div class="field-lbl">${c.name}</div><div style="font-size:11px;font-family:var(--mono)">${c.value}</div></div>
+      </div>`;
+    }
+    html+='</div>'; el.innerHTML=html;
+  } else if(S.inspTab==='strings'){
+    const strs=S.allStrings.filter(s=>s.pkg===S.inspPkg);
+    let html='<div style="padding:10px 0">';
+    for(const s of strs){
+      html+=`<div class="pkg-row"><span class="pkg-name">${s.name}</span><span class="pkg-files" style="max-width:60%;text-align:right;white-space:normal">${esc(s.value.slice(0,40))}</span></div>`;
+    }
+    html+='</div>'; el.innerHTML=html;
+  } else if(S.inspTab==='xml'){
+    const xmlFiles=Object.entries(pkg.files).filter(([p])=>p.endsWith('.xml'));
+    let html='<div style="padding:10px 0">';
+    for(const[p,blob] of xmlFiles){
+      html+=`<div class="pkg-row" onclick="(async()=>{const t=await S.packages['${S.inspPkg}'].files['${p}'].text();viewFile('${p}',t,true,'${S.inspPkg}');})()" style="cursor:pointer">
+        <span class="tree-icon">📝</span><span class="pkg-name">${p}</span><span class="pkg-files">${fmtSize(blob.size)}</span>
+      </div>`;
+    }
+    html+='</div>'; el.innerHTML=html;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// CLEANUP
+// ══════════════════════════════════════════════════════════
+function buildCleanup(){
+  const dupCount=S.issues.filter(i=>i.msg.includes('Duplikat')).length;
+  const darkCount=S.issues.filter(i=>i.msg.includes('→')).length;
+  const invalidCount=S.issues.filter(i=>i.msg.includes('tidak valid')).length;
+  const viCount=S.allStrings.filter(s=>s.hasVi).length;
+  const zhCount=S.allStrings.filter(s=>s.hasZh).length;
+  document.getElementById('cleanup-scroll').innerHTML=`
+  <div class="cleanup-card"><h4>🔄 Hapus Duplikat</h4><p>Hapus entri warna & drawable ganda dalam satu file.</p>
+    <div class="cleanup-stats">Terdeteksi: <span>${dupCount}</span> duplikat</div>
+    <div class="toggle-row"><div><div class="toggle-lbl">Aktifkan</div></div><div class="toggle ${S.cleanupOpts.removeDuplicates?'on':''}" onclick="tglCleanup('removeDuplicates',this)"></div></div>
+  </div>
+  <div class="cleanup-card"><h4>🌙 Perbaiki Dark Fallback</h4><p>Drawable <code>_dark</code> yang redirect ke <code>_light</code> diperbaiki.</p>
+    <div class="cleanup-stats">Terdeteksi: <span>${darkCount}</span> kasus</div>
+    <div class="toggle-row"><div><div class="toggle-lbl">Aktifkan</div></div><div class="toggle ${S.cleanupOpts.fixDarkFallback?'on':''}" onclick="tglCleanup('fixDarkFallback',this)"></div></div>
+  </div>
+  <div class="cleanup-card"><h4>🧹 Bersihkan Color Invalid</h4><p>Color name tidak valid seperti <code>"789"</code> dihapus.</p>
+    <div class="cleanup-stats">Terdeteksi: <span>${invalidCount}</span> entri</div>
+    <div class="toggle-row"><div><div class="toggle-lbl">Aktifkan</div></div><div class="toggle ${S.cleanupOpts.cleanInvalidColors?'on':''}" onclick="tglCleanup('cleanInvalidColors',this)"></div></div>
+  </div>
+  <div class="cleanup-card"><h4>📐 Format XML</h4><p>Rapihkan indentasi dan whitespace semua file XML.</p>
+    <div class="toggle-row"><div><div class="toggle-lbl">Aktifkan</div></div><div class="toggle ${S.cleanupOpts.formatXml?'on':''}" onclick="tglCleanup('formatXml',this)"></div></div>
+  </div>
+  <div class="cleanup-card"><h4>🌐 Terjemahkan Vietnam → Indonesia</h4><p>Teks Vietnam di semua XML → Bahasa Indonesia.</p>
+    <div class="cleanup-stats">Terdeteksi: <span>${viCount}</span> teks</div>
+    <div class="toggle-row"><div><div class="toggle-lbl">Aktifkan</div></div><div class="toggle ${S.cleanupOpts.translateVi?'on':''}" onclick="tglCleanup('translateVi',this)"></div></div>
+  </div>
+  <div class="cleanup-card"><h4>🌐 Terjemahkan Mandarin → Indonesia</h4><p>Komentar dan teks Mandarin → Bahasa Indonesia.</p>
+    <div class="cleanup-stats">Terdeteksi: <span>${zhCount}</span> teks</div>
+    <div class="toggle-row"><div><div class="toggle-lbl">Aktifkan</div></div><div class="toggle ${S.cleanupOpts.translateZh?'on':''}" onclick="tglCleanup('translateZh',this)"></div></div>
+  </div>
+  <button class="run-btn" onclick="runCleanup()">⚡ Jalankan Cleanup</button>`;
+}
+function tglCleanup(key,el){S.cleanupOpts[key]=!S.cleanupOpts[key];el.classList.toggle('on',S.cleanupOpts[key]);}
+async function runCleanup(){
+  showLoading('Cleanup...'); let stats={dup:0,dark:0,inv:0,fmt:0,tr:0};
+  const snap={};
+  for(const[pkgName,pkg] of Object.entries(S.packages)){
+    for(const[path,blob] of Object.entries(pkg.files)){
+      if(!path.endsWith('.xml')) continue;
+      let t=await blob.text(); let changed=false;
+      if(S.cleanupOpts.removeDuplicates){const{text,count}=rmDups(t);if(count>0){t=text;stats.dup+=count;changed=true;}}
+      if(S.cleanupOpts.fixDarkFallback&&path.includes('theme_fallback.xml')){const{fixed,count}=fixDarkFallbackText(t);if(count>0){t=fixed;stats.dark+=count;changed=true;}}
+      if(S.cleanupOpts.cleanInvalidColors){const{text,count}=rmInvalidColors(t);if(count>0){t=text;stats.inv+=count;changed=true;}}
+      if(S.cleanupOpts.translateVi||S.cleanupOpts.translateZh){const tr=translateText(t);if(tr!==t){t=tr;stats.tr++;changed=true;}}
+      if(S.cleanupOpts.formatXml&&changed){t=fmtXml(t);stats.fmt++;}
+      if(changed){if(!snap[pkgName])snap[pkgName]=snapshotPkg(pkgName);S.packages[pkgName].files[path]=new Blob([t],{type:'text/xml'});}
+    }
+  }
+  if(Object.keys(snap).length) pushHistory('Cleanup',snap);
+  await parseAllXml(); buildAnalyzer(); buildCleanup(); hideLoading();
+  showModal('✅ Cleanup Selesai',`<div style="font-family:var(--mono);font-size:12px;line-height:2.2">
+    🔄 Duplikat: <strong>${stats.dup}</strong><br>
+    🌙 Dark fallback: <strong>${stats.dark}</strong><br>
+    🧹 Color invalid: <strong>${stats.inv}</strong><br>
+    🌐 Diterjemahkan: <strong>${stats.tr}</strong> file<br>
+    📐 Diformat: <strong>${stats.fmt}</strong> file
+  </div>`);
+}
+function rmDups(xml){
+  let count=0; const sc=new Set(),sd=new Set();
+  xml=xml.replace(/<color[^>]+name="([^"]*)"[^>]*>[^<]*<\/color>/g,(m,n)=>{if(sc.has(n)){count++;return`<!-- dup color: ${n} -->`;}sc.add(n);return m;});
+  xml=xml.replace(/<drawable[^>]+name="([^"]*)"[^>]*>[^<]*<\/drawable>/g,(m,n)=>{if(sd.has(n)){count++;return`<!-- dup drawable: ${n} -->`;}sd.add(n);return m;});
+  return{text:xml,count};
+}
+function rmInvalidColors(xml){let count=0;xml=xml.replace(/<color[^>]+name="(\d+|[^a-zA-Z_][^"]*)"[^>]*>[^<]*<\/color>/g,(m,n)=>{count++;return`<!-- removed invalid: ${n} -->`;});return{text:xml,count};}
+function fmtXml(xml){
+  xml=xml.replace(/>\s*</g,'>\n<');
+  const lines=xml.split('\n'); let indent=0;
+  return lines.map(l=>{l=l.trim();if(!l)return'';if(l.startsWith('</'))indent=Math.max(0,indent-1);const r='\t'.repeat(indent)+l;if(!l.startsWith('</')&&!l.endsWith('/>')&&!l.startsWith('<!--')&&l.includes('<')&&!l.includes('</'))indent++;return r;}).filter(Boolean).join('\n');
+}
+
+// ══════════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════════
+function buildExport(){
+  S.exportSelected=new Set(Object.keys(S.packages));
+  let html=`<div style="padding:8px 0 4px">
+    <div class="action-row" style="margin-bottom:10px">
+      <button class="abtn" onclick="selAllExport(true)">✅ Semua</button>
+      <button class="abtn" onclick="selAllExport(false)">☐ Hapus</button>
+    </div></div>
+    <div id="export-pkg-list">`;
+  for(const[name,pkg] of Object.entries(S.packages)){
+    const s=name.replace('com.android.','').replace('com.miui.','miui.').replace('com.xiaomi.','xi.');
+    html+=`<div class="export-item"><div class="cb on" id="ecb-${name.replace(/\./g,'-')}" onclick="tglExport('${name}',this)">✓</div><span style="flex:1;font-size:11px;font-family:var(--mono);color:var(--text2)">${s}</span><span style="font-size:10px;color:var(--text3)">${fmtSize(pkg.size||0)}</span></div>`;
+  }
+  html+=`</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin:12px 0;font-size:11px;color:var(--text2);line-height:1.8">
+    📦 Export sebagai <strong>.mtz</strong><br>
+    ✏️ Semua modifikasi, cleanup & dark mode disertakan<br>
+    💾 File: <strong>MTZ-Studio-export.mtz</strong>
+  </div>
+  <button class="export-btn" onclick="exportMtz()">📦 Export .mtz</button>`;
+  document.getElementById('export-scroll').innerHTML=html;
+}
+function tglExport(name,el){if(S.exportSelected.has(name)){S.exportSelected.delete(name);el.classList.remove('on');el.textContent='';}else{S.exportSelected.add(name);el.classList.add('on');el.textContent='✓';}}
+function selAllExport(v){for(const n of Object.keys(S.packages)){const cb=document.getElementById(`ecb-${n.replace(/\./g,'-')}`);if(!cb)continue;if(v){S.exportSelected.add(n);cb.classList.add('on');cb.textContent='✓';}else{S.exportSelected.delete(n);cb.classList.remove('on');cb.textContent='';}}}
+async function exportMtz(){
+  if(!S.zip){toast('Belum ada file');return;}
+  showLoading('Membuat .mtz...',10);
+  try{
+    const newMtz=new JSZip();
+    if(S.description) newMtz.file('description.xml',S.description);
+    for(const[path,{blob,pkgName}] of Object.entries(S.allFiles)){if(pkgName==='__preview'||pkgName==='__wallpaper')newMtz.file(path,blob);}
+    let i=0; const total=S.exportSelected.size;
+    for(const pkgName of S.exportSelected){
+      const pkg=S.packages[pkgName]; if(!pkg) continue;
+      showLoading(`Repack: ${pkgName.split('.').slice(-1)[0]}...`,10+Math.floor((i/total)*80));
+      const sub=new JSZip();
+      for(const[path,blob] of Object.entries(pkg.files)) sub.file(path,blob);
+      const buf=await sub.generateAsync({type:'arraybuffer',compression:'DEFLATE',compressionOptions:{level:6}});
+      newMtz.file(pkgName,buf); i++;
+    }
+    showLoading('Mengompresi...',92);
+    const blob=await newMtz.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='MTZ-Studio-export.mtz'; a.click(); URL.revokeObjectURL(url);
+    hideLoading(); toast(`✅ Export ${fmtSize(blob.size)} berhasil!`);
+  }catch(e){hideLoading();toast('❌ Export gagal: '+e.message);console.error(e);}
+}
+
+// ══════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.getElementById(`panel-${name}`)?.classList.add('active');
+  document.getElementById(`tab-${name}`)?.classList.add('active');
+}
+function showLoading(text,pct){
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('loading-text').textContent=text||'Memuat...';
+  if(pct!==undefined) document.getElementById('loading-bar-fill').style.width=pct+'%';
+}
+function hideLoading(){document.getElementById('loading').classList.remove('show'); document.getElementById('loading-bar-fill').style.width='0%';}
+let toastTimer;
+function toast(msg,dur=2500){
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),dur);
+}
+function showModal(title,body){document.getElementById('modal-title').textContent=title;document.getElementById('modal-body').innerHTML=body;document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function copyClip(t){navigator.clipboard?.writeText(t).then(()=>toast('✅ Tersalin: '+t));}
+function fmtSize(b){if(!b)return'0B';if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'K';return(b/1048576).toFixed(1)+'M';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+
+// Add AOD button to analyzer after load
+function addAodBtn(){
+  if(!S.aodFrames.length) return;
+  const el=document.getElementById('analyzer-scroll');
+  const btn=document.createElement('button');
+  btn.className='run-btn'; btn.style.marginTop='8px'; btn.textContent='⏱ Buka AOD Player';
+  btn.onclick=openAodPlayer; el.appendChild(btn);
+}
+
+// ══════════════════════════════════════════════════════════
+// PWA
+// ══════════════════════════════════════════════════════════
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;setTimeout(showPwaBanner,1500);});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;hidePwaBanner();toast('✅ MTZ Studio diinstal!');});
+function showPwaBanner(){
+  const d=localStorage.getItem('pwa-dismissed');
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(!standalone&&(!d||Date.now()-d>259200000)){document.getElementById('pwa-banner').style.display='block';document.getElementById('pwa-hint-btn').style.display='flex';}
+}
+function hidePwaBanner(){document.getElementById('pwa-banner').style.display='none';}
+function dismissPwa(){hidePwaBanner();localStorage.setItem('pwa-dismissed',Date.now());}
+function installPwa(){
+  if(!deferredPrompt){showModal('📲 Cara Instal Manual','<div style="font-size:12px;line-height:2"><b>Chrome/Kiwi:</b> Menu ⋮ → Tambahkan ke layar beranda<br><b>Samsung Internet:</b> Menu → Tambahkan halaman ke → Layar beranda<br><b>Firefox:</b> Menu → Pasang</div>');return;}
+  deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('🎉 Instalasi dimulai!');deferredPrompt=null;hidePwaBanner();});
+}
+if('serviceWorker' in navigator){
+  try{const sw=`const C='mtz-v2';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C).map(n=>caches.delete(n)))));self.clients.claim();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})),{scope:'/'}).catch(()=>{});}catch(e){}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(!standalone) document.getElementById('pwa-hint-btn').style.display='flex';
+  // Override buildAnalyzer to also add AOD btn
+  const origBuildAnalyzer=buildAnalyzer;
+});
+// Patch: add AOD btn after load
+const _origLoad=loadFile;
+</script>
+</body>
+</html>
