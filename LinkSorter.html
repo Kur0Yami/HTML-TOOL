@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>LinkSorter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+  :root{--bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--border:#2a2a3a;--accent:#7c6aff;--accent2:#ff6a9e;--accent3:#6affd4;--text:#e8e8f0;--muted:#6666aa;--mono:'Space Mono',monospace;--sans:'Syne',sans-serif;--radius:10px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100dvh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.5;}
+  .app{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;min-height:100dvh;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;}
+  .logo{font-family:var(--sans);font-weight:800;font-size:1.4rem;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .logo span{font-weight:400;background:linear-gradient(135deg,var(--accent3),var(--accent));-webkit-background-clip:text;}
+  .stats-pill{font-family:var(--mono);font-size:0.65rem;color:var(--accent3);background:rgba(106,255,212,0.08);border:1px solid rgba(106,255,212,0.2);padding:4px 10px;border-radius:999px;}
+  .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;}
+  .tab{flex:1;padding:8px;border:none;background:transparent;color:var(--muted);font-family:var(--sans);font-size:0.78rem;font-weight:600;cursor:pointer;border-radius:7px;transition:all 0.18s;}
+  .tab.active{background:var(--accent);color:white;}
+  .tab:not(.active):hover{background:var(--surface2);color:var(--text);}
+  .panel{display:none;}.panel.active{display:flex;flex-direction:column;gap:12px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+  .card-title{font-size:0.7rem;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
+  .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2);position:relative;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(124,106,255,0.07);}
+  .drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .drop-icon{font-size:2rem;margin-bottom:8px;display:block;}
+  .drop-label{font-size:0.85rem;color:var(--muted);line-height:1.6;}.drop-label strong{color:var(--accent);}
+  .drop-sub{font-family:var(--mono);font-size:0.63rem;color:var(--muted);margin-top:6px;opacity:0.7;}
+  textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:0.72rem;padding:10px 12px;resize:vertical;outline:none;transition:border-color 0.2s;line-height:1.6;}
+  textarea:focus{border-color:var(--accent);}textarea::placeholder{color:var(--muted);opacity:0.6;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:none;font-family:var(--sans);font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.18s;}
+  .btn-primary{background:var(--accent);color:white;flex:1;}.btn-primary:hover{background:#6b59e8;transform:translateY(-1px);}
+  .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-danger{background:rgba(255,80,100,0.1);color:#ff5064;border:1px solid rgba(255,80,100,0.2);}.btn-danger:hover{background:rgba(255,80,100,0.2);}
+  .btn-sm{padding:5px 10px;font-size:0.7rem;}
+  .progress-wrap{margin-top:10px;}.progress-bar{height:3px;background:var(--surface2);border-radius:999px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;transition:width 0.15s;width:0%;}
+  .progress-label{font-family:var(--mono);font-size:0.63rem;color:var(--muted);margin-top:5px;text-align:center;}
+  input[type="text"],select{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:0.72rem;padding:7px 10px;outline:none;transition:border-color 0.2s;}
+  input[type="text"]:focus,select:focus{border-color:var(--accent);}select option{background:var(--surface2);}
+  #searchInput{min-width:150px;flex:1;}
+  .results-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .domain-group{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;}
+  .domain-group:hover{border-color:var(--muted);}
+  .domain-header{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);cursor:pointer;user-select:none;}
+  .domain-favicon{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
+  .domain-name{font-family:var(--mono);font-size:0.72rem;color:var(--accent3);flex:1;font-weight:700;}
+  .domain-count{font-family:var(--mono);font-size:0.65rem;background:rgba(124,106,255,0.15);color:var(--accent);padding:2px 7px;border-radius:999px;}
+  .domain-toggle{color:var(--muted);font-size:0.7rem;transition:transform 0.2s;}
+  .domain-group.collapsed .domain-toggle{transform:rotate(-90deg);}
+  .domain-group.collapsed .url-list{display:none;}
+  .act-btn{opacity:0;transition:opacity 0.15s;}.domain-header:hover .act-btn{opacity:1;}
+  .url-list{padding:4px 0;}
+  .url-item{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid rgba(42,42,58,0.5);transition:background 0.15s;}
+  .url-item:hover{background:rgba(124,106,255,0.05);}
+  .url-text{font-family:var(--mono);font-size:0.66rem;color:var(--text);flex:1;word-break:break-all;line-height:1.4;text-decoration:none;opacity:0.85;}
+  .url-text:hover{color:var(--accent);opacity:1;}
+  .url-actions{display:flex;gap:4px;opacity:0;flex-shrink:0;}.url-item:hover .url-actions{opacity:1;}
+  .icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:2px 4px;border-radius:4px;line-height:1;}
+  .icon-btn:hover{color:var(--accent);background:rgba(124,106,255,0.1);}
+  .icon-btn.del:hover{color:#ff5064;background:rgba(255,80,100,0.1);}
+  .empty-state{text-align:center;padding:48px 16px;color:var(--muted);}
+  .empty-icon{font-size:2.5rem;margin-bottom:12px;display:block;opacity:0.5;}
+  .empty-text{font-size:0.85rem;line-height:1.6;}
+  .toast-container{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+  .toast{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:999px;font-size:0.78rem;font-family:var(--sans);font-weight:600;white-space:nowrap;animation:toastIn 0.25s ease,toastOut 0.3s ease 1.7s forwards;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+  .toast.success{border-color:var(--accent3);color:var(--accent3);}.toast.error{border-color:#ff5064;color:#ff5064;}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes toastOut{from{opacity:1;}to{opacity:0;}}
+  .badge{font-family:var(--mono);font-size:0.62rem;padding:2px 7px;border-radius:999px;}
+  .badge-purple{background:rgba(124,106,255,0.15);color:var(--accent);}
+  .badge-pink{background:rgba(255,106,158,0.12);color:var(--accent2);}
+  .badge-green{background:rgba(106,255,212,0.1);color:var(--accent3);}
+  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  @media(max-width:480px){.app{padding:12px;}.btn{padding:8px 12px;font-size:0.74rem;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Link<span>Sorter</span></div>
+    <div class="stats-pill" id="globalStats">0 link · 0 domain</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('input')">📥 Input</button>
+    <button class="tab" onclick="switchTab('result')">🔗 Hasil</button>
+    <button class="tab" onclick="switchTab('io')">💾 Export/Import</button>
+  </div>
+
+  <!-- INPUT -->
+  <div class="panel active" id="panel-input">
+    <div class="card">
+      <div class="card-title">📂 Drop File / ZIP</div>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="*/*" multiple>
+        <span class="drop-icon">📦</span>
+        <div class="drop-label">
+          <strong>Tap atau drop file</strong><br>
+          ZIP folder tab Kiwi · SNSS binary · JSON · TXT
+        </div>
+        <div class="drop-sub">ZIP berisi ratusan file tab → semua di-parse sekaligus · bisa multi-file</div>
+      </div>
+      <div class="progress-wrap" id="progressWrap" style="display:none">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Memproses...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✏️ Paste URL / Teks Bebas</div>
+      <textarea id="textInput" rows="5" placeholder="Paste URL di sini...&#10;https://example.com"></textarea>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="extractFromText()">⚡ Ekstrak & Tambah</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('textInput').value=''">✕ Clear</button>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="switchTab('result')" style="flex:1">🔗 Lihat Hasil →</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Reset</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="panel" id="panel-result">
+    <div class="card">
+      <div class="results-header">
+        <div class="filter-row">
+          <input type="text" id="searchInput" placeholder="🔍 cari url / domain..." oninput="renderResults()">
+          <select id="sortSelect" onchange="renderResults()">
+            <option value="domain">Domain A-Z</option>
+            <option value="domain-z">Domain Z-A</option>
+            <option value="count">Terbanyak</option>
+            <option value="count-asc">Tersedikit</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="collapseAll()">⊟</button>
+          <button class="btn btn-ghost btn-sm" onclick="expandAll()">⊞</button>
+        </div>
+      </div>
+    </div>
+    <div id="resultsContainer">
+      <div class="empty-state">
+        <span class="empty-icon">🔗</span>
+        <div class="empty-text">Belum ada link.<br>Drop ZIP tab Kiwi di Input.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT/IMPORT -->
+  <div class="panel" id="panel-io">
+    <div class="card">
+      <div class="card-title">📤 Export</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="exportJSON()">💾 JSON</button>
+        <button class="btn btn-ghost" onclick="exportTXT()">📄 TXT</button>
+        <button class="btn btn-ghost" onclick="exportCSV()">📊 CSV</button>
+        <button class="btn btn-ghost" onclick="exportGroupedTXT()">📋 Grouped</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📥 Import JSON / TXT / CSV</div>
+      <div class="drop-zone" id="importDropZone" style="padding:20px">
+        <input type="file" id="importFileInput" accept=".json,.txt,.csv">
+        <span class="drop-icon" style="font-size:1.4rem">📁</span>
+        <div class="drop-label">Import dari export sebelumnya</div>
+      </div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-ghost btn-sm" onclick="importFromClipboard()">📋 Paste Clipboard</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Statistik</div>
+      <div id="statsContent" style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);line-height:2">Belum ada data.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+let allLinks = new Set();
+// store url→id mapping for buttons
+let _urlMap = {};
+let _domainMapGlobal = {};
+
+const URL_RE = /https?:\/\/[^\x00-\x1f\x7f-\x9f ]{4,}/g;
+
+function extractURLs(text) {
+  return (text.match(URL_RE)||[])
+    .map(u => u.replace(/[\]\[)('"`,;<>|\\]+$/,'').trim())
+    .filter(u => { try{new URL(u);return true;}catch{return false;} });
+}
+
+function parseBinary(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const utf8 = new TextDecoder('utf-8',{fatal:false}).decode(bytes);
+  // Scan UTF-16LE wide URLs
+  let wide = '';
+  for (let i = 0; i < bytes.length-20; i++) {
+    if ((bytes[i]===0x68||bytes[i]===0x48) && bytes[i+1]===0x00 && bytes[i+2]===0x74 && bytes[i+3]===0x00) {
+      let s='',j=i;
+      while(j<bytes.length-1 && bytes[j+1]===0x00 && bytes[j]>=0x20 && bytes[j]<0x7f){s+=String.fromCharCode(bytes[j]);j+=2;}
+      if(s.length>10){wide+=s+'\n';i=j;}
+    }
+  }
+  return extractURLs(utf8+'\n'+wide);
+}
+
+function addLinks(urls) {
+  let added=0;
+  urls.forEach(u=>{if(!allLinks.has(u)){allLinks.add(u);added++;}});
+  updateStats();
+  return added;
+}
+
+function updateStats() {
+  const d=getDomains();
+  document.getElementById('globalStats').textContent=`${allLinks.size} link · ${Object.keys(d).length} domain`;
+}
+
+function getDomains() {
+  const map={};
+  allLinks.forEach(url=>{
+    try{const d=new URL(url).hostname;if(!map[d])map[d]=[];map[d].push(url);}catch{}
+  });
+  return map;
+}
+
+// File drop
+const dropZone=document.getElementById('dropZone');
+const fileInput=document.getElementById('fileInput');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');handleFiles(Array.from(e.dataTransfer.files));});
+fileInput.addEventListener('change',e=>{handleFiles(Array.from(e.target.files));fileInput.value='';});
+
+async function handleFiles(files) {
+  const pw=document.getElementById('progressWrap');
+  const pf=document.getElementById('progressFill');
+  const pl=document.getElementById('progressLabel');
+  pw.style.display='block';
+  let totalAdded=0, totalFiles=0;
+
+  for(let i=0;i<files.length;i++){
+    const f=files[i];
+    pf.style.width=((i/files.length)*90)+'%';
+    pl.textContent='Memproses: '+f.name;
+    try{
+      if(f.name.toLowerCase().endsWith('.zip')||f.type==='application/zip'){
+        const r=await processZip(f,(cur,tot,name)=>{
+          pf.style.width=(((i/files.length)+(cur/tot/files.length))*90)+'%';
+          pl.textContent=`ZIP [${cur}/${tot}] ${name}`;
+        });
+        totalAdded+=r.added; totalFiles+=r.files;
+      } else {
+        const urls=await processFile(f);
+        totalAdded+=addLinks(urls); totalFiles++;
+      }
+    }catch(e){toast('Gagal: '+f.name,'error');}
+  }
+
+  pf.style.width='100%';
+  pl.textContent=`✓ Selesai! +${totalAdded} link baru dari ${totalFiles} file`;
+  setTimeout(()=>{pw.style.display='none';pf.style.width='0%';},3000);
+  toast(`+${totalAdded} link baru`,'success');
+}
+
+async function processZip(file, onProgress) {
+  const zip=await JSZip.loadAsync(file);
+  const entries=Object.values(zip.files).filter(f=>!f.dir);
+  let added=0,processed=0;
+  for(const entry of entries){
+    processed++;
+    if(onProgress) onProgress(processed,entries.length,entry.name.split('/').pop());
+    try{
+      const buf=await entry.async('arraybuffer');
+      added+=addLinks(parseBinary(buf));
+    }catch{}
+  }
+  return {added,files:entries.length};
+}
+
+async function processFile(file) {
+  const name=file.name.toLowerCase();
+  if(name.endsWith('.json')){
+    const text=await file.text();
+    try{
+      const p=JSON.parse(text);
+      if(p.domains) return Object.values(p.domains).flat();
+      if(Array.isArray(p)) return p.flatMap(i=>typeof i==='string'?[i]:i.url?[i.url]:[]);
+    }catch{}
+    return extractURLs(text);
+  }
+  if(name.endsWith('.txt')||name.endsWith('.csv')) return extractURLs(await file.text());
+  return parseBinary(await file.arrayBuffer());
+}
+
+function extractFromText(){
+  const text=document.getElementById('textInput').value;
+  if(!text.trim()) return;
+  const urls=extractURLs(text);
+  if(!urls.length){toast('Tidak ada URL ditemukan','error');return;}
+  toast(`+${addLinks(urls)} link baru`,'success');
+  document.getElementById('textInput').value='';
+}
+
+function renderResults(){
+  const container=document.getElementById('resultsContainer');
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const sort=document.getElementById('sortSelect').value;
+
+  if(!allLinks.size){
+    container.innerHTML='<div class="empty-state"><span class="empty-icon">🔗</span><div class="empty-text">Belum ada link.<br>Drop ZIP tab Kiwi di Input.</div></div>';
+    return;
+  }
+
+  let entries=Object.entries(getDomains());
+  if(search) entries=entries.map(([d,u])=>[d,u.filter(x=>x.toLowerCase().includes(search)||d.includes(search))]).filter(([,u])=>u.length);
+  entries.sort((a,b)=>{
+    if(sort==='domain') return a[0].localeCompare(b[0]);
+    if(sort==='domain-z') return b[0].localeCompare(a[0]);
+    if(sort==='count') return b[1].length-a[1].length;
+    return a[1].length-b[1].length;
+  });
+
+  if(!entries.length){
+    container.innerHTML=`<div class="empty-state"><span class="empty-icon">🔍</span><div class="empty-text">Tidak ada hasil untuk "${search}"</div></div>`;
+    return;
+  }
+
+  _urlMap={};
+  _domainMapGlobal={};
+  let idx=0;
+
+  container.innerHTML=entries.map(([domain,urls])=>{
+    const did='d'+(idx++);
+    _domainMapGlobal[did]={domain,urls};
+    const urlItems=urls.map(url=>{
+      const uid='u'+(idx++);
+      _urlMap[uid]=url;
+      return `<div class="url-item">
+        <a class="url-text" href="${url.replace(/"/g,'%22')}" target="_blank" title="${url.replace(/"/g,'&quot;')}">${url}</a>
+        <div class="url-actions">
+          <button class="icon-btn" onclick="copyLink('${uid}')" title="Copy">📋</button>
+          <button class="icon-btn del" onclick="deleteLink('${uid}')" title="Hapus">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="domain-group" id="dg-${did}">
+      <div class="domain-header" onclick="toggleDomain('${did}')">
+        <img class="domain-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" onerror="this.style.display='none'">
+        <span class="domain-name">${domain}</span>
+        <span class="domain-count">${urls.length}</span>
+        <button class="btn btn-ghost btn-sm act-btn" onclick="event.stopPropagation();copyDomain('${did}')" title="Copy semua">📋</button>
+        <button class="btn btn-ghost btn-sm act-btn" onclick="event.stopPropagation();exportDomain('${did}')" title="Export TXT">💾</button>
+        <button class="btn btn-danger btn-sm act-btn" onclick="event.stopPropagation();deleteDomain('${did}')" title="Hapus domain">🗑</button>
+        <span class="domain-toggle">▾</span>
+      </div>
+      <div class="url-list">${urlItems}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDomain(id){document.getElementById('dg-'+id)?.classList.toggle('collapsed');}
+function collapseAll(){document.querySelectorAll('.domain-group').forEach(g=>g.classList.add('collapsed'));}
+function expandAll(){document.querySelectorAll('.domain-group').forEach(g=>g.classList.remove('collapsed'));}
+function copyLink(uid){const url=_urlMap[uid];if(url)navigator.clipboard.writeText(url).then(()=>toast('Link di-copy!','success'));}
+function deleteLink(uid){const url=_urlMap[uid];if(url){allLinks.delete(url);updateStats();renderResults();}}
+function deleteDomain(did){const e=_domainMapGlobal[did];if(e){e.urls.forEach(u=>allLinks.delete(u));updateStats();renderResults();}}
+function copyDomain(did){const e=_domainMapGlobal[did];if(e)navigator.clipboard.writeText(e.urls.join('\n')).then(()=>toast(`${e.urls.length} link di-copy!`,'success'));}
+function exportDomain(did){
+  const e=_domainMapGlobal[did];if(!e)return;
+  const fname=e.domain.replace(/[^a-z0-9.-]/gi,'_')+'.txt';
+  dl(fname,e.urls.join('\n'),'text/plain');
+  toast(`Export ${e.domain} (${e.urls.length} link)`,'success');
+}
+
+// Export
+function dl(filename,content,type){
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([content],{type})),download:filename});
+  a.click();URL.revokeObjectURL(a.href);
+}
+function exportJSON(){const d=getDomains();dl('links_export.json',JSON.stringify({exported:new Date().toISOString(),total:allLinks.size,domains:d},null,2),'application/json');toast('JSON di-export!','success');}
+function exportTXT(){dl('links_export.txt',[...allLinks].sort().join('\n'),'text/plain');toast('TXT di-export!','success');}
+function exportCSV(){let c='domain,url\n';Object.entries(getDomains()).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([d,u])=>u.forEach(url=>c+=`"${d}","${url.replace(/"/g,'""')}"\n`));dl('links_export.csv',c,'text/csv');toast('CSV di-export!','success');}
+function exportGroupedTXT(){let t='';Object.entries(getDomains()).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([d,u])=>{t+=`\n### ${d} (${u.length})\n`+u.join('\n')+'\n';});dl('links_grouped.txt',t.trim(),'text/plain');toast('Grouped TXT di-export!','success');}
+
+// Import
+document.getElementById('importDropZone').addEventListener('dragover',e=>e.preventDefault());
+document.getElementById('importDropZone').addEventListener('drop',e=>{e.preventDefault();handleImport(e.dataTransfer.files[0]);});
+document.getElementById('importFileInput').addEventListener('change',e=>{if(e.target.files[0])handleImport(e.target.files[0]);e.target.value='';});
+async function handleImport(file){
+  try{
+    const text=await file.text();let urls=[];
+    try{const p=JSON.parse(text);if(p.domains)urls=Object.values(p.domains).flat();else if(Array.isArray(p))urls=p.flatMap(i=>typeof i==='string'?[i]:i.url?[i.url]:[]);else urls=extractURLs(text);}catch{urls=extractURLs(text);}
+    toast(`Import: +${addLinks(urls)} link`,'success');renderStats();
+  }catch{toast('Gagal import','error');}
+}
+async function importFromClipboard(){
+  try{const t=await navigator.clipboard.readText();toast(`+${addLinks(extractURLs(t))} link dari clipboard`,'success');}catch{toast('Gagal baca clipboard','error');}
+}
+
+function renderStats(){
+  const domains=getDomains();
+  const sorted=Object.entries(domains).sort((a,b)=>b[1].length-a[1].length);
+  if(!allLinks.size){document.getElementById('statsContent').innerHTML='Belum ada data.';return;}
+  document.getElementById('statsContent').innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="badge badge-purple">Total: ${allLinks.size} link</span>
+      <span class="badge badge-pink">Domain: ${sorted.length}</span>
+      <span class="badge badge-green">Avg: ${(allLinks.size/sorted.length).toFixed(1)}/domain</span>
+    </div>
+    <div style="color:var(--muted);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Top Domain</div>
+    ${sorted.slice(0,10).map(([d,u],i)=>`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="color:var(--accent);min-width:18px;font-size:0.65rem">${i+1}.</span>
+        <img src="https://www.google.com/s2/favicons?domain=${d}&sz=16" style="width:12px;height:12px;border-radius:2px" onerror="this.style.display='none'">
+        <span style="flex:1;color:var(--accent3);font-size:0.68rem">${d}</span>
+        <span class="badge badge-purple">${u.length}</span>
+      </div>`).join('')}
+    ${sorted.length>10?`<div style="color:var(--muted);font-size:0.65rem;margin-top:6px">+${sorted.length-10} domain lainnya</div>`:''}
+  `;
+}
+
+function clearAll(){if(!allLinks.size||!confirm(`Hapus semua ${allLinks.size} link?`))return;allLinks.clear();updateStats();renderResults();toast('Semua link dihapus','success');}
+
+function switchTab(tab){
+  ['input','result','io'].forEach((t,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
+    document.getElementById('panel-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='result') renderResults();
+  if(tab==='io') renderStats();
+}
+
+function toast(msg,type=''){
+  const d=document.createElement('div');
+  d.className='toast '+type;d.textContent=msg;
+  document.getElementById('toastContainer').appendChild(d);
+  setTimeout(()=>d.remove(),2100);
+}
+
+updateStats();
+</script>
+</body>
+</html>
