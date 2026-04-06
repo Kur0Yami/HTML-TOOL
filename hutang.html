@@ -976,26 +976,15 @@ function makeFavicon(size) {
   return c.toDataURL();
 }
 
-const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+// Manifest via data URI — tidak overlap dengan halaman lain
+const manifestJson = JSON.stringify(manifestData);
+const manifestB64  = btoa(unescape(encodeURIComponent(manifestJson)));
+document.getElementById('manifest-link').href =
+  'data:application/manifest+json;base64,' + manifestB64;
 
-// Service Worker
-if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE = 'hutangku-v1';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
-    });
-    self.addEventListener('fetch', e => {
-      e.respondWith(
-        caches.match(e.request).then(r => r || fetch(e.request))
-      );
-    });
-  `;
-  const swBlob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl  = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
-}
+// TIDAK daftarkan Service Worker — SW via blob URL tidak bisa dibatasi scope-nya
+// dan akan nge-intercept halaman lain di domain yang sama (GitHub Pages dll).
+// PWA tetap installable via manifest, data tetap aman di localStorage.
 
 // ─── START ────────────────────────────────────────────────
 init();
