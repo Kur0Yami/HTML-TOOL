@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4a7b9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hutang">
+<title>Hutang</title>
+<link rel="manifest" href="#" id="manifest-link">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --pink: #f4a7b9;
+    --pink-light: #fde8ed;
+    --pink-deep: #e8849a;
+    --mint: #c8e6d8;
+    --mint-light: #e8f5ee;
+    --dark: #1a1a1a;
+    --border: #1a1a1a;
+    --red: #e85555;
+    --green: #4caf50;
+    --white: #ffffff;
+    --shadow: 5px 5px 0px #1a1a1a;
+    --shadow-sm: 3px 3px 0px #1a1a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    padding: 16px;
+    padding-bottom: 40px;
+  }
+
+  /* ── APP WINDOW CHROME ── */
+  .app-window {
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .window-shadow {
+    background: var(--mint);
+    border: 2.5px solid var(--border);
+    border-radius: 18px;
+    position: absolute;
+    inset: 0;
+    transform: translate(5px, 5px);
+    z-index: 0;
+  }
+
+  .window-main {
+    background: var(--pink-light);
+    border: 2.5px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  .titlebar {
+    background: var(--pink);
+    border-bottom: 2.5px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .titlebar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+  }
+
+  .titlebar-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .titlebar-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--pink-light);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .titlebar-dot:hover { background: var(--pink-deep); }
+
+  .window-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .summary-card {
+    background: var(--white);
+    border: 2.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+
+  .summary-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .summary-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+    transition: filter 0.2s;
+  }
+
+  .summary-value.blurred { filter: blur(6px); user-select: none; }
+
+  .hide-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: #aaa;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+  }
+  .hide-toggle:hover { color: var(--dark); }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--dark);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 14px;
+    border: 2.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--border); }
+
+  .btn-pink { background: var(--pink); color: var(--dark); }
+  .btn-pink:hover { background: var(--pink-deep); }
+  .btn-mint { background: var(--mint); color: var(--dark); }
+  .btn-white { background: var(--white); color: var(--dark); }
+  .btn-red { background: #ffd5d5; color: var(--red); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 8px; box-shadow: 2px 2px 0 var(--border); }
+
+  /* ── DEBT CARD ── */
+  .debt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .debt-card {
+    background: var(--white);
+    border: 2.5px solid var(--border);
+    border-radius: 14px;
+    padding: 13px 14px;
+    box-shadow: var(--shadow-sm);
+    animation: slideIn 0.25s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .debt-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .debt-name {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--dark);
+    flex: 1;
+  }
+
+  .debt-type-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .tag-dipinjam { background: #ffd5d5; color: var(--red); }
+  .tag-meminjam { background: #d5f5e3; color: #2e7d32; }
+
+  .debt-amount-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .debt-amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--dark);
+    transition: filter 0.2s;
+    flex: 1;
+  }
+
+  .debt-amount.blurred { filter: blur(5px); user-select: none; }
+
+  .debt-note {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .debt-date {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 3px;
+  }
+
+  .debt-card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* ── MODAL ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: var(--pink-light);
+    border: 2.5px solid var(--border);
+    border-radius: 20px 20px 18px 18px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s ease;
+    overflow: hidden;
+    box-shadow: 0 -4px 40px rgba(0,0,0,0.15);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    background: var(--pink);
+    border-bottom: 2.5px solid var(--border);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* ── FORM ── */
+  .field-label {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #666;
+    margin-bottom: 5px;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .field-input:focus {
+    border-color: var(--pink-deep);
+    box-shadow: 0 0 0 3px rgba(244,167,185,0.3);
+  }
+
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .type-btn {
+    padding: 10px;
+    border: 2.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .type-btn.active-dipinjam { background: #ffd5d5; }
+  .type-btn.active-meminjam { background: #d5f5e3; }
+
+  /* ── GIST MODAL ── */
+  .gist-status {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    margin-top: 4px;
+  }
+
+  .gist-status.ok { background: #d5f5e3; color: #2e7d32; }
+  .gist-status.err { background: #ffd5d5; color: var(--red); }
+  .gist-status.loading { background: #fff9c4; color: #7a6600; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: #bbb;
+  }
+
+  .empty-state svg { opacity: 0.4; margin-bottom: 10px; }
+  .empty-state p { font-weight: 700; font-size: 13px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--dark);
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 999;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── FILTER TABS ── */
+  .filter-tabs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .filter-tab {
+    padding: 6px 12px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    background: var(--white);
+    transition: background 0.15s;
+  }
+
+  .filter-tab.active { background: var(--pink); }
+
+  /* ── MARK LUNAS ── */
+  .debt-card.lunas {
+    opacity: 0.5;
+  }
+
+  .debt-card.lunas .debt-name {
+    text-decoration: line-through;
+  }
+
+  /* SCROLLABLE AREA */
+  .debt-list-wrap {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .debt-list-wrap::-webkit-scrollbar { width: 4px; }
+  .debt-list-wrap::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 4px; }
+</style>
+</head>
+
+<body>
+
+<div class="app-window">
+  <div class="window-shadow"></div>
+  <div class="window-main">
+
+    <!-- TITLEBAR -->
+    <div class="titlebar">
+      <span class="titlebar-title">💸 hutang.ku</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-white btn-sm" id="gistBtn" onclick="openGistModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          Gist
+        </button>
+        <div class="titlebar-dots">
+          <div class="titlebar-dot"></div>
+          <div class="titlebar-dot"></div>
+          <div class="titlebar-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window-body">
+
+      <!-- SUMMARY -->
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            Gue hutang
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="summary-value" id="totalDipinjam">Rp 0</div>
+            <button class="hide-toggle" onclick="toggleHide('dipinjam')" title="Sembunyikan">
+              <svg id="eyeDipinjam" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+            Gue dihutangin
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="summary-value" id="totalMeminjam">Rp 0</div>
+            <button class="hide-toggle" onclick="toggleHide('meminjam')" title="Sembunyikan">
+              <svg id="eyeMeminjam" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER + ADD -->
+      <div class="section-header">
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="setFilter('semua', this)">Semua</button>
+          <button class="filter-tab" onclick="setFilter('dipinjam', this)">Hutang</button>
+          <button class="filter-tab" onclick="setFilter('meminjam', this)">Piutang</button>
+        </div>
+        <button class="btn btn-pink btn-sm" onclick="openAddModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah
+        </button>
+      </div>
+
+      <!-- LIST -->
+      <div class="debt-list-wrap">
+        <div class="debt-list" id="debtList"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addOverlay" onclick="closeOnOverlay(event, 'addOverlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Tambah Catatan</span>
+      <button class="btn btn-white btn-sm" onclick="closeModal('addOverlay')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div>
+        <div class="field-label">Tipe</div>
+        <div class="type-toggle">
+          <button class="type-btn active-dipinjam" id="typeDipinjam" onclick="setType('dipinjam')">
+            <svg style="vertical-align:middle;margin-right:4px" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+            Gue Hutang
+          </button>
+          <button class="type-btn" id="typeMeminjam" onclick="setType('meminjam')">
+            <svg style="vertical-align:middle;margin-right:4px" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
+            Gue Minjemin
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">Nama</div>
+        <input type="text" class="field-input" id="inputName" placeholder="Nama orang / keperluan">
+      </div>
+      <div>
+        <div class="field-label">Jumlah (Rp)</div>
+        <input type="number" class="field-input" id="inputAmount" placeholder="0" inputmode="numeric">
+      </div>
+      <div>
+        <div class="field-label">Catatan</div>
+        <input type="text" class="field-input" id="inputNote" placeholder="Opsional…">
+      </div>
+      <div>
+        <div class="field-label">Tanggal</div>
+        <input type="date" class="field-input" id="inputDate">
+      </div>
+      <button class="btn btn-pink" style="width:100%;justify-content:center;" onclick="saveDebt()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- GIST MODAL -->
+<div class="overlay" id="gistOverlay" onclick="closeOnOverlay(event, 'gistOverlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Sinkron GitHub Gist</span>
+      <button class="btn btn-white btn-sm" onclick="closeModal('gistOverlay')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="field-label">GitHub Token (gist scope)</div>
+        <input type="password" class="field-input" id="gistToken" placeholder="ghp_xxxxxxxxxxxxx">
+      </div>
+      <div>
+        <div class="field-label">Gist ID (kosongkan = buat baru)</div>
+        <input type="text" class="field-input" id="gistId" placeholder="abc123def456...">
+      </div>
+      <div id="gistStatus" class="gist-status" style="display:none;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="btn btn-mint" style="justify-content:center;" onclick="syncFromGist()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+          Pull
+        </button>
+        <button class="btn btn-pink" style="justify-content:center;" onclick="syncToGist()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.51"/></svg>
+          Push
+        </button>
+      </div>
+      <button class="btn btn-white" style="width:100%;justify-content:center;font-size:12px;" onclick="saveGistConfig()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Simpan Config
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let debts = [];
+let hiddenDipinjam = false;
+let hiddenMeminjam = false;
+let hiddenCards = {};
+let currentFilter = 'semua';
+let currentType = 'dipinjam';
+let editingId = null;
+
+const STORAGE_KEY = 'hutangku_data';
+const GIST_KEY = 'hutangku_gist';
+
+// ─── INIT ─────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) debts = JSON.parse(saved);
+
+  const gist = getGistConfig();
+  if (gist.token) document.getElementById('gistToken').value = gist.token;
+  if (gist.id) document.getElementById('gistId').value = gist.id;
+
+  document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+  render();
+}
+
+// ─── STORAGE ──────────────────────────────────────────────
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(debts));
+}
+
+function getGistConfig() {
+  const c = localStorage.getItem(GIST_KEY);
+  return c ? JSON.parse(c) : {};
+}
+
+function saveGistConfig() {
+  const token = document.getElementById('gistToken').value.trim();
+  const id    = document.getElementById('gistId').value.trim();
+  localStorage.setItem(GIST_KEY, JSON.stringify({ token, id }));
+  toast('Config tersimpan!');
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function fmt(n) {
+  return 'Rp ' + Number(n).toLocaleString('id-ID');
+}
+
+function render() {
+  // summary
+  const totalD = debts.filter(d => d.type === 'dipinjam' && !d.lunas).reduce((a,b) => a + b.amount, 0);
+  const totalM = debts.filter(d => d.type === 'meminjam' && !d.lunas).reduce((a,b) => a + b.amount, 0);
+
+  const elD = document.getElementById('totalDipinjam');
+  const elM = document.getElementById('totalMeminjam');
+
+  elD.textContent = hiddenDipinjam ? '*****' : fmt(totalD);
+  elM.textContent = hiddenMeminjam ? '*****' : fmt(totalM);
+  elD.classList.toggle('blurred', false);
+  elM.classList.toggle('blurred', false);
+
+  // list
+  const list = document.getElementById('debtList');
+  const filtered = debts.filter(d => currentFilter === 'semua' || d.type === currentFilter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <p>Belum ada catatan hutang</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(d => {
+    const hidden = hiddenCards[d.id];
+    const amountDisplay = hidden ? '*****' : fmt(d.amount);
+    const eyeIcon = hidden
+      ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+      : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+    return `
+    <div class="debt-card ${d.lunas ? 'lunas' : ''}" id="card-${d.id}">
+      <div class="debt-card-header">
+        <span class="debt-name">${escHtml(d.name)}</span>
+        <span class="debt-type-tag ${d.type === 'dipinjam' ? 'tag-dipinjam' : 'tag-meminjam'}">
+          ${d.type === 'dipinjam' ? 'Gue Hutang' : 'Gue Minjemin'}
+        </span>
+      </div>
+      <div class="debt-amount-row">
+        <span class="debt-amount ${hidden ? 'blurred' : ''}" id="amount-${d.id}">${amountDisplay}</span>
+        <button class="hide-toggle" onclick="toggleCardHide('${d.id}')" title="Sembunyikan jumlah">${eyeIcon}</button>
+      </div>
+      ${d.note ? `<div class="debt-note">${escHtml(d.note)}</div>` : ''}
+      <div class="debt-date">${d.date || ''}</div>
+      <div class="debt-card-actions">
+        <button class="btn btn-mint btn-sm" onclick="markLunas('${d.id}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ${d.lunas ? 'Buka' : 'Lunas'}
+        </button>
+        <button class="btn btn-white btn-sm" onclick="editDebt('${d.id}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn btn-red btn-sm" onclick="deleteDebt('${d.id}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Hapus
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── FILTER ───────────────────────────────────────────────
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+// ─── HIDE SUMMARY ─────────────────────────────────────────
+function toggleHide(type) {
+  if (type === 'dipinjam') {
+    hiddenDipinjam = !hiddenDipinjam;
+    updateEye('eyeDipinjam', hiddenDipinjam);
+  } else {
+    hiddenMeminjam = !hiddenMeminjam;
+    updateEye('eyeMeminjam', hiddenMeminjam);
+  }
+  render();
+}
+
+function updateEye(id, hidden) {
+  const el = document.getElementById(id);
+  if (hidden) {
+    el.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+  } else {
+    el.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  }
+}
+
+// ─── HIDE CARD AMOUNT ─────────────────────────────────────
+function toggleCardHide(id) {
+  hiddenCards[id] = !hiddenCards[id];
+  render();
+}
+
+// ─── ADD / EDIT ───────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Tambah Catatan';
+  document.getElementById('editId').value = '';
+  document.getElementById('inputName').value = '';
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputNote').value = '';
+  document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+  setType('dipinjam');
+  document.getElementById('addOverlay').classList.add('open');
+}
+
+function editDebt(id) {
+  const d = debts.find(x => x.id === id);
+  if (!d) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Catatan';
+  document.getElementById('editId').value = id;
+  document.getElementById('inputName').value = d.name;
+  document.getElementById('inputAmount').value = d.amount;
+  document.getElementById('inputNote').value = d.note || '';
+  document.getElementById('inputDate').value = d.date || '';
+  setType(d.type);
+  document.getElementById('addOverlay').classList.add('open');
+}
+
+function setType(t) {
+  currentType = t;
+  const btnD = document.getElementById('typeDipinjam');
+  const btnM = document.getElementById('typeMeminjam');
+  btnD.className = 'type-btn' + (t === 'dipinjam' ? ' active-dipinjam' : '');
+  btnM.className = 'type-btn' + (t === 'meminjam' ? ' active-meminjam' : '');
+}
+
+function saveDebt() {
+  const name   = document.getElementById('inputName').value.trim();
+  const amount = parseFloat(document.getElementById('inputAmount').value);
+  const note   = document.getElementById('inputNote').value.trim();
+  const date   = document.getElementById('inputDate').value;
+
+  if (!name) { toast('Nama wajib diisi!'); return; }
+  if (isNaN(amount) || amount <= 0) { toast('Jumlah harus lebih dari 0!'); return; }
+
+  if (editingId) {
+    const idx = debts.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      debts[idx] = { ...debts[idx], name, amount, note, date, type: currentType };
+    }
+    toast('Catatan diupdate!');
+  } else {
+    debts.unshift({ id: uid(), name, amount, note, date, type: currentType, lunas: false });
+    toast('Catatan ditambah!');
+  }
+
+  save();
+  closeModal('addOverlay');
+  render();
+}
+
+function markLunas(id) {
+  const d = debts.find(x => x.id === id);
+  if (d) { d.lunas = !d.lunas; save(); render(); toast(d.lunas ? 'Ditandai lunas!' : 'Dibuka kembali!'); }
+}
+
+function deleteDebt(id) {
+  if (!confirm('Hapus catatan ini?')) return;
+  debts = debts.filter(x => x.id !== id);
+  save();
+  render();
+  toast('Catatan dihapus!');
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ─── MODAL ────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeOnOverlay(e, id) { if (e.target.id === id) closeModal(id); }
+
+function openGistModal() {
+  const c = getGistConfig();
+  if (c.token) document.getElementById('gistToken').value = c.token;
+  if (c.id) document.getElementById('gistId').value = c.id;
+  document.getElementById('gistStatus').style.display = 'none';
+  document.getElementById('gistOverlay').classList.add('open');
+}
+
+// ─── GIST SYNC ────────────────────────────────────────────
+function showGistStatus(msg, type) {
+  const el = document.getElementById('gistStatus');
+  el.style.display = 'block';
+  el.className = 'gist-status ' + type;
+  el.textContent = msg;
+}
+
+async function syncToGist() {
+  const token = document.getElementById('gistToken').value.trim();
+  const gistId = document.getElementById('gistId').value.trim();
+  if (!token) { showGistStatus('Token wajib diisi!', 'err'); return; }
+
+  showGistStatus('Mengirim data…', 'loading');
+
+  const body = { files: { 'hutangku.json': { content: JSON.stringify(debts, null, 2) } } };
+
+  try {
+    let url = 'https://api.github.com/gists';
+    let method = 'POST';
+    if (gistId) { url += '/' + gistId; method = 'PATCH'; }
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal');
+
+    document.getElementById('gistId').value = data.id;
+    localStorage.setItem(GIST_KEY, JSON.stringify({ token, id: data.id }));
+    showGistStatus('Berhasil push ke Gist! ID: ' + data.id, 'ok');
+    toast('Data tersimpan ke Gist!');
+  } catch(e) {
+    showGistStatus('Error: ' + e.message, 'err');
+  }
+}
+
+async function syncFromGist() {
+  const token  = document.getElementById('gistToken').value.trim();
+  const gistId = document.getElementById('gistId').value.trim();
+  if (!token || !gistId) { showGistStatus('Token & Gist ID wajib diisi!', 'err'); return; }
+
+  showGistStatus('Mengambil data…', 'loading');
+
+  try {
+    const res = await fetch('https://api.github.com/gists/' + gistId, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal');
+
+    const file = data.files['hutangku.json'];
+    if (!file) throw new Error('File hutangku.json tidak ditemukan di Gist ini');
+
+    let content = file.content;
+    if (file.truncated) {
+      const raw = await fetch(file.raw_url);
+      content = await raw.text();
+    }
+
+    debts = JSON.parse(content);
+    save();
+    render();
+    localStorage.setItem(GIST_KEY, JSON.stringify({ token, id: gistId }));
+    showGistStatus('Berhasil pull dari Gist!', 'ok');
+    toast('Data diambil dari Gist!');
+  } catch(e) {
+    showGistStatus('Error: ' + e.message, 'err');
+  }
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── PWA MANIFEST ─────────────────────────────────────────
+const manifestData = {
+  name: 'Hutang.ku',
+  short_name: 'Hutang',
+  start_url: '.',
+  display: 'standalone',
+  background_color: '#fde8ed',
+  theme_color: '#f4a7b9',
+  description: 'Catatan hutang & piutang',
+  icons: [
+    { src: makeFavicon(192), sizes: '192x192', type: 'image/png' },
+    { src: makeFavicon(512), sizes: '512x512', type: 'image/png' }
+  ]
+};
+
+function makeFavicon(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const r = size * 0.18;
+  ctx.fillStyle = '#f4a7b9';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, size, size, [r]);
+  ctx.fill();
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = `bold ${size * 0.55}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('₩', size/2, size/2);
+  return c.toDataURL();
+}
+
+const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'hutangku-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+// ─── START ────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
