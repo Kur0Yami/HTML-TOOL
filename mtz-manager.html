@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0e1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MTZ Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e1117;--bg2:#151820;--bg3:#1c2030;--bg4:#242840;
+  --border:#252d45;--border2:#323d60;
+  --accent:#5b8ff9;--accent2:#8b5cf6;--green:#34d399;
+  --yellow:#fbbf24;--red:#f87171;
+  --text:#e2e8f0;--text2:#8892aa;--text3:#434d6e;
+  --r:10px;--r2:7px;--r3:14px;
+  --shadow:0 4px 24px rgba(0,0,0,0.6);
+  --sab:env(safe-area-inset-bottom,0px);
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'Menlo','Courier New',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--font);color:var(--text);display:flex;flex-direction:column;overscroll-behavior:none}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:8px;padding:0 14px;height:52px;
+  background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;z-index:200}
+.logo{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.logo-box{width:32px;height:32px;border-radius:8px;flex-shrink:0;font-size:16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center}
+.logo-text{font-size:16px;font-weight:700}
+.logo-tag{font-size:9px;font-family:var(--mono);color:var(--accent);
+  background:rgba(91,143,249,.15);border:1px solid rgba(91,143,249,.3);
+  padding:2px 5px;border-radius:4px;letter-spacing:1px;flex-shrink:0}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  border:none;border-radius:var(--r2);font-family:var(--font);font-weight:600;
+  cursor:pointer;transition:all .15s;white-space:nowrap;-webkit-user-select:none;user-select:none}
+.btn:active{opacity:.7;transform:scale(.96)}
+.btn-p{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:9px 16px;font-size:14px}
+.btn-g{background:var(--bg3);color:var(--text2);border:1px solid var(--border);padding:9px 14px;font-size:13px}
+.btn-d{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.25);padding:9px 14px;font-size:13px}
+.btn-s{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25);padding:9px 14px;font-size:13px}
+.btn-w{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25);padding:9px 14px;font-size:13px}
+.btn-sm{padding:7px 12px;font-size:12px}
+.btn-xs{padding:5px 9px;font-size:11px}
+.btn-ic{padding:8px;min-width:36px}
+
+/* VIEWS */
+.view{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.view.active{display:flex}
+
+/* HOME */
+.home{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:18px;text-align:center}
+.home-icon{font-size:70px;filter:drop-shadow(0 0 28px rgba(91,143,249,.35))}
+.home-title{font-size:24px;font-weight:800;letter-spacing:-.3px}
+.home-sub{font-size:14px;color:var(--text2);line-height:1.6;max-width:280px}
+.drop-box{width:100%;max-width:300px;border:2px dashed var(--border2);border-radius:16px;
+  padding:26px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  cursor:pointer;transition:all .2s;background:var(--bg2)}
+.drop-box:active,.drop-box.ov{border-color:var(--accent);background:rgba(91,143,249,.06)}
+.drop-icon{font-size:34px}.drop-txt{font-size:15px;font-weight:600;color:var(--text2)}
+.drop-sub{font-size:12px;color:var(--text3)}
+
+/* PKG TABS */
+.pkg-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;
+  border-bottom:1px solid var(--border);background:var(--bg2);
+  overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.pkg-bar::-webkit-scrollbar{display:none}
+.pkg-tab{display:flex;align-items:center;gap:4px;padding:6px 11px;border-radius:20px;
+  font-size:12px;font-weight:600;font-family:var(--mono);white-space:nowrap;cursor:pointer;
+  transition:all .15s;background:var(--bg3);color:var(--text2);border:1px solid var(--border);flex-shrink:0}
+.pkg-tab:active{opacity:.7}
+.pkg-tab.on{background:rgba(91,143,249,.15);color:var(--accent);border-color:rgba(91,143,249,.4)}
+.pkg-cnt{background:var(--bg4);color:var(--text3);font-size:10px;padding:1px 4px;border-radius:6px}
+.pkg-tab.on .pkg-cnt{background:rgba(91,143,249,.2);color:var(--accent)}
+
+/* BROWSER NAV */
+.nav-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;
+  border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.nav-bar::-webkit-scrollbar{display:none}
+.breadcrumb{display:flex;align-items:center;gap:3px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.breadcrumb::-webkit-scrollbar{display:none}
+.bc{font-family:var(--mono);font-size:12px;color:var(--text2);white-space:nowrap;
+  cursor:pointer;padding:4px 6px;border-radius:5px;transition:background .1s}
+.bc:active{background:var(--bg3)}.bc.cur{color:var(--accent);font-weight:600}
+.bc-sep{color:var(--text3);font-size:12px;flex-shrink:0}
+
+/* TOOLBAR */
+.tbar{display:flex;align-items:center;gap:6px;padding:8px 12px;
+  border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.tbar::-webkit-scrollbar{display:none}
+.tbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+
+/* SEARCH */
+.sbar{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;display:none}
+.sbar.show{display:block}
+.sinput{display:flex;align-items:center;gap:8px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px}
+.sinput input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:13px}
+.sinput input::placeholder{color:var(--text3)}
+
+/* SEL BAR */
+.selbar{display:none;align-items:center;gap:8px;padding:9px 12px;
+  background:rgba(91,143,249,.1);border-bottom:1px solid rgba(91,143,249,.2);flex-shrink:0}
+.selbar.show{display:flex}
+.selcnt{font-size:13px;font-weight:700;color:var(--accent);flex:1}
+
+/* FILE LIST */
+.flist{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.flist::-webkit-scrollbar{width:3px}
+.flist::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.flist-inner{padding:4px 0;padding-bottom:calc(56px + var(--sab))}
+.flist-inner.grid-mode{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;padding:10px;padding-bottom:calc(70px + var(--sab))}
+
+/* LIST ROW */
+.frow{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
+  transition:background .1s;position:relative;-webkit-user-select:none;user-select:none}
+.frow:active{background:var(--bg3)}.frow.sel{background:rgba(91,143,249,.08)}
+.frow::after{content:'';position:absolute;bottom:0;left:52px;right:0;height:1px;background:var(--border);opacity:.4}
+.frow:last-child::after{display:none}
+.frow-check{width:20px;height:20px;border-radius:5px;flex-shrink:0;
+  border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-size:11px;background:var(--bg3)}
+.frow.sel .frow-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.frow-icon{font-size:24px;flex-shrink:0;width:34px;text-align:center}
+.frow-info{flex:1;min-width:0}
+.frow-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-family:var(--mono);font-size:11px;color:var(--text3)}
+.ext-tag{background:var(--bg3);padding:1px 5px;border-radius:4px;text-transform:uppercase;color:var(--text3)}
+.ext-tag.xml{background:rgba(251,191,36,.1);color:var(--yellow)}
+.ext-tag.png,.ext-tag.jpg,.ext-tag.jpeg,.ext-tag.webp,.ext-tag.gif{background:rgba(248,113,113,.1);color:var(--red)}
+.mod-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);flex-shrink:0}
+.frow-arr{color:var(--text3);font-size:15px;flex-shrink:0}
+
+/* GRID CARD */
+.gcell{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px;
+  border-radius:10px;border:1px solid var(--border);background:var(--bg2);
+  cursor:pointer;transition:all .15s;position:relative;-webkit-user-select:none;user-select:none;
+  min-height:110px;justify-content:center}
+.gcell:active{background:var(--bg3);transform:scale(.96)}
+.gcell.sel{border-color:var(--accent);background:rgba(91,143,249,.1)}
+.gcell-check{position:absolute;top:5px;left:5px;width:18px;height:18px;border-radius:4px;
+  border:2px solid var(--border2);background:var(--bg3);display:flex;align-items:center;
+  justify-content:center;font-size:10px;transition:all .15s}
+.gcell.sel .gcell-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.gcell-mod{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--yellow)}
+.gcell-thumb{width:64px;height:64px;border-radius:8px;object-fit:contain;
+  background:repeating-conic-gradient(var(--bg3) 0% 25%,var(--bg) 0% 50%) 0 0/14px 14px}
+.gcell-ic{font-size:36px;width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.gcell-name{font-size:10px;font-weight:500;text-align:center;word-break:break-all;
+  color:var(--text2);max-width:100%;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical}
+.gcell-ext{font-size:9px;font-family:var(--mono);padding:1px 4px;border-radius:3px;
+  background:var(--bg3);color:var(--text3);text-transform:uppercase}
+
+/* PWA INSTALL BANNER */
+.pwa-banner{display:none;align-items:center;gap:10px;padding:9px 14px;
+  background:rgba(91,143,249,.12);border-bottom:1px solid rgba(91,143,249,.25);flex-shrink:0}
+.pwa-banner.show{display:flex}
+.pwa-banner-txt{font-size:12px;color:var(--text2);flex:1}
+.pwa-banner-txt b{color:var(--accent)}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 24px;gap:10px;color:var(--text2);text-align:center}
+.empty-ic{font-size:44px;opacity:.25}.empty-tx{font-size:14px;opacity:.5}
+
+/* STATUSBAR */
+.stbar{display:flex;align-items:center;gap:8px;padding:6px 12px;
+  font-size:11px;font-family:var(--mono);color:var(--text3);
+  background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
+.st-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ok .st-dot{background:var(--green)}.mod .st-dot{background:var(--yellow)}
+.st-sep{color:var(--border2)}
+
+/* EDITOR */
+.ed-head{display:flex;align-items:center;gap:8px;padding:10px 12px;
+  border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+.ed-title{font-family:var(--mono);font-size:13px;font-weight:600;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-badge{font-size:10px;font-family:var(--mono);padding:2px 5px;border-radius:4px;flex-shrink:0}
+.eb-xml{background:rgba(251,191,36,.15);color:var(--yellow);border:1px solid rgba(251,191,36,.3)}
+.eb-img{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.eb-bin{background:rgba(91,143,249,.15);color:var(--accent);border:1px solid rgba(91,143,249,.3)}
+.ed-acts{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.ed-acts::-webkit-scrollbar{display:none}
+.ed-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.ed-ta{flex:1;background:var(--bg);border:none;outline:none;color:var(--text);
+  font-family:var(--mono);font-size:13px;line-height:1.6;padding:14px;
+  resize:none;tab-size:2;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ed-ta::-webkit-scrollbar{width:3px}
+.ed-ta::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ed-img{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
+  background:repeating-conic-gradient(var(--bg3) 0% 25%,var(--bg2) 0% 50%) 0 0/20px 20px}
+.ed-img img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:var(--shadow)}
+.bin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;color:var(--text2);text-align:center;padding:24px}
+.bin-ic{font-size:52px;opacity:.25}.bin-nm{font-family:var(--mono);font-size:14px}
+.bin-sz{font-family:var(--mono);font-size:12px;color:var(--text3)}
+
+/* MODAL (bottom sheet) */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;
+  display:none;align-items:flex-end;backdrop-filter:blur(3px)}
+.ov.show{display:flex}
+.modal{background:var(--bg3);border-radius:16px 16px 0 0;padding:18px 18px calc(18px + var(--sab));
+  width:100%;max-height:85vh;animation:sup .22s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.m-handle{width:38px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 14px}
+.m-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.m-body{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.m-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);
+  padding:11px 12px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;margin-top:6px}
+.m-input:focus{border-color:var(--accent)}
+.m-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+
+/* CTX SHEET */
+.ctx-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;backdrop-filter:blur(2px)}
+.ctx-ov.show{display:block}
+.ctx-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg3);border-radius:16px 16px 0 0;
+  padding:0 0 calc(10px + var(--sab));z-index:401;transform:translateY(100%);
+  transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.ctx-sheet.show{transform:translateY(0)}
+.ctx-hnd{width:38px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 6px}
+.ctx-info{display:flex;align-items:center;gap:10px;padding:10px 16px 12px;border-bottom:1px solid var(--border)}
+.ctx-info-ic{font-size:26px}
+.ctx-info-nm{font-family:var(--mono);font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-info-sz{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+.ctx-item{display:flex;align-items:center;gap:12px;padding:14px 18px;
+  font-size:15px;font-weight:500;cursor:pointer;transition:background .1s}
+.ctx-item:active{background:var(--bg4)}
+.ctx-item-ic{width:26px;text-align:center;font-size:17px}
+.ctx-item.danger{color:var(--red)}
+.ctx-sep{height:1px;background:var(--border);margin:4px 16px}
+
+/* TOAST */
+.toasts{position:fixed;bottom:calc(70px + var(--sab));left:12px;right:12px;z-index:9999;
+  display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);
+  padding:11px 14px;display:flex;align-items:center;gap:9px;font-size:13px;
+  box-shadow:var(--shadow);animation:tin .22s ease;pointer-events:all}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.toast.out{animation:tout .22s ease forwards}
+@keyframes tout{to{opacity:0;transform:translateY(8px)}}
+.ts{border-left:3px solid var(--green)}.te{border-left:3px solid var(--red)}
+.ti{border-left:3px solid var(--accent)}.tw{border-left:3px solid var(--yellow)}
+
+/* PROGRESS */
+.prog{position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;display:none}
+.prog.show{display:block}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .1s;border-radius:0 3px 3px 0}
+
+/* SPINNER */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+.loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text3);font-size:13px}
+
+/* COLOR EDITOR */
+input[type=color].col-inp{-webkit-appearance:none;appearance:none;padding:0;border:2px solid var(--border2)!important;border-radius:6px!important;cursor:pointer}
+input[type=color].col-inp::-webkit-color-swatch-wrapper{padding:2px}
+input[type=color].col-inp::-webkit-color-swatch{border:none;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"><div class="prog-f" id="progF" style="width:0%"></div></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-box">📦</div>
+    <span class="logo-text">MTZ Manager</span>
+    <span class="logo-tag">PWA</span>
+  </div>
+  <button class="btn btn-p btn-sm" onclick="document.getElementById('fi').click()">📂 Buka MTZ</button>
+</div>
+
+<!-- VIEW: HOME -->
+<div class="view active" id="vHome">
+  <div class="home">
+    <div class="home-icon">📦</div>
+    <div class="home-title">MTZ Manager</div>
+    <div class="home-sub">Bongkar, edit, dan repack file tema MIUI (.mtz). Support semua packages, edit XML, replace file, export.</div>
+    <div class="drop-box" id="dropBox" onclick="document.getElementById('fi').click()">
+      <div class="drop-icon">🗂️</div>
+      <div class="drop-txt">Pilih file .mtz</div>
+      <div class="drop-sub">Tap untuk browse file</div>
+    </div>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-banner" id="pwaBanner">
+  <span style="font-size:18px">📦</span>
+  <div class="pwa-banner-txt"><b>Install MTZ Manager</b> — tambahkan ke layar utama!</div>
+  <button class="btn btn-p btn-xs" onclick="pwaDoPWAInstall()">Install</button>
+  <button class="btn btn-g btn-xs" onclick="document.getElementById('pwaBanner').classList.remove('show')">✕</button>
+</div>
+
+<!-- VIEW: BROWSER -->
+<div class="view" id="vBrowser">
+  <div class="pkg-bar" id="pkgBar"><span style="color:var(--text3);font-size:12px;padding:4px 6px">⏳ Loading...</span></div>
+  <div class="nav-bar">
+    <button class="btn btn-g btn-ic btn-sm" id="btnUp" onclick="navUp()">⬆</button>
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <button class="btn btn-g btn-ic btn-sm" id="gridToggleBtn" onclick="toggleGridView()" title="Toggle Grid/List">⊞</button>
+    <button class="btn btn-g btn-ic btn-sm" onclick="toggleSearch()">🔍</button>
+  </div>
+  <div class="sbar" id="sbar">
+    <div class="sinput">
+      <span style="color:var(--text3)">🔍</span>
+      <input type="text" id="sInput" placeholder="Cari file..." oninput="doSearch()" autocomplete="off">
+      <button onclick="clearSearch()" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px">✕</button>
+    </div>
+  </div>
+  <div class="tbar">
+    <button class="btn btn-g btn-sm" onclick="showAddFile()">➕ File</button>
+    <button class="btn btn-g btn-sm" onclick="showAddFolder()">📁 Folder</button>
+    <div class="tbar-sep"></div>
+    <button class="btn btn-s btn-sm" onclick="showExportMenu()">💾 Export ▾</button>
+    <button class="btn btn-g btn-sm" onclick="document.getElementById('importXmlIn').click()">📥 Import XML</button>
+    <button class="btn btn-w btn-sm" onclick="showColorEditor()">🎨 Warna</button>
+    <div class="tbar-sep"></div>
+    <button class="btn btn-g btn-sm" onclick="showRenameToOriginal()" title="Rename export menggunakan nama file MTZ asli">🏷️ Rename</button>
+  </div>
+  <div class="selbar" id="selbar">
+    <span class="selcnt" id="selcnt">0 dipilih</span>
+    <button class="btn btn-g btn-sm" onclick="selectAll()">☑ Semua</button>
+    <button class="btn btn-d btn-sm" onclick="delSelected()">🗑 Hapus</button>
+    <button class="btn btn-g btn-sm" onclick="dlSelected()">⬇</button>
+    <button class="btn btn-g btn-sm" onclick="clearSel()">✕</button>
+  </div>
+  <div class="flist" id="flist"><div class="flist-inner" id="flistInner"></div></div>
+  <div class="stbar" id="stbar">
+    <div class="st-dot ok" id="stDot"></div>
+    <span id="stTxt">-</span>
+    <span class="st-sep">|</span>
+    <span id="stMod">Belum dimodifikasi</span>
+  </div>
+</div>
+
+<!-- VIEW: EDITOR -->
+<div class="view" id="vEditor">
+  <div class="ed-head">
+    <button class="btn btn-g btn-ic btn-sm" onclick="closeEditor()">←</button>
+    <span id="edIc" style="font-size:20px">📄</span>
+    <span class="ed-title" id="edTitle">-</span>
+    <span class="ed-badge" id="edBadge"></span>
+    <div class="mod-dot" id="edMod" style="display:none"></div>
+  </div>
+  <div class="ed-acts">
+    <button class="btn btn-p btn-sm" onclick="saveEd()">💾 Simpan</button>
+    <button class="btn btn-g btn-sm" id="fmtBtn" onclick="fmtXML()" style="display:none">✨ Format XML</button>
+    <button class="btn btn-g btn-sm" onclick="replaceFile()">🔄 Replace</button>
+    <button class="btn btn-g btn-sm" onclick="dlCurrent()">⬇ Download</button>
+    <button class="btn btn-d btn-sm" onclick="delCurrent()">🗑 Hapus</button>
+  </div>
+  <div class="ed-body" id="edBody">
+    <div class="loading"><div class="spin"></div>Loading...</div>
+  </div>
+</div>
+
+<!-- CTX SHEET -->
+<div class="ctx-ov" id="ctxOv" onclick="closeCtx()"></div>
+<div class="ctx-sheet" id="ctxSheet">
+  <div class="ctx-hnd"></div>
+  <div class="ctx-info">
+    <div class="ctx-info-ic" id="ctxIc">📄</div>
+    <div style="flex:1;min-width:0">
+      <div class="ctx-info-nm" id="ctxNm">-</div>
+      <div class="ctx-info-sz" id="ctxSz">-</div>
+    </div>
+  </div>
+  <div id="ctxActs"></div>
+</div>
+
+<!-- MODAL -->
+<div class="ov" id="ov">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <div class="m-title" id="mTitle">-</div>
+    <div class="m-body" id="mBody"></div>
+    <div class="m-foot" id="mFoot"></div>
+  </div>
+</div>
+
+<!-- EXPORT MENU SHEET -->
+<div class="ctx-ov" id="expOv" onclick="closeExpMenu()"></div>
+<div class="ctx-sheet" id="expSheet">
+  <div class="ctx-hnd"></div>
+  <div class="ctx-info" style="padding:10px 16px 10px">
+    <div class="ctx-info-ic">💾</div>
+    <div style="flex:1;min-width:0">
+      <div class="ctx-info-nm">Export Tema</div>
+      <div class="ctx-info-sz">Pilih mode export</div>
+    </div>
+  </div>
+  <div id="expActs">
+    <div class="ctx-item" onclick="closeExpMenu();exportMTZ()"><span class="ctx-item-ic">📦</span>Export MTZ (Full)</div>
+    <div class="ctx-item" onclick="closeExpMenu();exportXML()"><span class="ctx-item-ic">🗂️</span>Export XML (Full)</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="closeExpMenu();exportDarkMTZ()"><span class="ctx-item-ic">🌙</span>Export MTZ Dark Mode</div>
+    <div class="ctx-item" onclick="closeExpMenu();exportDarkXML()"><span class="ctx-item-ic">🌚</span>Export XML Dark Mode</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="closeExpMenu();exportLightMTZ()"><span class="ctx-item-ic">☀️</span>Export MTZ Light Mode</div>
+    <div class="ctx-item" onclick="closeExpMenu();exportLightXML()"><span class="ctx-item-ic">🌤️</span>Export XML Light Mode</div>
+  </div>
+</div>
+
+<!-- COLOR EDITOR SHEET -->
+<div class="ctx-ov" id="colOv" onclick="closeColorEditor()"></div>
+<div class="ctx-sheet" id="colSheet" style="max-height:90vh;overflow-y:auto">
+  <div class="ctx-hnd"></div>
+  <div class="ctx-info" style="padding:10px 16px 10px">
+    <div class="ctx-info-ic">🎨</div>
+    <div style="flex:1;min-width:0">
+      <div class="ctx-info-nm">Edit Warna Package</div>
+      <div class="ctx-info-sz" id="colPkgName">-</div>
+    </div>
+  </div>
+  <div id="colList" style="padding:0 14px 16px"></div>
+  <div style="padding:0 14px 10px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-p btn-sm" onclick="saveColors()">💾 Simpan Warna</button>
+    <button class="btn btn-g btn-sm" onclick="closeColorEditor()">Batal</button>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<!-- INPUTS -->
+<input type="file" id="fi" accept=".mtz,.zip" style="display:none" onchange="openMTZ(event)">
+<input type="file" id="replIn" style="display:none" onchange="onReplace(event)">
+<input type="file" id="addIn" multiple style="display:none" onchange="onAddFiles(event)">
+<input type="file" id="importXmlIn" accept=".zip" style="display:none" onchange="onImportXML(event)">
+
+<script>
+// ============ STATE ============
+let RZ=null,PKG={},PKG_DONE=false,CUR_PKG=null,CUR_PATH='';
+let MOD=new Set(),SEL=new Set(),ED_PATH=null,ED_BIN=false,CUR_ITEMS=[];
+let CTX_TGT=null,SEARCH_ON=false;
+let GRID_MODE=false; // Grid view toggle
+let ORIG_MTZ_NAME=''; // Original MTZ filename (without extension)
+let PWA_INSTALL_PROMPT=null; // PWA install prompt event
+
+// ============ UTILS ============
+const sz=b=>b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(2)+'MB';
+const xtn=n=>{const i=n.lastIndexOf('.');return i>=0?n.slice(i+1).toLowerCase():'';};
+const isTxt=n=>['xml','txt','json','md','html','css','js','ini','conf','properties','svg','csv','log','smali','gradle','yaml','yml','sh','toml'].includes(xtn(n));
+const isImg=n=>['png','jpg','jpeg','webp','gif','bmp','svg'].includes(xtn(n));
+const ic=(n,d)=>{
+  if(d)return'📁';
+  const e=xtn(n);
+  return{xml:'📄',png:'🖼️',jpg:'🖼️',jpeg:'🖼️',webp:'🖼️',gif:'🖼️',svg:'🎨',
+    ttf:'🔤',otf:'🔤',woff:'🔤',woff2:'🔤',json:'📋',txt:'📝',md:'📝',
+    html:'🌐',css:'🎨',js:'⚙️',zip:'🗜️',mtz:'📦',so:'⚙️',apk:'📱',
+    dex:'⚙️',mp3:'🎵',mp4:'🎬',wav:'🎵',ogg:'🎵',ini:'⚙️'}[e]||'📄';
+};
+
+function toast(msg,t='i',em=''){
+  const em2={s:'✅',e:'❌',i:'ℹ️',w:'⚠️'};
+  const el=document.createElement('div');
+  el.className=`toast t${t}`;
+  el.innerHTML=`<span>${em||em2[t]}</span><span style="flex:1;line-height:1.4">${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),250);},3000);
+}
+function prog(v,on=true){
+  const p=document.getElementById('prog'),f=document.getElementById('progF');
+  if(on){p.classList.add('show');f.style.width=v+'%';}
+  else{p.classList.remove('show');f.style.width='0%';}
+}
+function showV(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showM(title,bodyHTML,btns){
+  document.getElementById('mTitle').textContent=title;
+  document.getElementById('mBody').innerHTML=bodyHTML;
+  const f=document.getElementById('mFoot');f.innerHTML='';
+  btns.forEach(b=>{
+    const btn=document.createElement('button');
+    btn.className='btn '+(b.cls||'btn-g');btn.textContent=b.text;
+    btn.onclick=()=>{hideM();b.fn&&b.fn();};f.appendChild(btn);
+  });
+  document.getElementById('ov').classList.add('show');
+}
+function hideM(){document.getElementById('ov').classList.remove('show');}
+document.getElementById('ov').addEventListener('click',e=>{if(e.target===document.getElementById('ov'))hideM();});
+
+// ============ OPEN MTZ ============
+async function openMTZ(e){
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  // Store original filename (without extension)
+  ORIG_MTZ_NAME=file.name.replace(/\.(mtz|zip)$/i,'');
+  prog(5);toast('Membuka '+file.name+'...','i','📦');
+  try{
+    RZ=new JSZip();prog(20);
+    await RZ.loadAsync(file);prog(60);
+    PKG={};PKG_DONE=false;CUR_PKG=null;CUR_PATH='';MOD.clear();SEL.clear();
+    showV('vBrowser');
+    renderPkgBar();renderBrowser();
+    prog(100);toast('Berhasil! '+file.name,'s','📦');
+    setTimeout(()=>prog(0,false),600);
+    // detect packages async
+    detectPKG().then(()=>{PKG_DONE=true;renderPkgBar();const n=Object.keys(PKG).length;if(n)toast(n+' package terdeteksi','s','🗂️');});
+  }catch(err){prog(0,false);toast('Gagal: '+err.message,'e');console.error(err);}
+}
+
+async function detectPKG(){
+  PKG={};
+  const candidates=[];
+  RZ.forEach((path,entry)=>{
+    // Root-level files (no slash in path) → try as sub-zip (package)
+    if(!entry.dir && !path.includes('/')) candidates.push({path,entry});
+  });
+  await Promise.allSettled(candidates.map(async({path,entry})=>{
+    try{
+      const buf=await entry.async('arraybuffer');
+      const sub=new JSZip();
+      await sub.loadAsync(buf);
+      let cnt=0;sub.forEach(()=>cnt++);
+      if(cnt>0) PKG[path]=sub;
+    }catch(e){}
+  }));
+}
+
+function getZ(){return(CUR_PKG&&PKG[CUR_PKG])?PKG[CUR_PKG]:RZ;}
+
+// ============ PKG BAR ============
+function renderPkgBar(){
+  const bar=document.getElementById('pkgBar');bar.innerHTML='';
+  const mk=(label,key,active,cnt)=>{
+    const d=document.createElement('div');
+    d.className='pkg-tab'+(active?' on':'');
+    d.innerHTML=label+(cnt!=null?` <span class="pkg-cnt">${cnt}</span>`:'');
+    d.onclick=()=>{CUR_PKG=key;CUR_PATH='';SEL.clear();renderPkgBar();renderBrowser();};
+    bar.appendChild(d);
+  };
+  mk('📦 Root',null,CUR_PKG===null);
+  if(!PKG_DONE&&Object.keys(PKG).length===0){
+    const s=document.createElement('span');s.style.cssText='color:var(--text3);font-size:12px;padding:6px 8px;white-space:nowrap';
+    s.textContent='⏳ Detecting packages...';bar.appendChild(s);
+    return;
+  }
+  Object.keys(PKG).sort().forEach(name=>{
+    let cnt=0;PKG[name].forEach(()=>cnt++);
+    mk('📂 '+name,name,CUR_PKG===name,cnt);
+  });
+}
+
+// ============ BROWSER ============
+function renderBrowser(){
+  const z=getZ();if(!z)return;
+  CUR_ITEMS=getItems(z,CUR_PATH);
+  renderBC();renderList(CUR_ITEMS);updateSt();
+  const u=document.getElementById('btnUp');
+  u.disabled=!CUR_PATH;u.style.opacity=CUR_PATH?'1':'.3';
+}
+
+function getItems(z,path){
+  const items=[],seen=new Set();
+  z.forEach((fp,entry)=>{
+    if(path&&!fp.startsWith(path))return;
+    const rel=path?fp.slice(path.length):fp;
+    if(!rel)return;
+    const parts=rel.split('/').filter(Boolean);
+    if(!parts.length)return;
+    const name=parts[0];if(seen.has(name))return;seen.add(name);
+    if(parts.length>1||entry.dir){
+      items.push({name,path:path+name+'/',isDir:true,size:0,entry:null});
+    }else{
+      const size=entry._data?(entry._data.uncompressedSize||0):0;
+      items.push({name,path:path+name,isDir:false,size,entry});
+    }
+  });
+  items.sort((a,b)=>{if(a.isDir!==b.isDir)return a.isDir?-1:1;return a.name.localeCompare(b.name);});
+  return items;
+}
+
+function renderList(items){
+  const q=document.getElementById('sInput').value.toLowerCase();
+  const filtered=q?items.filter(i=>i.name.toLowerCase().includes(q)):items;
+  const inner=document.getElementById('flistInner');inner.innerHTML='';
+  if(!filtered.length){
+    inner.innerHTML=`<div class="empty"><div class="empty-ic">🔍</div><div class="empty-tx">${q?'Tidak ditemukan':'Folder kosong'}</div></div>`;return;
+  }
+  if(GRID_MODE){
+    inner.classList.add('grid-mode');
+    filtered.forEach(item=>{renderGridCell(item,inner);});
+  } else {
+    inner.classList.remove('grid-mode');
+    filtered.forEach(item=>{renderListRow(item,inner);});
+  }
+}
+
+function renderListRow(item,container){
+  const row=document.createElement('div');
+  const isSel=SEL.has(item.path);
+  row.className='frow'+(isSel?' sel':'');
+  const e=item.isDir?'':xtn(item.name);
+  const ec=['xml','png','jpg','jpeg','webp','gif'].includes(e)?e:'';
+  row.innerHTML=`
+    <div class="frow-check">${isSel?'✓':''}</div>
+    <div class="frow-icon">${ic(item.name,item.isDir)}</div>
+    <div class="frow-info">
+      <div class="frow-name">${item.name}</div>
+      <div class="frow-meta">
+        ${!item.isDir?`<span>${sz(item.size)}</span>`:''}
+        ${!item.isDir?`<span class="ext-tag ${ec}">${e||'?'}</span>`:'<span class="ext-tag" style="color:var(--accent)">DIR</span>'}
+        ${MOD.has(item.path)?'<span class="mod-dot"></span>':''}
+      </div>
+    </div>
+    ${item.isDir?'<div class="frow-arr">›</div>':''}
+  `;
+  // FIXED: checkbox tap — stop propagation so it doesn't bubble to row click
+  const chk=row.querySelector('.frow-check');
+  chk.addEventListener('click',ev=>{
+    ev.stopPropagation();
+    toggleSel(item);
+  });
+  // tap row
+  row.addEventListener('click',()=>{
+    if(SEL.size>0){toggleSel(item);}
+    else if(item.isDir){CUR_PATH=item.path;SEL.clear();renderBrowser();}
+    else openEditor(item.path);
+  });
+  // long press to start selection
+  let pt;
+  row.addEventListener('touchstart',()=>{pt=setTimeout(()=>{toggleSel(item);},480);},{passive:true});
+  row.addEventListener('touchend',()=>clearTimeout(pt),{passive:true});
+  row.addEventListener('touchmove',()=>clearTimeout(pt),{passive:true});
+  row.addEventListener('contextmenu',ev=>{ev.preventDefault();openCtx(item);});
+  container.appendChild(row);
+}
+
+async function renderGridCell(item,container){
+  const cell=document.createElement('div');
+  const isSel=SEL.has(item.path);
+  cell.className='gcell'+(isSel?' sel':'');
+  const e=item.isDir?'':xtn(item.name);
+  const isImage=isImg(item.name)&&!item.isDir;
+
+  // Build cell content
+  cell.innerHTML=`
+    <div class="gcell-check">${isSel?'✓':''}</div>
+    ${MOD.has(item.path)?'<div class="gcell-mod"></div>':''}
+    <div class="gcell-ic" id="gcic-${btoa(item.path).replace(/[^a-zA-Z0-9]/g,'')}">${ic(item.name,item.isDir)}</div>
+    <div class="gcell-name">${item.name}</div>
+    ${!item.isDir?`<div class="gcell-ext">${e||'?'}</div>`:''}
+  `;
+
+  // Load thumbnail for images
+  if(isImage){
+    const icEl=cell.querySelector('.gcell-ic');
+    try{
+      const z=getZ(),entry=z.file(item.path);
+      if(entry){
+        entry.async('uint8array').then(buf=>{
+          const mime=e==='svg'?'image/svg+xml':'image/'+e;
+          const blob=new Blob([buf],{type:mime});
+          const url=URL.createObjectURL(blob);
+          const img=document.createElement('img');
+          img.className='gcell-thumb';img.src=url;img.alt=item.name;
+          icEl.replaceWith(img);
+        }).catch(()=>{});
+      }
+    }catch(err){}
+  }
+
+  // checkbox click
+  const chk=cell.querySelector('.gcell-check');
+  chk.addEventListener('click',ev=>{ev.stopPropagation();toggleSel(item);});
+
+  // cell click
+  cell.addEventListener('click',()=>{
+    if(SEL.size>0){toggleSel(item);}
+    else if(item.isDir){CUR_PATH=item.path;SEL.clear();renderBrowser();}
+    else openEditor(item.path);
+  });
+  // long press
+  let pt;
+  cell.addEventListener('touchstart',()=>{pt=setTimeout(()=>toggleSel(item),480);},{passive:true});
+  cell.addEventListener('touchend',()=>clearTimeout(pt),{passive:true});
+  cell.addEventListener('touchmove',()=>clearTimeout(pt),{passive:true});
+  cell.addEventListener('contextmenu',ev=>{ev.preventDefault();openCtx(item);});
+  container.appendChild(cell);
+}
+
+// ============ GRID TOGGLE ============
+function toggleGridView(){
+  GRID_MODE=!GRID_MODE;
+  const btn=document.getElementById('gridToggleBtn');
+  btn.textContent=GRID_MODE?'☰':'⊞';
+  btn.title=GRID_MODE?'Tampilan List':'Tampilan Grid';
+  renderList(CUR_ITEMS);
+}
+
+function renderBC(){
+  const bc=document.getElementById('breadcrumb');bc.innerHTML='';
+  const prefix=CUR_PKG||'root';
+  const mk=(text,path)=>{
+    const s=document.createElement('span');s.className='bc';s.textContent=text;
+    s.onclick=()=>{CUR_PATH=path;SEL.clear();renderBrowser();};return s;
+  };
+  bc.appendChild(mk('🏠 '+prefix,''));
+  const parts=CUR_PATH.split('/').filter(Boolean);
+  parts.forEach((p,i)=>{
+    const sep=document.createElement('span');sep.className='bc-sep';sep.textContent='›';bc.appendChild(sep);
+    const path=parts.slice(0,i+1).join('/')+'/';
+    const sp=mk(p,path);if(i===parts.length-1)sp.classList.add('cur');bc.appendChild(sp);
+  });
+}
+
+function updateSt(){
+  const dirs=CUR_ITEMS.filter(i=>i.isDir).length,files=CUR_ITEMS.filter(i=>!i.isDir).length;
+  document.getElementById('stTxt').textContent=`${dirs} folder, ${files} file`;
+  const m=MOD.size;
+  document.getElementById('stMod').textContent=m?m+' dimodifikasi':'Belum dimodifikasi';
+  const dot=document.getElementById('stDot');dot.className='st-dot '+(m?'mod':'ok');
+}
+
+function navUp(){
+  if(!CUR_PATH)return;
+  const parts=CUR_PATH.replace(/\/$/,'').split('/');parts.pop();
+  CUR_PATH=parts.length?parts.join('/')+'/':'';SEL.clear();renderBrowser();
+}
+
+// ============ SEARCH ============
+function toggleSearch(){
+  SEARCH_ON=!SEARCH_ON;
+  const sb=document.getElementById('sbar');sb.classList.toggle('show',SEARCH_ON);
+  if(SEARCH_ON)document.getElementById('sInput').focus();
+  else{document.getElementById('sInput').value='';renderBrowser();}
+}
+function doSearch(){renderList(CUR_ITEMS);}
+function clearSearch(){document.getElementById('sInput').value='';document.getElementById('sbar').classList.remove('show');SEARCH_ON=false;renderBrowser();}
+
+// ============ SELECTION ============
+function toggleSel(item){
+  if(SEL.has(item.path))SEL.delete(item.path);
+  else SEL.add(item.path);
+  updateSelBar();
+  renderList(CUR_ITEMS);
+}
+function clearSel(){SEL.clear();updateSelBar();renderList(CUR_ITEMS);}
+function updateSelBar(){
+  const n=SEL.size,bar=document.getElementById('selbar');
+  if(n>0){bar.classList.add('show');document.getElementById('selcnt').textContent=n+' dipilih';}
+  else bar.classList.remove('show');
+}
+function delSelected(){
+  const paths=[...SEL];
+  showM('Hapus '+paths.length+' item',`Hapus <strong style="color:var(--red)">${paths.length} item</strong>?`,
+    [{text:'Batal',cls:'btn-g'},{text:'🗑 Hapus',cls:'btn-d',fn:()=>{
+      const z=getZ();paths.forEach(p=>{z.remove(p);MOD.delete(p);});
+      SEL.clear();updateSelBar();toast(paths.length+' item dihapus','w');renderBrowser();
+    }}]);
+}
+async function dlSelected(){for(const p of SEL)await dlFile(p);clearSel();}
+
+// ============ CTX SHEET ============
+function openCtx(item){
+  CTX_TGT=item;
+  document.getElementById('ctxIc').textContent=ic(item.name,item.isDir);
+  document.getElementById('ctxNm').textContent=item.name;
+  document.getElementById('ctxSz').textContent=item.isDir?'Folder':sz(item.size);
+  const acts=document.getElementById('ctxActs');acts.innerHTML='';
+  const add=(lbl,em,fn,cls='')=>{
+    const d=document.createElement('div');d.className='ctx-item'+(cls?' '+cls:'');
+    d.innerHTML=`<span class="ctx-item-ic">${em}</span>${lbl}`;
+    d.onclick=()=>{closeCtx();fn();};acts.appendChild(d);
+  };
+  const sep=()=>{const s=document.createElement('div');s.className='ctx-sep';acts.appendChild(s);};
+  if(item.isDir){add('Buka','📂',()=>{CUR_PATH=item.path;renderBrowser();});}
+  else{
+    add('Edit / Lihat','✏️',()=>openEditor(item.path));
+    add('Download','⬇️',()=>dlFile(item.path));
+    add('Replace File','🔄',()=>replaceFileAt(item.path));
+  }
+  sep();
+  add('Rename','📝',()=>renameD(item));
+  add('Hapus','🗑️',()=>delItemD(item.path,item.isDir),'danger');
+  document.getElementById('ctxOv').classList.add('show');
+  document.getElementById('ctxSheet').classList.add('show');
+}
+function closeCtx(){document.getElementById('ctxOv').classList.remove('show');document.getElementById('ctxSheet').classList.remove('show');}
+
+// ============ EDITOR ============
+async function openEditor(path){
+  ED_PATH=path;ED_BIN=false;
+  const name=path.split('/').pop(),e=xtn(name);
+  document.getElementById('edTitle').textContent=name;
+  document.getElementById('edIc').textContent=ic(name,false);
+  document.getElementById('edMod').style.display=MOD.has(path)?'':'none';
+  const badge=document.getElementById('edBadge');
+  if(e==='xml'){badge.className='ed-badge eb-xml';badge.textContent='XML';}
+  else if(isImg(name)){badge.className='ed-badge eb-img';badge.textContent=e.toUpperCase();}
+  else{badge.className='ed-badge eb-bin';badge.textContent=e.toUpperCase()||'BIN';}
+  document.getElementById('fmtBtn').style.display=e==='xml'?'':'none';
+  showV('vEditor');
+  const body=document.getElementById('edBody');
+  body.innerHTML='<div class="loading"><div class="spin"></div>Loading...</div>';
+  const z=getZ(),entry=z.file(path);
+  if(!entry){toast('File tidak ditemukan','e');return;}
+  if(isImg(name)){
+    ED_BIN=true;
+    const buf=await entry.async('uint8array');
+    const blob=new Blob([buf],{type:'image/'+e});
+    const url=URL.createObjectURL(blob);
+    body.innerHTML=`<div class="ed-img"><img src="${url}" alt="${name}"></div>`;
+  }else if(isTxt(name)){
+    const text=await entry.async('string');
+    body.innerHTML=`<textarea class="ed-ta" id="edTa" spellcheck="false"></textarea>`;
+    document.getElementById('edTa').value=text;
+    document.getElementById('edTa').addEventListener('input',()=>document.getElementById('edMod').style.display='');
+  }else{
+    ED_BIN=true;
+    const data=await entry.async('uint8array');
+    body.innerHTML=`<div class="bin-wrap">
+      <div class="bin-ic">${ic(name,false)}</div>
+      <div class="bin-nm">${name}</div>
+      <div class="bin-sz">${sz(data.length)} • Binary file</div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-s" onclick="dlCurrent()">⬇ Download</button>
+        <button class="btn btn-g" onclick="replaceFile()">🔄 Replace</button>
+      </div>
+    </div>`;
+  }
+}
+
+function closeEditor(){showV('vBrowser');renderBrowser();}
+function saveEd(){
+  if(!ED_PATH||ED_BIN)return;
+  const ta=document.getElementById('edTa');if(!ta)return;
+  getZ().file(ED_PATH,ta.value);MOD.add(ED_PATH);
+  document.getElementById('edMod').style.display='';
+  toast('Disimpan: '+ED_PATH.split('/').pop(),'s');
+}
+function fmtXML(){
+  const ta=document.getElementById('edTa');if(!ta)return;
+  try{
+    const p=new DOMParser(),doc=p.parseFromString(ta.value,'text/xml');
+    if(doc.querySelector('parsererror,parseerror')){toast('XML tidak valid','e');return;}
+    ta.value=prettyXML(ta.value);toast('XML diformat','s','✨');
+  }catch(e){toast('Error: '+e.message,'e');}
+}
+function prettyXML(xml){
+  let r='',ind=0,tab='  ';
+  xml.replace(/</g,'\n<').split('\n').forEach(line=>{
+    line=line.trim();if(!line)return;
+    if(line.match(/^<\/\w/))ind=Math.max(0,ind-1);
+    r+=tab.repeat(ind)+line+'\n';
+    if(line.match(/^<[^!?/][^>]*[^/]>/)&&!line.match(/<.*>.*<\/.*>/))ind++;
+  });
+  return r.trim();
+}
+function replaceFile(){replaceFileAt(ED_PATH);}
+function replaceFileAt(path){window._rTgt=path;document.getElementById('replIn').click();}
+async function onReplace(e){
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  const tgt=window._rTgt;if(!tgt)return;
+  const data=await file.arrayBuffer();
+  getZ().file(tgt,data);MOD.add(tgt);
+  toast('Replaced: '+tgt.split('/').pop(),'s','🔄');
+  if(ED_PATH===tgt)openEditor(tgt);
+  updateSt();
+}
+async function dlCurrent(){if(ED_PATH)await dlFile(ED_PATH);}
+function delCurrent(){if(ED_PATH)delItemD(ED_PATH,false,closeEditor);}
+
+// ============ FILE OPS ============
+async function dlFile(path){
+  const z=getZ(),entry=z.file(path);if(!entry)return;
+  const blob=await entry.async('blob'),name=path.split('/').pop();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  toast('Download: '+name,'i');
+}
+function delItemD(path,isDir,cb){
+  const name=path.replace(/\/$/,'').split('/').pop();
+  showM('Hapus '+(isDir?'Folder':'File'),`Hapus <strong style="color:var(--red)">${name}</strong>?`,
+    [{text:'Batal',cls:'btn-g'},{text:'🗑 Hapus',cls:'btn-d',fn:()=>{
+      const z=getZ();
+      if(isDir){z.forEach(p=>{if(p.startsWith(path))z.remove(p);});}else z.remove(path);
+      MOD.delete(path);toast('Dihapus: '+name,'w','🗑');renderBrowser();cb&&cb();
+    }}]);
+}
+function renameD(item){
+  showM('Rename',`Nama baru:<input class="m-input" id="rnI" value="${item.name}">`,
+    [{text:'Batal',cls:'btn-g'},{text:'✓ Rename',cls:'btn-p',fn:()=>{
+      const nn=document.getElementById('rnI')?.value?.trim();
+      if(!nn||nn===item.name)return;
+      const z=getZ(),dir=item.path.slice(0,item.path.lastIndexOf(item.name));
+      const np=dir+nn+(item.isDir?'/':'');
+      if(!item.isDir){
+        item.entry.async('uint8array').then(d=>{
+          z.file(np,d);z.remove(item.path);MOD.delete(item.path);MOD.add(np);
+          renderBrowser();toast('Renamed → '+nn,'s');
+        });
+      } else {
+        const toRn=[];z.forEach((p,e)=>{if(p.startsWith(item.path))toRn.push({p,e});});
+        Promise.all(toRn.map(async({p,e})=>{
+          if(!e.dir){const d=await e.async('uint8array');z.file(np+p.slice(item.path.length),d);z.remove(p);}
+        })).then(()=>{renderBrowser();toast('Renamed → '+nn,'s');});
+      }
+    }}]);
+  setTimeout(()=>{const i=document.getElementById('rnI');if(i){i.focus();i.select();}},150);
+}
+function showAddFile(){document.getElementById('addIn').click();}
+async function onAddFiles(e){
+  const files=[...e.target.files];if(!files.length)return;e.target.value='';
+  const z=getZ();
+  for(const f of files){const p=CUR_PATH+f.name,d=await f.arrayBuffer();z.file(p,d);MOD.add(p);}
+  toast(files.length+' file ditambahkan','s','➕');renderBrowser();
+}
+function showAddFolder(){
+  showM('Folder Baru','Nama folder:<input class="m-input" id="fnI" placeholder="nama-folder">',
+    [{text:'Batal',cls:'btn-g'},{text:'📁 Buat',cls:'btn-p',fn:()=>{
+      const n=document.getElementById('fnI')?.value?.trim();if(!n)return;
+      getZ().folder(CUR_PATH+n);toast('Folder dibuat: '+n,'s');renderBrowser();
+    }}]);
+  setTimeout(()=>document.getElementById('fnI')?.focus(),150);
+}
+
+// ============ EXPORT MENU ============
+function showExportMenu(){
+  document.getElementById('expOv').classList.add('show');
+  document.getElementById('expSheet').classList.add('show');
+}
+function closeExpMenu(){
+  document.getElementById('expOv').classList.remove('show');
+  document.getElementById('expSheet').classList.remove('show');
+}
+
+// ============ EXPORT HELPERS ============
+// isNight(path): true jika path berada di dalam folder "nightmode"
+function isNight(path){return path.replace(/\\/g,'/').split('/').includes('nightmode');}
+
+// collectFilesFromZip: collect files from a zip filtered by fn(path)
+async function collectFilesFromZip(z, filterFn){
+  const items=[];
+  z.forEach((path,entry)=>{if(!entry.dir&&filterFn(path))items.push({path,entry});});
+  const out=[];
+  for(const{path,entry}of items){const data=await entry.async('uint8array');out.push({path,data});}
+  return out;
+}
+
+// buildMTZ: repack MTZ with per-package file filter
+// pkgFileFilter(pkgName, filePath) => bool
+async function buildMTZ(pkgFileFilter, outName){
+  if(!RZ)return;
+  prog(5);toast('Menyiapkan export '+outName+'...','i');
+  try{
+    const newRZ=new JSZip();
+    // Root non-package files
+    const rootFiles=[];
+    RZ.forEach((path,entry)=>{
+      if(!entry.dir&&!path.includes('/')&&!PKG[path])rootFiles.push({path,entry});
+    });
+    for(const{path,entry}of rootFiles){
+      const data=await entry.async('uint8array');newRZ.file(path,data);
+    }
+    prog(20);
+    const pkgNames=Object.keys(PKG);
+    for(let i=0;i<pkgNames.length;i++){
+      const name=pkgNames[i];
+      const sub=PKG[name];
+      const newSub=new JSZip();
+      const files=await collectFilesFromZip(sub,(p)=>pkgFileFilter(name,p));
+      for(const{path,data}of files)newSub.file(path,data);
+      let cnt=0;newSub.forEach(()=>cnt++);
+      if(cnt>0){
+        const d=await newSub.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+        newRZ.file(name,d);
+      }
+      prog(20+Math.round(((i+1)/pkgNames.length)*52));
+    }
+    prog(74);
+    const blob=await newRZ.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},m=>prog(74+Math.round(m.percent*.26)));
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=outName;a.click();
+    prog(100);toast('Export '+outName+' berhasil!','s','💾');setTimeout(()=>prog(0,false),700);
+  }catch(e){prog(0,false);toast('Gagal: '+e.message,'e');console.error(e);}
+}
+
+// buildXMLZip: export xml files only, filtered by pkgFileFilter(pkgName, filePath)
+async function buildXMLZip(pkgFileFilter, outName){
+  if(!RZ)return;
+  prog(5);toast('Mengumpulkan file XML...','i','🗂️');
+  try{
+    const xz=new JSZip();let total=0;
+    const rootXml=[];
+    RZ.forEach((path,entry)=>{
+      if(!entry.dir&&!path.includes('/')&&!PKG[path]&&xtn(path)==='xml')rootXml.push({path,entry});
+    });
+    for(const{path,entry}of rootXml){const data=await entry.async('uint8array');xz.file(path,data);total++;}
+    prog(20);
+    const pkgNames=Object.keys(PKG);
+    for(let i=0;i<pkgNames.length;i++){
+      const name=pkgNames[i];
+      const files=await collectFilesFromZip(PKG[name],(p)=>xtn(p)==='xml'&&pkgFileFilter(name,p));
+      for(const{path,data}of files){xz.file(name+'/'+path,data);total++;}
+      prog(20+Math.round(((i+1)/pkgNames.length)*65));
+    }
+    if(total===0){prog(0,false);toast('Tidak ada file XML ditemukan','w');return;}
+    prog(87);
+    const blob=await xz.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},m=>prog(87+Math.round(m.percent*.13)));
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=outName;a.click();
+    prog(100);toast(`${total} file XML diexport!`,'s','🗂️');setTimeout(()=>prog(0,false),700);
+  }catch(e){prog(0,false);toast('Gagal: '+e.message,'e');console.error(e);}
+}
+
+// ============ EXPORT FUNCTIONS ============
+// FULL MTZ — sama seperti sebelumnya
+async function exportMTZ(){
+  if(!RZ)return;prog(5);toast('Menyiapkan export...','i');
+  const outName=(ORIG_MTZ_NAME?ORIG_MTZ_NAME+'_modified':'modified_theme')+'.mtz';
+  try{
+    let i=0,tot=Object.keys(PKG).length;
+    for(const[name,sub]of Object.entries(PKG)){
+      prog(5+Math.round((i/Math.max(tot,1))*45));
+      const d=await sub.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+      RZ.file(name,d);i++;
+    }
+    prog(55);
+    const blob=await RZ.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},m=>prog(55+Math.round(m.percent*.45)));
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=outName;a.click();
+    prog(100);toast('Export MTZ berhasil! → '+outName,'s','💾');setTimeout(()=>prog(0,false),700);
+  }catch(e){prog(0,false);toast('Gagal: '+e.message,'e');}
+}
+
+// ============ RENAME TO ORIGINAL ============
+function showRenameToOriginal(){
+  if(!RZ){toast('Buka file MTZ dulu','w');return;}
+  const base=ORIG_MTZ_NAME||'tema';
+  showM('Rename Export File',
+    `<div style="font-size:13px;color:var(--text2);margin-bottom:10px">
+      Nama dasar untuk semua file export (berdasarkan MTZ asli):
+    </div>
+    <input class="m-input" id="rnMtzI" value="${base}" placeholder="nama-tema">
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">
+      Output: <code style="color:var(--accent)">${base}_modified.mtz</code>,
+      <code style="color:var(--accent)">${base}_dark.mtz</code>, dll.
+    </div>`,
+    [{text:'Batal',cls:'btn-g'},{text:'✓ Simpan',cls:'btn-p',fn:()=>{
+      const val=document.getElementById('rnMtzI')?.value?.trim();
+      if(!val)return;
+      ORIG_MTZ_NAME=val;
+      toast('Nama dasar diset: '+val,'s','🏷️');
+    }}]
+  );
+  setTimeout(()=>{const i=document.getElementById('rnMtzI');if(i){i.focus();i.select();}},150);
+}
+// ============ IMPORT XML ZIP ============
+async function exportDarkMTZ(){
+  const base=ORIG_MTZ_NAME||'theme';
+  await buildMTZ(()=>true,base+'_dark.mtz');
+}
+// LIGHT MODE MTZ: semua file KECUALI nightmode
+async function exportLightMTZ(){
+  const base=ORIG_MTZ_NAME||'theme';
+  await buildMTZ((_pkg,p)=>!isNight(p),base+'_light.mtz');
+}
+// DARK XML: hanya xml di dalam nightmode
+async function exportDarkXML(){
+  const base=ORIG_MTZ_NAME||'xml';
+  await buildXMLZip((_pkg,p)=>isNight(p),base+'_dark.zip');
+}
+// LIGHT XML: xml di luar nightmode
+async function exportLightXML(){
+  const base=ORIG_MTZ_NAME||'xml';
+  await buildXMLZip((_pkg,p)=>!isNight(p),base+'_light.zip');
+}
+// FULL XML
+async function exportXML(){
+  const base=ORIG_MTZ_NAME||'xml';
+  await buildXMLZip(()=>true,base+'_full.zip');
+}
+
+// ============ IMPORT XML ZIP ============
+// Struktur ZIP yang diharapkan:
+//   pkgName/path/to/file.xml   → masuk ke PKG[pkgName]
+//   path/to/file.xml           → masuk ke RZ root (jika pkgName tidak dikenal)
+async function onImportXML(e){
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  if(!RZ){toast('Buka file MTZ dulu','w');return;}
+  prog(5);toast('Membaca ZIP import...','i','📥');
+  try{
+    const impZ=new JSZip();
+    await impZ.loadAsync(file);
+    prog(25);
+
+    // Kumpulkan semua file xml dari zip import
+    const entries=[];
+    impZ.forEach((path,entry)=>{if(!entry.dir&&xtn(path)==='xml')entries.push({path,entry});});
+
+    if(!entries.length){prog(0,false);toast('Tidak ada XML di dalam ZIP','w');return;}
+
+    let matched=0,unmatched=0,skipped=0;
+    const preview=[]; // {dest, srcPath, pkgName}
+
+    for(const{path}of entries){
+      const parts=path.split('/');
+      // Cek apakah bagian pertama adalah nama package yang dikenal
+      const maybePkg=parts[0];
+      if(PKG[maybePkg]){
+        // path dalam package = sisa setelah pkgName/
+        const innerPath=parts.slice(1).join('/');
+        if(!innerPath){skipped++;continue;}
+        preview.push({srcPath:path,pkgName:maybePkg,innerPath,dest:'📂 '+maybePkg+' → '+innerPath});
+        matched++;
+      } else {
+        // Tidak cocok dengan package manapun → coba masukkan ke root RZ
+        preview.push({srcPath:path,pkgName:null,innerPath:path,dest:'📦 Root → '+path});
+        unmatched++;
+      }
+    }
+
+    prog(50);
+
+    // Tampilkan preview konfirmasi
+    const previewHTML=preview.slice(0,12).map(p=>
+      `<div style="font-family:var(--mono);font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        ${p.dest}
+      </div>`
+    ).join('')+(preview.length>12?`<div style="font-size:11px;color:var(--text3);padding:4px 0">...dan ${preview.length-12} file lainnya</div>`:'');
+
+    showM('Import XML ZIP',
+      `<div style="margin-bottom:10px;font-size:13px">
+        Ditemukan <strong style="color:var(--green)">${matched}</strong> file cocok ke package,
+        <strong style="color:var(--yellow)">${unmatched}</strong> ke root${skipped?`, <strong style="color:var(--text3)">${skipped} dilewati</strong>`:''}
+      </div>
+      <div style="max-height:200px;overflow-y:auto;background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:4px">${previewHTML}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:8px">File yang path-nya cocok akan di-replace. File lain tidak tersentuh.</div>`,
+      [{text:'Batal',cls:'btn-g'},{text:'📥 Import',cls:'btn-p',fn:async()=>{
+        prog(55);
+        let done=0;
+        for(const item of preview){
+          const data=await impZ.file(item.srcPath).async('uint8array');
+          if(item.pkgName){
+            PKG[item.pkgName].file(item.innerPath,data);
+            MOD.add(item.pkgName+'/'+item.innerPath);
+          } else {
+            RZ.file(item.innerPath,data);
+            MOD.add(item.innerPath);
+          }
+          done++;
+          prog(55+Math.round((done/preview.length)*45));
+        }
+        prog(100);
+        toast(`${done} file XML diimport ke MTZ`,'s','📥');
+        setTimeout(()=>prog(0,false),700);
+        renderBrowser();
+      }}]
+    );
+    prog(0,false);
+  }catch(err){prog(0,false);toast('Gagal import: '+err.message,'e');console.error(err);}
+}
+
+// ============ COLOR EDITOR ============
+// Scan XML files di package aktif (atau root) untuk atribut/nilai warna (#RRGGBB, #AARRGGBB)
+const COLOR_RE=/#([0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/g;
+let COL_MAP={}; // {originalColor: {newColor, locations:[{path,attr}]}}
+let COL_FILES={}; // {path: content_string}
+
+// COL_FILES: { key: {zip, pkgName, path, text} }
+async function showColorEditor(){
+  if(!RZ){toast('Buka file MTZ dulu','w');return;}
+  document.getElementById('colPkgName').textContent='Loading...';
+  document.getElementById('colList').innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px 0">⏳ Scanning warna...</div>';
+  document.getElementById('colOv').classList.add('show');
+  document.getElementById('colSheet').classList.add('show');
+
+  COL_MAP={};COL_FILES={};
+
+  // Ekstrak nama-nama atribut XML yang mengandung warna tertentu
+  function extractColorNames(text){
+    // names: Map<hexUPPER, Set<namaAtribut>>
+    const names=new Map();
+    const add=(hex,name)=>{
+      const h=hex.toUpperCase();
+      if(!names.has(h))names.set(h,new Set());
+      names.get(h).add(name);
+    };
+    // <color name="xxx">#HEX</color>
+    // <item name="xxx">#HEX</item>
+    const tagRe=/<(?:color|item)[^>]*\bname=["']([^"']+)["'][^>]*>\s*(#[0-9A-Fa-f]{3,8})\s*<\/(?:color|item)>/g;
+    let m;
+    while((m=tagRe.exec(text))!==null) add(m[2],m[1]);
+    // attr="value" seperti android:textColor="#HEX" atau textColor="#HEX"
+    const attrRe=/\b([\w:]+)\s*=\s*["'](#[0-9A-Fa-f]{3,8})["']/g;
+    while((m=attrRe.exec(text))!==null){
+      // Hapus prefix namespace (android:, app:, dll)
+      const name=m[1].replace(/^[^:]+:/,'');
+      add(m[2],name);
+    }
+    return names;
+  }
+
+  // Scan xml files dari satu zip, simpan dengan sumber zip-nya
+  async function scanZip(z, pkgName){
+    const xmlEntries=[];
+    z.forEach((path,entry)=>{if(!entry.dir&&xtn(path)==='xml')xmlEntries.push({path,entry});});
+    for(const{path,entry}of xmlEntries){
+      const text=await entry.async('string');
+      const key=pkgName+'::'+path;
+      COL_FILES[key]={zip:z, pkgName, path, text};
+      const nameMap=extractColorNames(text);
+      COLOR_RE.lastIndex=0; let m;
+      while((m=COLOR_RE.exec(text))!==null){
+        const raw=m[0].toUpperCase();
+        const mapKey=pkgName+'::'+raw; // KEY PER PACKAGE
+        if(!COL_MAP[mapKey])COL_MAP[mapKey]={newColor:raw,origColor:raw,pkgName,count:0,fileKeys:new Set(),names:new Set()};
+        COL_MAP[mapKey].count++;COL_MAP[mapKey].fileKeys.add(key);
+        if(nameMap.has(raw))nameMap.get(raw).forEach(n=>COL_MAP[mapKey].names.add(n));
+      }
+    }
+  }
+
+  // Scan root RZ (bukan package)
+  const rootXmlEntries=[];
+  RZ.forEach((path,entry)=>{
+    if(!entry.dir&&xtn(path)==='xml'&&!PKG[path.split('/')[0]])rootXmlEntries.push({path,entry});
+  });
+  for(const{path,entry}of rootXmlEntries){
+    const text=await entry.async('string');
+    const key='::'+path;
+    COL_FILES[key]={zip:RZ,pkgName:'',path,text};
+    const nameMap=extractColorNames(text);
+    COLOR_RE.lastIndex=0;let m;
+    while((m=COLOR_RE.exec(text))!==null){
+      const raw=m[0].toUpperCase();
+      const mapKey='::'+raw;
+      if(!COL_MAP[mapKey])COL_MAP[mapKey]={newColor:raw,origColor:raw,pkgName:'',count:0,fileKeys:new Set(),names:new Set()};
+      COL_MAP[mapKey].count++;COL_MAP[mapKey].fileKeys.add(key);
+      if(nameMap.has(raw))nameMap.get(raw).forEach(n=>COL_MAP[mapKey].names.add(n));
+    }
+  }
+  for(const[pkgName,sub]of Object.entries(PKG)) await scanZip(sub, pkgName);
+
+  const allKeys=Object.keys(COL_MAP);
+  if(!allKeys.length){
+    document.getElementById('colList').innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px 0">Tidak ada warna ditemukan di XML.</div>';
+    document.getElementById('colPkgName').textContent='Tidak ada warna';
+    return;
+  }
+
+  // Group by package: { pkgName: [mapKey, ...] }
+  const pkgGroups={};
+  for(const[mapKey,info]of Object.entries(COL_MAP)){
+    const pkg=info.pkgName;
+    if(!pkgGroups[pkg])pkgGroups[pkg]=[];
+    pkgGroups[pkg].push(mapKey);
+  }
+
+  const totalFiles=Object.keys(COL_FILES).length;
+  const nightCount=Object.values(COL_FILES).filter(f=>isNight(f.path)).length;
+  const totalColors=new Set(Object.values(COL_MAP).map(i=>i.origColor)).size;
+  document.getElementById('colPkgName').textContent=
+    `${totalColors} warna · ${totalFiles} file XML · ${nightCount} nightmode`;
+
+  // Build HTML grouped by package
+  let html=`<div style="font-size:11px;color:var(--text3);display:flex;gap:16px;padding:4px 0 10px;border-bottom:1px solid var(--border);margin-bottom:8px">
+    <span>🟦 <b style="color:var(--text2)">Sebelum</b></span>
+    <span style="margin-left:auto">🎨 <b style="color:var(--text2)">Ganti → (per package)</b></span>
+  </div>`;
+
+  const sortedPkgs=Object.keys(pkgGroups).sort((a,b)=>{
+    if(!a)return-1;if(!b)return 1;return a.localeCompare(b);
+  });
+
+  sortedPkgs.forEach(pkgName=>{
+    const mapKeys=pkgGroups[pkgName].sort((a,b)=>COL_MAP[a].origColor.localeCompare(COL_MAP[b].origColor));
+    const pkgLabel=pkgName||'📦 Root';
+    const pkgFiles=Object.values(COL_FILES).filter(f=>f.pkgName===pkgName);
+    const pkgNight=pkgFiles.filter(f=>isNight(f.path)).length;
+    const nightTag=pkgNight?`<span style="font-size:10px;color:var(--accent);margin-left:6px">🌙 ${pkgNight} nightmode</span>`:'';
+
+    html+=`<div style="margin:10px 0 4px">
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg4);border-radius:8px;cursor:pointer"
+        onclick="togglePkgGroup(this)">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);flex:1">${pkgLabel}</span>
+        <span style="font-size:11px;color:var(--text3)">${mapKeys.length} warna${nightTag}</span>
+        <span class="pkg-arr" style="color:var(--text3);font-size:14px">⌄</span>
+      </div>
+      <div class="pkg-col-group">`;
+
+    mapKeys.forEach(mapKey=>{
+      const info=COL_MAP[mapKey];
+      const col=info.origColor;
+      const norm=normalizeHexColor(col);
+      const nightFiles=[...info.fileKeys].filter(k=>isNight(COL_FILES[k]?.path||'')).length;
+      const nightTag2=nightFiles?`<span style="font-size:10px;color:var(--accent)">🌙${nightFiles}</span>`:'';
+
+      // XML names per package — ambil names yang relevan dari file di package ini
+      const pkgNames=new Set();
+      for(const fk of info.fileKeys){
+        const f=COL_FILES[fk];if(!f)continue;
+        const nm=extractColorNames(f.text);
+        if(nm.has(col))nm.get(col).forEach(n=>pkgNames.add(n));
+      }
+      const nameList=[...pkgNames].slice(0,3);
+      const namesHTML=nameList.length
+        ? nameList.map(n=>`<span style="font-size:10px;background:rgba(91,143,249,.12);color:var(--accent);border:1px solid rgba(91,143,249,.2);border-radius:4px;padding:1px 5px;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block" title="${n}">${n}</span>`).join('')
+          +(pkgNames.size>3?`<span style="font-size:10px;color:var(--text3)">+${pkgNames.size-3}</span>`:'')
+        :`<span style="font-size:10px;color:var(--text3)">—</span>`;
+
+      // data-mapkey = pkgName::hexColor, uniquely identifies this color in this package
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="width:30px;height:30px;border-radius:6px;background:${norm};border:1px solid var(--border2);flex-shrink:0" title="${col}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">${col}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap">
+            ${namesHTML}${nightTag2}
+          </div>
+        </div>
+        <span style="color:var(--text3);font-size:14px">→</span>
+        <input type="color" class="col-inp" data-mapkey="${mapKey}" value="${norm}"
+          style="width:34px;height:34px;border:none;background:none;cursor:pointer;border-radius:6px;padding:1px;flex-shrink:0"
+          oninput="previewColor(this)">
+        <input type="text" class="col-hex" data-mapkey="${mapKey}" value="${col}"
+          style="width:100px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+          padding:6px 8px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;flex-shrink:0"
+          oninput="syncColorHex(this)" onfocus="this.select()">
+      </div>`;
+    });
+
+    html+='</div></div>';
+  });
+
+  document.getElementById('colList').innerHTML=html;
+}
+
+function togglePkgGroup(hdr){
+  const body=hdr.nextElementSibling;
+  const arr=hdr.querySelector('.pkg-arr');
+  const collapsed=body.style.display==='none';
+  body.style.display=collapsed?'block':'none';
+  arr.textContent=collapsed?'⌄':'›';
+}
+
+function normalizeHexColor(hex){
+  let h=hex.replace('#','');
+  if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  if(h.length===8)h=h.slice(2); // AARRGGBB → RRGGBB
+  return '#'+h.slice(0,6);
+}
+
+function previewColor(inp){
+  const hex=inp.value.toUpperCase();
+  const mk=inp.dataset.mapkey;
+  if(COL_MAP[mk])COL_MAP[mk].newColor=hex;
+  const row=inp.parentElement;
+  const sw=row.querySelector('div[title]');
+  if(sw)sw.style.background=normalizeHexColor(hex);
+  const tx=row.querySelector('.col-hex');
+  if(tx)tx.value=hex;
+}
+
+function syncColorHex(inp){
+  const val=inp.value.trim().toUpperCase();
+  const mk=inp.dataset.mapkey;
+  const m=val.match(/^#?([0-9A-F]{3}|[0-9A-F]{6}|[0-9A-F]{8})$/);
+  if(!m)return;
+  const full='#'+m[1];
+  if(COL_MAP[mk])COL_MAP[mk].newColor=full;
+  const row=inp.parentElement;
+  const ci=row.querySelector('.col-inp');
+  if(ci)ci.value=normalizeHexColor(full);
+  const sw=row.querySelector('div[title]');
+  if(sw)sw.style.background=normalizeHexColor(full);
+}
+
+async function saveColors(){
+  // reps per package: { pkgName: { origHex: newHex } }
+  const repsByPkg={};
+  for(const[mk,info]of Object.entries(COL_MAP)){
+    if(info.newColor&&info.newColor!==info.origColor){
+      const pkg=info.pkgName;
+      if(!repsByPkg[pkg])repsByPkg[pkg]={};
+      repsByPkg[pkg][info.origColor]=info.newColor;
+    }
+  }
+  if(!Object.keys(repsByPkg).length){toast('Tidak ada perubahan warna','w');closeColorEditor();return;}
+
+  let fileCount=0,colorCount=0;
+  for(const[key,{zip,pkgName,path,text}]of Object.entries(COL_FILES)){
+    const reps=repsByPkg[pkgName];
+    if(!reps)continue;
+    let updated=text;let didChange=false;
+    for(const[from,to]of Object.entries(reps)){
+      const re=new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+      const replaced=updated.replace(re,to);
+      if(replaced!==updated){updated=replaced;didChange=true;}
+    }
+    if(didChange){
+      zip.file(path,updated);
+      MOD.add(pkgName?pkgName+'/'+path:path);
+      fileCount++;
+    }
+  }
+  for(const reps of Object.values(repsByPkg))colorCount+=Object.keys(reps).length;
+  toast(`${colorCount} warna diubah di ${fileCount} file`,'s','🎨');
+  closeColorEditor();renderBrowser();
+}
+
+function closeColorEditor(){
+  document.getElementById('colOv').classList.remove('show');
+  document.getElementById('colSheet').classList.remove('show');
+}
+
+// ============ SWIPE BACK ============
+let txS=0;
+document.addEventListener('touchstart',e=>{txS=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-txS;
+  if(dx>70&&txS<36){
+    const v=document.getElementById('vEditor');
+    if(v.classList.contains('active'))closeEditor();
+  }
+},{passive:true});
+
+// ============ DRAG DROP ============
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{
+  e.preventDefault();
+  if(!e.dataTransfer.files.length)return;
+  if(RZ){
+    (async()=>{
+      const z=getZ();
+      for(const f of e.dataTransfer.files){const p=CUR_PATH+f.name,d=await f.arrayBuffer();z.file(p,d);MOD.add(p);}
+      toast(e.dataTransfer.files.length+' file ditambahkan','s','➕');renderBrowser();
+    })();
+  }else openMTZ({target:{files:e.dataTransfer.files,value:''}});
+});
+
+// ============ PWA ============
+(()=>{
+  // Manifest
+  const iconSvg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="96" fill="#0e1117"/>
+    <rect width="512" height="512" rx="96" fill="url(#g)"/>
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5b8ff9"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient></defs>
+    <text x="256" y="340" font-size="280" text-anchor="middle" font-family="Apple Color Emoji,Segoe UI Emoji">📦</text>
+  </svg>`;
+  const iconUrl='data:image/svg+xml,'+encodeURIComponent(iconSvg);
+  const m={
+    name:'MTZ Manager',short_name:'MTZ',display:'standalone',
+    background_color:'#0e1117',theme_color:'#0e1117',start_url:'.',
+    description:'Bongkar, edit, dan repack file tema MIUI (.mtz)',
+    icons:[
+      {src:iconUrl,sizes:'192x192',type:'image/svg+xml'},
+      {src:iconUrl,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}
+    ]
+  };
+  try{
+    const b=new Blob([JSON.stringify(m)],{type:'application/json'});
+    const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(b);
+    document.head.appendChild(l);
+  }catch(e){}
+
+  // Service Worker (inline via blob URL)
+  if('serviceWorker' in navigator){
+    const swCode=`
+const CACHE='mtz-manager-v1';
+const ASSETS=['/'];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch',e=>{
+  e.respondWith(
+    caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response('Offline',{status:503})))
+  );
+});
+    `;
+    try{
+      const swBlob=new Blob([swCode],{type:'application/javascript'});
+      const swUrl=URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swUrl,{scope:'./'}).then(reg=>{
+        console.log('[MTZ PWA] SW registered',reg.scope);
+      }).catch(err=>console.warn('[MTZ PWA] SW failed:',err));
+    }catch(e){console.warn('[MTZ PWA] SW blob error:',e);}
+  }
+
+  // PWA Install prompt
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    PWA_INSTALL_PROMPT=e;
+    document.getElementById('pwaBanner').classList.add('show');
+  });
+  window.addEventListener('appinstalled',()=>{
+    document.getElementById('pwaBanner').classList.remove('show');
+    PWA_INSTALL_PROMPT=null;
+    toast('MTZ Manager berhasil diinstall! 🎉','s','📦');
+  });
+})();
+
+function pwaDoPWAInstall(){
+  if(!PWA_INSTALL_PROMPT){toast('Install tidak tersedia di browser ini','w');return;}
+  PWA_INSTALL_PROMPT.prompt();
+  PWA_INSTALL_PROMPT.userChoice.then(r=>{
+    if(r.outcome==='accepted'){
+      document.getElementById('pwaBanner').classList.remove('show');
+      PWA_INSTALL_PROMPT=null;
+    }
+  });
+}
+
+// ============ SELECTION - FIX selectAll helper ============
+function selectAll(){
+  CUR_ITEMS.forEach(item=>SEL.add(item.path));
+  updateSelBar();renderList(CUR_ITEMS);
+}
+</script>
+</body>
+</html>
