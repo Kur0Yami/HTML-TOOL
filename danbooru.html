@@ -681,18 +681,15 @@ async function downloadSelected(){
 }
 
 /* ═══════════════════════════
-   DOWNLOAD (blob fix)
+   DOWNLOAD
 ═══════════════════════════ */
 function dlCard(card){
   const url=card.dataset.url, name=card.dataset.fname;
   if(!url){ toast("⚠️ URL tidak tersedia"); return; }
+  const dlUrl=url+(url.includes("?")?"&":"?")+"download=1";
   const a=document.createElement("a");
-  a.href=url;
-  a.download=name;
-  a.target="_blank";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href=dlUrl; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
   toast(`⬇️ ${name}`);
   markDone(card,url);
 }
