@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danbooru Image Fetcher</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        input {
+            width: 250px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #000;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+            background-color: #2a2a2a;
+        }
+
+        .card-info {
+            padding: 10px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .card-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        #loading {
+            text-align: center;
+            display: none;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>Danbooru Fetcher</h2>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="tagInput" placeholder="Masukkan tag (contoh: wuthering_waves)" value="wuthering_waves">
+        
+        <select id="limitInput">
+            <option value="10">10 Gambar</option>
+            <option value="20" selected>20 Gambar</option>
+            <option value="50">50 Gambar</option>
+        </select>
+        
+        <select id="ratingInput">
+            <option value="rating:general">General (Aman)</option>
+            <option value="rating:sensitive">Sensitive</option>
+            <option value="rating:explicit">Explicit</option>
+            <option value="">Semua Rating</option>
+        </select>
+
+        <button onclick="fetchImages()">Cari Gambar</button>
+    </div>
+
+    <div class="gallery" id="gallery">
+        <div id="loading">Mengambil data dari API...</div>
+    </div>
+
+    <script>
+        async function fetchImages() {
+            const tag = document.getElementById('tagInput').value.trim();
+            const limit = document.getElementById('limitInput').value;
+            const rating = document.getElementById('ratingInput').value;
+            const gallery = document.getElementById('gallery');
+            const loading = document.getElementById('loading');
+
+            // Bersihkan galeri sebelumnya
+            gallery.innerHTML = '';
+            gallery.appendChild(loading);
+            loading.style.display = 'block';
+
+            // Gabungkan tag pencarian dengan tag rating
+            let searchTags = tag;
+            if (rating !== "") {
+                searchTags += ` ${rating}`;
+            }
+
+            // Endpoint API Danbooru (Limit maksimal gratis biasanya 200)
+            const apiUrl = `https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(searchTags)}&limit=${limit}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Gagal mengambil data');
+                
+                const data = await response.json();
+                loading.style.display = 'none';
+
+                if (data.length === 0) {
+                    gallery.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Tidak ada gambar ditemukan untuk tag tersebut.</p>';
+                    return;
+                }
+
+                data.forEach(post => {
+                    // Beberapa post mungkin tidak memiliki file_url (misal dihapus atau butuh akun premium)
+                    if (post.file_url && post.preview_file_url) {
+                        createCard(post, gallery);
+                    }
+                });
+
+            } catch (error) {
+                loading.style.display = 'none';
+                gallery.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function createCard(post, container) {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const img = document.createElement('img');
+            img.src = post.preview_file_url; // Gunakan preview agar tidak berat
+            img.alt = 'Thumbnail';
+            img.loading = 'lazy'; // Lazy load untuk performa
+            
+            // Buka gambar ukuran penuh di tab baru saat diklik
+            img.onclick = () => window.open(post.file_url, '_blank');
+
+            const info = document.createElement('div');
+            info.className = 'card-info';
+            
+            // Ekstensi file dan resolusi
+            const ext = post.file_ext.toUpperCase();
+            const res = `${post.image_width}x${post.image_height}`;
+            
+            info.innerHTML = `
+                <div>${ext} | ${res}</div>
+                <a href="${post.file_url}" target="_blank" download>Buka Full Size</a>
+            `;
+
+            card.appendChild(img);
+            card.appendChild(info);
+            container.appendChild(card);
+        }
+
+        // Panggil fungsi saat pertama kali dibuka
+        window.onload = fetchImages;
+    </script>
+</body>
+</html>
