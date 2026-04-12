@@ -6,705 +6,238 @@
 <title>🌸 Danbooru Fetcher</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-/* ─── RESET & TOKENS ────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --lime:   #C9FF00;
-  --lime2:  #b3e600;
-  --ink:    #111111;
-  --white:  #FFFFFF;
-  --card-r: 16px;
-  --border: 2.5px solid #111;
-  --shadow: 5px 5px 0 #111;
-  --shadow-sm: 3px 3px 0 #111;
-  --font-h: 'Fredoka One', cursive;
-  --font:   'Nunito', sans-serif;
-  /* rating colors */
-  --g: #4ade80; --s: #facc15; --e: #f87171; --q: #fb923c;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --lime:#C9FF00;--lime2:#b3e600;--ink:#111;--white:#fff;
+  --card-r:10px;--border:2.5px solid #111;
+  --shadow:5px 5px 0 #111;--shadow-sm:3px 3px 0 #111;
+  --font-h:'Fredoka One',cursive;--font:'Nunito',sans-serif;
 }
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--lime);min-height:100vh;color:var(--ink);overflow-x:hidden}
 
-html { scroll-behavior: smooth; }
-body {
-  font-family: var(--font);
-  background: var(--lime);
-  background-image:
-    radial-gradient(circle at 15% 20%, rgba(255,255,255,.25) 0%, transparent 40%),
-    radial-gradient(circle at 85% 75%, rgba(255,255,255,.15) 0%, transparent 35%);
-  min-height: 100vh;
-  color: var(--ink);
-  overflow-x: hidden;
-}
+/* SHELL */
+.shell{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 10px 80px}
 
-/* ─── DOODLE DECORATIONS ────────────────────────────── */
-.doodle { position: fixed; pointer-events: none; z-index: 0; opacity: .55; }
-.doodle-tl { top: 20px; left: 18px; }
-.doodle-tr { top: 12px; right: 24px; }
-.doodle-bl { bottom: 60px; left: 30px; }
-.doodle-br { bottom: 40px; right: 20px; }
+/* HEADER */
+.header{text-align:center;padding:16px 10px 10px}
+.header h1{font-family:var(--font-h);font-size:clamp(1.4rem,4vw,2.4rem);line-height:1}
+.header h1 span{color:#fff;text-shadow:3px 3px 0 var(--ink)}
 
-/* ─── LAYOUT SHELL ──────────────────────────────────── */
-.shell {
-  position: relative;
-  z-index: 1;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 16px 80px;
-}
+/* SEARCH WRAP */
+.search-wrap{background:#fff;border:var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px}
+.search-row{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}
+.tag-wrap{position:relative;flex:1 1 180px}
+.field-label{font-weight:800;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:3px;display:block}
+#tagInput{width:100%;padding:9px 12px;border:var(--border);border-radius:8px;font-family:var(--font);font-size:14px;font-weight:700;background:#fafafa;outline:none;transition:box-shadow .15s}
+#tagInput:focus{box-shadow:var(--shadow-sm);background:#fff}
 
-/* ─── HEADER ────────────────────────────────────────── */
-.header {
-  text-align: center;
-  padding: 36px 16px 20px;
+/* AUTOCOMPLETE — danbooru style */
+.ac-box{
+  position:absolute;top:calc(100% + 3px);left:0;right:0;
+  background:#fff;border:2px solid #0073ff;
+  border-top:none;border-radius:0 0 7px 7px;
+  z-index:9999;display:none;max-height:320px;overflow-y:auto;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
 }
-.header h1 {
-  font-family: var(--font-h);
-  font-size: clamp(2rem, 6vw, 3.6rem);
-  letter-spacing: 1px;
-  line-height: 1;
-}
-.header h1 span { color: var(--white); text-shadow: 3px 3px 0 var(--ink); }
-.header p {
-  font-weight: 700;
-  margin-top: 6px;
-  font-size: .95rem;
-  opacity: .75;
-}
+.ac-item{display:flex;align-items:center;padding:6px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid #f2f2f2;gap:8px;line-height:1.3}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.sel{background:#e8f4ff}
+.ac-name{flex:1;font-weight:400}
+.ac-name b{font-weight:900}
+.ac-count{font-size:11.5px;color:#aaa;font-weight:700;min-width:32px;text-align:right}
+/* category colors (matching danbooru) */
+.cat-0 .ac-name{color:#3a7a00}
+.cat-1 .ac-name{color:#c0392b}
+.cat-3 .ac-name{color:#8e44ad}
+.cat-4 .ac-name{color:#1a6bb5}
+.cat-5 .ac-name{color:#7f8c8d}
 
-/* ─── SEARCH BOX ────────────────────────────────────── */
-.search-wrap {
-  background: var(--white);
-  border: var(--border);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-  padding: 20px 22px;
-  margin-bottom: 18px;
-}
-.search-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-.tag-wrap {
-  position: relative;
-  flex: 1 1 260px;
-}
-.tag-wrap label, .ctrl-label {
-  display: block;
-  font-weight: 800;
-  font-size: .72rem;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-bottom: 5px;
-  color: #555;
-}
-#tagInput {
-  width: 100%;
-  padding: 11px 14px;
-  border: var(--border);
-  border-radius: 10px;
-  font-family: var(--font);
-  font-size: 14px;
-  font-weight: 700;
-  background: #fafafa;
-  outline: none;
-  transition: box-shadow .15s;
-}
-#tagInput:focus { box-shadow: var(--shadow-sm); background: #fff; }
+/* CONTROLS */
+.ctrl-group{display:flex;flex-direction:column}
+select.ctrl{padding:9px 10px;border:var(--border);border-radius:8px;font-family:var(--font);font-size:13px;font-weight:700;background:#fafafa;cursor:pointer;min-width:120px;outline:none}
+select.ctrl:focus{box-shadow:var(--shadow-sm)}
+.btn-search{padding:10px 20px;background:var(--ink);color:var(--lime);border:var(--border);border-radius:8px;font-family:var(--font-h);font-size:.9rem;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .1s,box-shadow .1s;white-space:nowrap}
+.btn-search:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--lime2)}
+.btn-search:active{transform:translate(2px,2px);box-shadow:none}
 
-/* Autocomplete dropdown */
-.autocomplete-box {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0; right: 0;
-  background: var(--white);
-  border: var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  z-index: 999;
-  overflow: hidden;
-  display: none;
-  max-height: 260px;
-  overflow-y: auto;
-}
-.ac-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 9px 14px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  gap: 8px;
-  transition: background .1s;
-}
-.ac-item:hover, .ac-item.active { background: var(--lime); }
-.ac-item .ac-name { flex: 1; }
-.ac-item .ac-count {
-  font-size: 11px;
-  background: #f0f0f0;
-  border-radius: 20px;
-  padding: 2px 8px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.ac-cat { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.cat-0 { background:#4ade80; } /* general */
-.cat-1 { background:#f87171; } /* artist */
-.cat-3 { background:#c084fc; } /* copyright */
-.cat-4 { background:#60a5fa; } /* character */
-.cat-5 { background:#94a3b8; } /* meta */
+/* TOOLBAR */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:8px}
 
-/* Controls row */
-.ctrl-group { display: flex; flex-direction: column; }
-select.ctrl {
-  padding: 11px 12px;
-  border: var(--border);
-  border-radius: 10px;
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 700;
-  background: #fafafa;
-  cursor: pointer;
-  min-width: 140px;
-  outline: none;
-}
-select.ctrl:focus { box-shadow: var(--shadow-sm); }
+/* Grid S/M/L */
+.gs-group{display:flex;border:var(--border);border-radius:7px;overflow:hidden;background:#fff;box-shadow:var(--shadow-sm)}
+.gs-btn{padding:6px 13px;background:#fff;border:none;border-right:2px solid #111;font-family:var(--font);font-weight:800;font-size:.78rem;cursor:pointer;transition:background .12s}
+.gs-btn:last-child{border-right:none}
+.gs-btn.active{background:var(--lime)}
+.gs-btn:hover:not(.active){background:#f5f5f5}
 
-.btn-search {
-  align-self: flex-end;
-  padding: 12px 28px;
-  background: var(--ink);
-  color: var(--lime);
-  border: var(--border);
-  border-radius: 10px;
-  font-family: var(--font-h);
-  font-size: 1rem;
-  letter-spacing: .5px;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: transform .1s, box-shadow .1s;
-  white-space: nowrap;
-}
-.btn-search:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--lime2); }
-.btn-search:active { transform: translate(2px,2px); box-shadow: none; }
+/* Adv toggle */
+.adv-toggle{background:#fff;border:var(--border);border-radius:7px;padding:6px 11px;font-family:var(--font);font-weight:800;font-size:.75rem;cursor:pointer;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:5px}
+.adv-toggle svg{transition:transform .2s}
+.adv-toggle.open svg{transform:rotate(180deg)}
 
-/* ─── ADVANCED FILTER ───────────────────────────────── */
-.adv-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  font-family: var(--font);
-  font-weight: 800;
-  font-size: .82rem;
-  cursor: pointer;
-  margin-top: 14px;
-  color: #555;
-  padding: 0;
-}
-.adv-toggle svg { transition: transform .2s; }
-.adv-toggle.open svg { transform: rotate(180deg); }
+/* Status chip */
+.status-chip{background:#fff;border:var(--border);border-radius:20px;padding:5px 12px;font-weight:800;font-size:.76rem;box-shadow:var(--shadow-sm)}
+.status-chip span{color:#aaa;font-weight:600}
 
-.adv-panel {
-  display: none;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 2px dashed #ddd;
-}
-.adv-panel.open { display: grid; }
-.adv-field label {
-  display: block;
-  font-weight: 800;
-  font-size: .7rem;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-bottom: 5px;
-  color: #555;
-}
-.adv-field input[type="text"],
-.adv-field input[type="number"] {
-  width: 100%;
-  padding: 9px 12px;
-  border: var(--border);
-  border-radius: 8px;
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 700;
-  background: #fafafa;
-  outline: none;
-}
-.adv-field input:focus { box-shadow: var(--shadow-sm); }
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-}
-.toggle {
-  position: relative;
-  width: 40px; height: 22px;
-  flex-shrink: 0;
-}
-.toggle input { opacity: 0; width: 0; height: 0; }
-.toggle-track {
-  position: absolute;
-  inset: 0;
-  background: #ddd;
-  border: 2px solid #111;
-  border-radius: 22px;
-  cursor: pointer;
-  transition: background .2s;
-}
-.toggle input:checked + .toggle-track { background: var(--lime); }
-.toggle-thumb {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 14px; height: 14px;
-  background: #111;
-  border-radius: 50%;
-  transition: transform .2s;
-  pointer-events: none;
-}
-.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
-.toggle-label { font-weight: 700; font-size: .82rem; }
+/* Buttons */
+.btn-sm{padding:6px 12px;border:var(--border);border-radius:20px;font-family:var(--font);font-weight:800;font-size:.75rem;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .1s,box-shadow .1s;white-space:nowrap}
+.btn-sm:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #111}
+.btn-sm:active{transform:translate(1px,1px);box-shadow:none}
+.btn-lime{background:var(--lime);color:var(--ink)}
+.btn-white{background:#fff;color:var(--ink)}
+.btn-ink{background:var(--ink);color:var(--lime)}
+.btn-danger{background:#f87171;color:#fff}
 
-/* ─── STATUS BAR ────────────────────────────────────── */
-.status-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 14px;
-}
-.status-info {
-  font-weight: 800;
-  font-size: .88rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: 30px;
-  padding: 6px 14px;
-  box-shadow: var(--shadow-sm);
-}
-.status-info span { color: #888; font-weight: 600; }
-.btn-sm {
-  padding: 7px 14px;
-  border: var(--border);
-  border-radius: 30px;
-  font-family: var(--font);
-  font-weight: 800;
-  font-size: .8rem;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: transform .1s, box-shadow .1s;
-  white-space: nowrap;
-}
-.btn-sm:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #111; }
-.btn-sm:active { transform: translate(1px,1px); box-shadow: none; }
-.btn-lime { background: var(--lime); color: var(--ink); }
-.btn-white { background: var(--white); color: var(--ink); }
-.btn-ink { background: var(--ink); color: var(--lime); }
-.btn-danger { background: #f87171; color: #fff; }
+/* ADV FILTER PANEL */
+.adv-panel{display:none;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:9px;margin-bottom:10px;background:#fff;border:var(--border);border-radius:11px;box-shadow:var(--shadow-sm);padding:12px 14px}
+.adv-panel.open{display:grid}
+.adv-field label{font-weight:800;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:3px;display:block}
+.adv-field input[type=text],.adv-field input[type=number]{width:100%;padding:7px 9px;border:var(--border);border-radius:6px;font-family:var(--font);font-size:13px;font-weight:700;background:#fafafa;outline:none}
+.adv-field input:focus{box-shadow:var(--shadow-sm)}
+.toggle-row{display:flex;align-items:center;gap:7px;margin-top:5px}
+.toggle{position:relative;width:36px;height:19px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:#ddd;border:2px solid #111;border-radius:20px;cursor:pointer;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--lime)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:11px;height:11px;background:#111;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{transform:translateX(17px)}
+.toggle-label{font-weight:700;font-size:.78rem}
 
-/* ─── GALLERY GRID ──────────────────────────────────── */
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 18px;
-}
+/* GALLERY */
+.gallery{display:grid;gap:8px}
+.gallery.size-s{grid-template-columns:repeat(3,1fr)}
+.gallery.size-m{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.gallery.size-l{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
 
-/* ─── CARD ──────────────────────────────────────────── */
-.card {
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--card-r);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transition: transform .18s, box-shadow .18s;
-  cursor: pointer;
-}
-.card:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 #111; }
-.card.done { outline: 3px solid #4ade80; outline-offset: -1px; }
+/* CARD */
+.card{background:#fff;border:var(--border);border-radius:var(--card-r);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow)}
+.card.done{outline:3px solid #4ade80;outline-offset:-1px}
 
-/* Card image area */
-.card-thumb {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  background: #e8f5e9;
-}
-.card-thumb img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform .3s;
-}
-.card:hover .card-thumb img { transform: scale(1.04); }
+/* Thumb */
+.card-thumb{position:relative;aspect-ratio:1/1;overflow:hidden;background:#c8f000}
+.card-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.card:hover .card-thumb img{transform:scale(1.06)}
 
-/* Video indicator */
-.card-thumb.is-video::after {
-  content: '▶';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(0,0,0,.5);
-  pointer-events: none;
+/* ALWAYS-VISIBLE DOWNLOAD BTN */
+.thumb-dl{
+  position:absolute;bottom:4px;right:4px;z-index:15;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(0,0,0,.7);border:1.5px solid rgba(255,255,255,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;cursor:pointer;
+  transition:background .15s,transform .12s;
+  color:#fff;user-select:none;
 }
-
-/* Overlay shown on hover */
-.card-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  opacity: 0;
-  transition: opacity .2s;
-}
-.card:hover .card-overlay { opacity: 1; }
-.btn-icon {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: var(--white);
-  border: 2px solid #111;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background .15s, transform .1s;
-}
-.btn-icon:hover { background: var(--lime); transform: scale(1.1); }
-
-/* Badges on image corners */
-.badge {
-  position: absolute;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 20px;
-  border: 1.5px solid #111;
-  z-index: 10;
-  line-height: 1.4;
-  pointer-events: none;
-}
-.badge-score  { top: 7px; left: 7px; background: #fff; }
-.badge-fav    { top: 7px; right: 7px; background: #fce4ec; }
-.badge-size   { bottom: 7px; right: 7px; }
-.badge-done   { bottom: 7px; left: 7px; background: #4ade80; color: #fff; }
-.badge-rating {
-  position: absolute;
-  top: 42px; left: 7px;
-  font-size: 10px;
-  font-weight: 900;
-  padding: 2px 7px;
-  border-radius: 20px;
-  border: 1.5px solid #111;
-  z-index: 10;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-.size-green { background: #4ade80; color: #fff; }
-.size-yellow { background: #facc15; color: #111; }
-.size-red { background: #f87171; color: #fff; }
-.rating-g { background: #4ade80; color: #fff; }
-.rating-s { background: #facc15; color: #111; }
-.rating-e { background: #f87171; color: #fff; }
-.rating-q { background: #fb923c; color: #fff; }
+.thumb-dl:hover{background:var(--lime);border-color:#111;color:#111;transform:scale(1.15)}
 
 /* Checkbox */
-.card-check {
-  position: absolute;
-  top: 7px; left: 7px;
-  width: 18px; height: 18px;
-  accent-color: var(--lime);
-  cursor: pointer;
-  z-index: 20;
-  border: 2px solid #111;
-  border-radius: 4px;
-}
+.card-cb{position:absolute;top:4px;left:4px;z-index:15;width:15px;height:15px;cursor:pointer;accent-color:var(--lime)}
+
+/* Badges */
+.badge{position:absolute;z-index:10;pointer-events:none;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:20px;border:1.5px solid #111;line-height:1.4}
+.badge-top{top:4px;right:4px;background:#fff}
+.badge-size{bottom:4px;left:4px}
+.badge-done{bottom:4px;left:4px;background:#4ade80;color:#fff}
+.size-g{background:#4ade80;color:#fff}
+.size-y{background:#facc15;color:#111}
+.size-r{background:#f87171;color:#fff}
+.badge-rating{position:absolute;top:25px;left:4px;z-index:10;pointer-events:none;font-size:8.5px;font-weight:900;padding:2px 6px;border-radius:20px;border:1.5px solid #111;text-transform:uppercase}
+.r-g{background:#4ade80;color:#fff}.r-s{background:#facc15;color:#111}.r-e{background:#f87171;color:#fff}.r-q{background:#fb923c;color:#fff}
 
 /* Card footer */
-.card-info {
-  padding: 10px 11px 11px;
-  border-top: 2px solid #f0f0f0;
-}
-.card-id {
-  font-size: 10px;
-  font-weight: 800;
-  color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-}
-.card-ext {
-  font-size: 12px;
-  font-weight: 800;
-  margin-top: 2px;
-}
-.card-res {
-  font-size: 11px;
-  color: #777;
-  font-weight: 600;
-}
+.card-foot{padding:5px 6px 6px;border-top:1.5px solid #f0f0f0}
+.cf-id{font-size:8.5px;font-weight:800;color:#ccc;text-transform:uppercase}
+.cf-meta{font-size:9.5px;font-weight:800;color:#444;margin-top:1px}
 
-/* ─── LOADING / EMPTY ────────────────────────────────── */
-.placeholder {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 60px 20px;
-}
-.placeholder .ph-icon { font-size: 3rem; margin-bottom: 12px; }
-.placeholder h3 { font-family: var(--font-h); font-size: 1.4rem; }
-.placeholder p { color: #666; margin-top: 6px; font-size: .88rem; }
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.pg-btn{width:36px;height:36px;border:var(--border);border-radius:50%;background:#fff;font-size:1.15rem;cursor:pointer;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;font-family:var(--font-h);transition:transform .1s,background .12s}
+.pg-btn:hover:not(:disabled){transform:translate(-2px,-2px);background:var(--lime)}
+.pg-btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important}
+.pg-info{background:#fff;border:var(--border);border-radius:20px;padding:6px 16px;font-family:var(--font-h);font-size:.88rem;box-shadow:var(--shadow-sm)}
 
-/* Skeleton cards */
-.skeleton { animation: pulse 1.5s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
-.sk-thumb { background: #d4f56e; aspect-ratio: 1/1; }
-.sk-line { background: #d4f56e; border-radius: 4px; height: 10px; margin: 8px 10px; }
-.sk-line.w70 { width: 70%; }
+/* SKELETON */
+.skeleton{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.sk-thumb{background:#afe800;aspect-ratio:1/1}
+.sk-line{background:#afe800;border-radius:4px;height:8px;margin:6px 7px}
 
-/* ─── PAGINATION ─────────────────────────────────────── */
-.page-wrap {
-  text-align: center;
-  margin-top: 30px;
-}
-.btn-more {
-  padding: 14px 40px;
-  background: var(--white);
-  border: var(--border);
-  border-radius: 50px;
-  font-family: var(--font-h);
-  font-size: 1.05rem;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform .1s, box-shadow .1s;
-}
-.btn-more:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 #111; background: var(--lime); }
-.btn-more:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: var(--shadow); }
+/* PLACEHOLDER */
+.placeholder{grid-column:1/-1;text-align:center;padding:40px 20px}
+.ph-icon{font-size:2.4rem;margin-bottom:9px}
+.placeholder h3{font-family:var(--font-h);font-size:1.1rem}
+.placeholder p{color:#555;font-size:.82rem;margin-top:4px}
 
-/* ─── LIGHTBOX ───────────────────────────────────────── */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  z-index: 9000;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.lightbox.open { display: flex; }
-.lb-close {
-  position: absolute;
-  top: 16px; right: 20px;
-  font-size: 2rem;
-  color: #fff;
-  cursor: pointer;
-  background: none;
-  border: none;
-  line-height: 1;
-  font-family: var(--font-h);
-}
-.lb-img-wrap {
-  max-width: 90vw;
-  max-height: 75vh;
-  position: relative;
-}
-.lb-img-wrap img {
-  max-width: 90vw;
-  max-height: 75vh;
-  object-fit: contain;
-  border: 3px solid #fff;
-  border-radius: 12px;
-}
-.lb-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2rem;
-  color: #fff;
-  cursor: pointer;
-  background: rgba(0,0,0,.5);
-  border: none;
-  border-radius: 50%;
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-}
-.lb-nav.prev { left: -56px; }
-.lb-nav.next { right: -56px; }
-.lb-info {
-  margin-top: 16px;
-  text-align: center;
-  color: #fff;
-}
-.lb-info h3 { font-family: var(--font-h); font-size: 1.1rem; }
-.lb-info p { font-size: .8rem; color: #ccc; margin-top: 4px; max-width: 600px; line-height: 1.5; word-break: break-word; }
-.lb-actions { display: flex; gap: 10px; margin-top: 12px; }
-.lb-tag-chips {
-  display: flex; flex-wrap: wrap; gap: 5px;
-  margin-top: 8px; max-width: 680px; justify-content: center;
-  max-height: 80px; overflow-y: auto;
-}
-.lb-tag {
-  background: rgba(255,255,255,.15);
-  color: #fff;
-  font-size: 11px;
-  padding: 2px 9px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background .15s;
-}
-.lb-tag:hover { background: var(--lime); color: #111; }
+/* LIGHTBOX */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px}
+.lb.open{display:flex}
+.lb-close{position:absolute;top:12px;right:16px;color:#fff;cursor:pointer;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:34px;height:34px;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.lb-close:hover{background:rgba(255,255,255,.3)}
+.lb-img-wrap{position:relative;max-width:90vw;max-height:70vh}
+.lb-img-wrap img{max-width:90vw;max-height:70vh;object-fit:contain;border:2px solid #fff;border-radius:9px;display:block}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;border-radius:50%;width:38px;height:38px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lb-nav.prev{left:-50px}.lb-nav.next{right:-50px}
+.lb-nav:hover{background:rgba(201,255,0,.8);color:#111}
+.lb-info{text-align:center;color:#fff;margin-top:10px}
+.lb-info h3{font-family:var(--font-h);font-size:.95rem}
+.lb-info p{font-size:.72rem;color:#ccc;margin-top:2px}
+.lb-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;max-width:640px;justify-content:center;max-height:65px;overflow-y:auto}
+.lb-tag{background:rgba(255,255,255,.15);color:#fff;font-size:10.5px;padding:2px 8px;border-radius:20px;cursor:pointer;border:none;font-family:var(--font);font-weight:700}
+.lb-tag:hover{background:var(--lime);color:#111}
+.lb-acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;justify-content:center}
 
-/* ─── TOAST ──────────────────────────────────────────── */
-#toast-container {
-  position: fixed;
-  bottom: 20px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  pointer-events: none;
-}
-.toast {
-  background: var(--ink);
-  color: var(--lime);
-  padding: 10px 22px;
-  border-radius: 30px;
-  font-family: var(--font);
-  font-weight: 800;
-  font-size: .88rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,.35);
-  animation: toastIn .3s ease, toastOut .3s ease 2.2s forwards;
-  pointer-events: none;
-}
-@keyframes toastIn  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-@keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-10px); } }
+/* TOAST */
+#toast-ct{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{background:var(--ink);color:var(--lime);padding:8px 18px;border-radius:30px;font-family:var(--font);font-weight:800;font-size:.82rem;box-shadow:0 4px 16px rgba(0,0,0,.3);animation:tIn .25s ease,tOut .25s ease 2.3s forwards}
+@keyframes tIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0;transform:translateY(-8px)}}
 
-/* ─── FLOATING PANEL BUTTON ──────────────────────────── */
-.fab {
-  position: fixed;
-  bottom: 24px; right: 24px;
-  width: 52px; height: 52px;
-  background: var(--ink);
-  color: var(--lime);
-  border: var(--border);
-  border-radius: 50%;
-  font-size: 1.4rem;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 800;
-  transition: transform .15s, background .15s;
-}
-.fab:hover { transform: scale(1.08); background: #222; }
+/* FAB */
+.fab{position:fixed;bottom:18px;right:18px;width:46px;height:46px;background:var(--ink);color:var(--lime);border:var(--border);border-radius:50%;font-size:1.2rem;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:800}
+.settings-panel{position:fixed;bottom:74px;right:18px;width:250px;background:#fff;border:var(--border);border-radius:13px;box-shadow:var(--shadow);padding:14px;z-index:800;display:none;flex-direction:column;gap:8px}
+.settings-panel.open{display:flex}
+.settings-title{font-family:var(--font-h);font-size:.9rem;border-bottom:2px dashed #eee;padding-bottom:6px}
+.settings-stat{font-size:.76rem;color:#888;font-weight:600;background:#f5f5f5;border-radius:7px;padding:7px 9px;line-height:1.7}
+.settings-stat b{color:#111}
 
-.settings-panel {
-  position: fixed;
-  bottom: 86px; right: 24px;
-  width: 280px;
-  background: var(--white);
-  border: var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 18px;
-  z-index: 800;
-  display: none;
-  flex-direction: column;
-  gap: 10px;
-}
-.settings-panel.open { display: flex; }
-.settings-title {
-  font-family: var(--font-h);
-  font-size: 1rem;
-  border-bottom: 2px dashed #ddd;
-  padding-bottom: 8px;
-  margin-bottom: 2px;
-}
-.settings-stat {
-  font-size: .8rem;
-  color: #777;
-  font-weight: 600;
-  background: #f5f5f5;
-  border-radius: 8px;
-  padding: 8px 10px;
-  line-height: 1.7;
-}
-.settings-stat b { color: #111; }
-
-/* ─── SCROLLBAR ──────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #bbb; border-radius: 10px; }
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#bbb;border-radius:10px}
 </style>
 </head>
 <body>
-
-<!-- Doodle decorations -->
-<svg class="doodle doodle-tl" width="80" height="80" viewBox="0 0 80 80">
-  <path d="M40 5 L43 35 L73 38 L43 41 L46 71 L40 43 L10 46 L38 43 L35 13 Z" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
-</svg>
-<svg class="doodle doodle-tr" width="90" height="90" viewBox="0 0 90 90">
-  <path d="M45 10 C45 10 75 30 65 55 C55 80 20 75 15 50 C10 25 35 5 45 10Z" fill="none" stroke="#111" stroke-width="2.5"/>
-  <path d="M35 40 C40 30 55 35 50 45 C45 55 30 50 35 40Z" fill="#111"/>
-</svg>
-<svg class="doodle doodle-bl" width="70" height="70" viewBox="0 0 70 70">
-  <circle cx="35" cy="35" r="28" fill="none" stroke="#111" stroke-width="2.5"/>
-  <circle cx="35" cy="35" r="12" fill="none" stroke="#111" stroke-width="2.5"/>
-  <line x1="35" y1="7" x2="35" y2="63" stroke="#111" stroke-width="2"/>
-  <line x1="7" y1="35" x2="63" y2="35" stroke="#111" stroke-width="2"/>
-</svg>
-<svg class="doodle doodle-br" width="65" height="65" viewBox="0 0 65 65">
-  <path d="M32 5 L38 28 L62 32 L38 36 L42 60 L32 38 L8 42 L28 32 L22 8 Z" fill="#111"/>
-</svg>
 
 <div class="shell">
 
   <!-- HEADER -->
   <header class="header">
     <h1>Danbooru <span>Fetcher</span></h1>
-    <p>🌸 Browse · Download · Collect</p>
   </header>
 
-  <!-- SEARCH BOX -->
+  <!-- SEARCH -->
   <div class="search-wrap">
     <div class="search-row">
-      <!-- Tag input with autocomplete -->
       <div class="tag-wrap">
-        <label for="tagInput">🏷️ Tags (spasi = AND, - = exclude)</label>
-        <input type="text" id="tagInput" placeholder="wuthering_waves 1girl…" autocomplete="off" value="wuthering_waves">
-        <div class="autocomplete-box" id="autocompleteBox"></div>
+        <label class="field-label" for="tagInput">🏷️ Tags (spasi=AND, -=exclude)</label>
+        <input type="text" id="tagInput" placeholder="arknights 1girl …" autocomplete="off" value="wuthering_waves">
+        <div class="ac-box" id="acBox"></div>
       </div>
 
-      <!-- Order By -->
       <div class="ctrl-group">
-        <label class="ctrl-label">📊 Order By</label>
+        <label class="field-label">📊 Urut</label>
         <select id="orderInput" class="ctrl">
-          <option value="">Terbaru (ID)</option>
+          <option value="">Terbaru</option>
           <option value="order:score">⭐ Score</option>
-          <option value="order:favcount">♡ Favorites</option>
+          <option value="order:favcount">♡ Favorit</option>
           <option value="order:rank">🔥 Trending</option>
           <option value="order:views">👁 Views</option>
         </select>
       </div>
 
-      <!-- Rating -->
       <div class="ctrl-group">
-        <label class="ctrl-label">🔞 Rating</label>
+        <label class="field-label">🔞 Rating</label>
         <select id="ratingInput" class="ctrl">
           <option value="rating:general">General ✅</option>
           <option value="rating:sensitive">Sensitive 🟡</option>
@@ -714,97 +247,78 @@ select.ctrl:focus { box-shadow: var(--shadow-sm); }
         </select>
       </div>
 
-      <!-- Limit -->
-      <div class="ctrl-group">
-        <label class="ctrl-label">📦 Jumlah</label>
-        <select id="limitInput" class="ctrl">
-          <option value="10">10</option>
-          <option value="20" selected>20</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
-      </div>
-
       <button class="btn-search" onclick="startSearch()">🔍 Cari</button>
-    </div>
-
-    <!-- Advanced toggle -->
-    <button class="adv-toggle" id="advToggle" onclick="toggleAdv()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-      Filter Lanjutan
-    </button>
-
-    <div class="adv-panel" id="advPanel">
-      <div class="adv-field">
-        <label>🏷️ Tag Filter (must, -exclude, ~optional)</label>
-        <input type="text" id="tagFilterInput" placeholder="-nsfw ~solo ~couple">
-      </div>
-      <div class="adv-field">
-        <label>📏 Ukuran Min (MB)</label>
-        <input type="number" id="sizeMinInput" value="0" min="0" step="0.1">
-      </div>
-      <div class="adv-field">
-        <label>📏 Ukuran Maks (MB)</label>
-        <input type="number" id="sizeMaxInput" value="9999" min="0" step="0.1">
-      </div>
-      <div class="adv-field">
-        <label>⚙️ Opsi</label>
-        <div class="toggle-row" style="margin-top:8px">
-          <label class="toggle">
-            <input type="checkbox" id="toggleSizeIndicator" checked onchange="savePref()">
-            <div class="toggle-track"></div>
-            <div class="toggle-thumb"></div>
-          </label>
-          <span class="toggle-label">Tampilkan ukuran file</span>
-        </div>
-        <div class="toggle-row" style="margin-top:8px">
-          <label class="toggle">
-            <input type="checkbox" id="toggleAutoApply" onchange="savePref()">
-            <div class="toggle-track"></div>
-            <div class="toggle-thumb"></div>
-          </label>
-          <span class="toggle-label">Auto-select berdasar filter</span>
-        </div>
-        <div class="toggle-row" style="margin-top:8px">
-          <label class="toggle">
-            <input type="checkbox" id="toggleHideDone" onchange="applyCardFilters()">
-            <div class="toggle-track"></div>
-            <div class="toggle-thumb"></div>
-          </label>
-          <span class="toggle-label">Sembunyikan yg sudah DL</span>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- STATUS BAR -->
-  <div class="status-bar" id="statusBar" style="display:none">
-    <div class="status-info" id="statusInfo">—</div>
-    <button class="btn-sm btn-lime" onclick="selectAll()">☑ Pilih Semua</button>
-    <button class="btn-sm btn-white" onclick="deselectAll()">☐ Batal Pilih</button>
-    <button class="btn-sm btn-ink"  onclick="downloadSelected()">⬇️ Unduh Dipilih</button>
-    <button class="btn-sm btn-white" id="applyFilterBtn" onclick="applyCardFilters()">🔽 Terapkan Filter</button>
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="gs-group">
+      <button class="gs-btn active" id="gs-s" onclick="setGrid('s')">S</button>
+      <button class="gs-btn"        id="gs-m" onclick="setGrid('m')">M</button>
+      <button class="gs-btn"        id="gs-l" onclick="setGrid('l')">L</button>
+    </div>
+    <button class="adv-toggle" id="advToggle" onclick="toggleAdv()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      Filter
+    </button>
+    <div class="status-chip" id="statusChip" style="display:none">—</div>
+    <button class="btn-sm btn-lime"  id="btnSelAll"  style="display:none" onclick="selectAll()">☑ Semua</button>
+    <button class="btn-sm btn-white" id="btnDesel"   style="display:none" onclick="deselectAll()">☐ Batal</button>
+    <button class="btn-sm btn-ink"   id="btnDlSel"   style="display:none" onclick="downloadSelected()">⬇️ DL Dipilih</button>
+  </div>
+
+  <!-- ADVANCED FILTER -->
+  <div class="adv-panel" id="advPanel">
+    <div class="adv-field">
+      <label>🏷️ Tag Filter (must, -excl, ~atau)</label>
+      <input type="text" id="tagFilterInput" placeholder="-nsfw ~solo">
+    </div>
+    <div class="adv-field">
+      <label>📏 Ukuran Min (MB)</label>
+      <input type="number" id="sizeMin" value="0" min="0" step="0.5">
+    </div>
+    <div class="adv-field">
+      <label>📏 Ukuran Maks (MB)</label>
+      <input type="number" id="sizeMax" value="9999" min="0" step="0.5">
+    </div>
+    <div class="adv-field">
+      <label>⚙️ Opsi</label>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="togSize" checked onchange="savePref()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        <span class="toggle-label">Tampilkan ukuran file</span>
+      </div>
+      <div class="toggle-row" style="margin-top:7px">
+        <label class="toggle"><input type="checkbox" id="togHideDone" onchange="applyFilter()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        <span class="toggle-label">Sembunyikan yg sudah DL</span>
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn-sm btn-lime" style="width:100%" onclick="applyFilter()">✅ Terapkan Filter</button>
+      </div>
+    </div>
   </div>
 
   <!-- GALLERY -->
-  <div class="gallery" id="gallery">
+  <div class="gallery size-s" id="gallery">
     <div class="placeholder">
       <div class="ph-icon">🌸</div>
-      <h3>Siap mencari gambar!</h3>
-      <p>Masukkan tag dan klik Cari untuk mulai.</p>
+      <h3>Siap mencari!</h3>
+      <p>Masukkan tag lalu klik Cari.</p>
     </div>
   </div>
 
   <!-- PAGINATION -->
-  <div class="page-wrap" id="pageWrap" style="display:none">
-    <button class="btn-more" id="btnMore" onclick="loadMore()">Muat Lebih Banyak ↓</button>
+  <div class="pagination" id="pagination" style="display:none">
+    <button class="pg-btn" id="pgPrev" onclick="goPage(currentPage-1)">‹</button>
+    <div class="pg-info" id="pgInfo">Hal. 1</div>
+    <button class="pg-btn" id="pgNext" onclick="goPage(currentPage+1)">›</button>
   </div>
 
-</div><!-- /shell -->
+</div>
 
 <!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="closeLb(event)">
-  <button class="lb-close" onclick="closeLightbox()">✕</button>
+<div class="lb" id="lb" onclick="lbBgClick(event)">
+  <button class="lb-close" onclick="closeLb()">✕</button>
   <div class="lb-img-wrap">
     <img id="lbImg" src="" alt="">
     <button class="lb-nav prev" onclick="lbNav(-1);event.stopPropagation()">‹</button>
@@ -813,656 +327,476 @@ select.ctrl:focus { box-shadow: var(--shadow-sm); }
   <div class="lb-info">
     <h3 id="lbTitle"></h3>
     <p id="lbMeta"></p>
-    <div class="lb-tag-chips" id="lbTags"></div>
-    <div class="lb-actions">
-      <button class="btn-sm btn-lime" id="lbDl" onclick="lbDownload()">⬇️ Unduh</button>
-      <button class="btn-sm btn-white" id="lbOpen" onclick="lbOpenFull()">🔗 Buka Full</button>
-      <button class="btn-sm btn-white" onclick="closeLightbox()">✕ Tutup</button>
+    <div class="lb-tags" id="lbTags"></div>
+    <div class="lb-acts">
+      <button class="btn-sm btn-lime"  onclick="lbDl()">⬇️ Unduh</button>
+      <button class="btn-sm btn-white" onclick="lbOpen()">🔗 Danbooru</button>
+      <button class="btn-sm btn-white" onclick="closeLb()">✕ Tutup</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast-container"></div>
+<div id="toast-ct"></div>
 
-<!-- FLOATING FAB -->
-<button class="fab" id="fabBtn" onclick="toggleSettings()" title="Pengaturan & Riwayat">⚙️</button>
-
+<button class="fab" id="fabBtn" onclick="toggleSettings()">⚙️</button>
 <div class="settings-panel" id="settingsPanel">
-  <div class="settings-title">⚙️ Pengaturan & Riwayat</div>
+  <div class="settings-title">⚙️ Riwayat Download</div>
   <div class="settings-stat" id="settingsStat">—</div>
-  <button class="btn-sm btn-lime"   onclick="exportHistory()" style="width:100%">📤 Export Riwayat</button>
-  <button class="btn-sm btn-white"  onclick="importHistory()" style="width:100%">📥 Import Riwayat</button>
-  <button class="btn-sm btn-danger" onclick="clearHistory()"  style="width:100%">🗑️ Hapus Semua Riwayat</button>
-  <div style="font-size:.75rem;color:#999;font-weight:700;border-top:1px dashed #ddd;padding-top:8px;margin-top:2px">
-    Awoobooru Fetcher v2.0 · Data disimpan di localStorage
-  </div>
+  <button class="btn-sm btn-lime"   onclick="exportHistory()" style="width:100%">📤 Export JSON</button>
+  <button class="btn-sm btn-white"  onclick="importHistory()" style="width:100%">📥 Import JSON</button>
+  <button class="btn-sm btn-danger" onclick="clearHistory()"  style="width:100%">🗑️ Hapus Riwayat</button>
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════════════ */
-const DOWNLOADED_KEY = "danbooru_downloaded_v2";
-const PREFS_KEY      = "danbooru_prefs_v2";
+/* ═══════════════════════════
+   STATE & CONSTANTS
+═══════════════════════════ */
+const DL_KEY   = "db_dl_v2";
+const PREF_KEY = "db_pref_v2";
 
-let downloadedSet = new Set(JSON.parse(localStorage.getItem(DOWNLOADED_KEY) || "[]"));
-let prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || '{"showSize":true,"autoApply":false}');
+// S=3cols×7rows=21, M=~5cols×5rows=25, L=~7cols×4rows=28
+const GRID = {
+  s:{ cls:"size-s", perPage:21 },
+  m:{ cls:"size-m", perPage:25 },
+  l:{ cls:"size-l", perPage:28 },
+};
 
-let allPosts    = [];   // raw API data for current search
-let allCards    = [];   // DOM elements
+let downloadedSet = new Set(JSON.parse(localStorage.getItem(DL_KEY)||"[]"));
+let prefs = JSON.parse(localStorage.getItem(PREF_KEY)||'{"showSize":true}');
+
+let curPosts   = [];
 let currentPage = 1;
-let currentTags = "";
-let currentLimit = 20;
-let lbIndex     = 0;
-let acTimer     = null;
-let acData      = [];
-let acActive    = -1;
-let settingsOpen = false;
+let curGrid    = "s";
+let hasNext    = false;
+let lbIdx      = 0;
+let acTimer    = null;
+let acData     = [];
+let acSel      = -1;
+let settingsOpen=false;
 
-/* ══════════════════════════════════════════════════════
-   PERSISTENCE
-══════════════════════════════════════════════════════ */
-function saveDownloaded() {
-  localStorage.setItem(DOWNLOADED_KEY, JSON.stringify([...downloadedSet]));
-}
+/* ═══════════════════════════
+   PERSIST
+═══════════════════════════ */
+function saveDL(){ localStorage.setItem(DL_KEY, JSON.stringify([...downloadedSet])); }
+function savePref(){ prefs.showSize=document.getElementById("togSize").checked; localStorage.setItem(PREF_KEY,JSON.stringify(prefs)); }
+function loadPrefs(){ document.getElementById("togSize").checked=!!prefs.showSize; }
 
-function savePref() {
-  prefs.showSize   = document.getElementById("toggleSizeIndicator").checked;
-  prefs.autoApply  = document.getElementById("toggleAutoApply").checked;
-  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-}
-
-function loadPrefs() {
-  document.getElementById("toggleSizeIndicator").checked = !!prefs.showSize;
-  document.getElementById("toggleAutoApply").checked     = !!prefs.autoApply;
-}
-
-/* ══════════════════════════════════════════════════════
+/* ═══════════════════════════
    UTILS
-══════════════════════════════════════════════════════ */
-function formatBytes(bytes) {
-  if (!bytes) return null;
-  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
-  if (bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(2) + " MB";
-  return (bytes/1024/1024/1024).toFixed(2) + " GB";
+═══════════════════════════ */
+function fmtBytes(b){
+  if(!b) return null;
+  if(b<1048576) return (b/1024).toFixed(1)+" KB";
+  return (b/1048576).toFixed(2)+" MB";
 }
-function bytesToMB(bytes) { return (bytes||0) / 1024 / 1024; }
-function sizeClass(mb) {
-  if (mb >= 5) return "size-red";
-  if (mb >= 2) return "size-yellow";
-  return "size-green";
-}
-function ratingClass(r) {
-  return {g:"rating-g", s:"rating-s", e:"rating-e", q:"rating-q"}[r] || "rating-q";
-}
-function ratingLabel(r) {
-  return {g:"G", s:"S", e:"E", q:"Q"}[r] || r.toUpperCase();
-}
-function normalizeUrl(url) {
-  try { const u = new URL(url); u.search=""; u.hash=""; return u.href; } catch { return url; }
-}
-function fmtNum(n) {
-  if (n >= 1000) return (n/1000).toFixed(1)+"k";
-  return String(n);
-}
-function showToast(msg, duration=2500) {
-  const tc = document.getElementById("toast-container");
-  const t  = document.createElement("div");
-  t.className = "toast";
-  t.textContent = msg;
-  tc.appendChild(t);
-  setTimeout(() => t.remove(), duration);
+function toMB(b){ return (b||0)/1048576; }
+function scls(mb){ return mb>=5?"size-r":mb>=2?"size-y":"size-g"; }
+function rcls(r){ return {g:"r-g",s:"r-s",e:"r-e",q:"r-q"}[r]||"r-q"; }
+function rlbl(r){ return {g:"G",s:"S",e:"E",q:"Q"}[r]||(r||"?").toUpperCase(); }
+function norm(u){ try{const x=new URL(u);x.search="";x.hash="";return x.href;}catch{return u;} }
+function fmtN(n){ return (n||0)>=1000?((n||0)/1000).toFixed(1)+"k":String(n||0); }
+
+function toast(msg,dur=2500){
+  const c=document.getElementById("toast-ct"),t=document.createElement("div");
+  t.className="toast"; t.textContent=msg; c.appendChild(t);
+  setTimeout(()=>t.remove(),dur+300);
 }
 
-/* ══════════════════════════════════════════════════════
-   TAG AUTOCOMPLETE
-══════════════════════════════════════════════════════ */
-const tagInput = document.getElementById("tagInput");
-const acBox    = document.getElementById("autocompleteBox");
+/* ═══════════════════════════
+   GRID SIZE
+═══════════════════════════ */
+function setGrid(size){
+  curGrid=size;
+  const g=document.getElementById("gallery");
+  Object.keys(GRID).forEach(k=>{
+    g.classList.remove(GRID[k].cls);
+    document.getElementById("gs-"+k).classList.toggle("active",k===size);
+  });
+  g.classList.add(GRID[size].cls);
+}
 
-tagInput.addEventListener("input", () => {
+/* ═══════════════════════════
+   AUTOCOMPLETE
+═══════════════════════════ */
+const tagEl = document.getElementById("tagInput");
+const acBox = document.getElementById("acBox");
+
+tagEl.addEventListener("input",()=>{
   clearTimeout(acTimer);
-  const raw = tagInput.value;
-  const words = raw.split(/\s+/);
-  const last  = words[words.length - 1].replace(/^[-~]/, "");
-  if (last.length < 1) { closeAc(); return; }
-  acTimer = setTimeout(() => fetchAc(last), 220);
+  const last = getLastWord().replace(/^[-~]/,"");
+  if(last.length<1){ closeAc(); return; }
+  acTimer=setTimeout(()=>fetchAc(last),200);
 });
 
-tagInput.addEventListener("keydown", e => {
-  const items = acBox.querySelectorAll(".ac-item");
-  if (e.key === "ArrowDown") { acActive = Math.min(acActive+1, items.length-1); highlightAc(items); e.preventDefault(); }
-  else if (e.key === "ArrowUp") { acActive = Math.max(acActive-1, 0); highlightAc(items); e.preventDefault(); }
-  else if (e.key === "Enter" && acActive >= 0 && items[acActive]) {
-    applyAcItem(acData[acActive]); e.preventDefault();
-  } else if (e.key === "Escape") { closeAc(); }
-  else if (e.key === "Enter" && acActive < 0) { startSearch(); closeAc(); }
+tagEl.addEventListener("keydown",e=>{
+  const items=acBox.querySelectorAll(".ac-item");
+  if(e.key==="ArrowDown"){ acSel=Math.min(acSel+1,items.length-1); hiAc(items); e.preventDefault(); }
+  else if(e.key==="ArrowUp"){ acSel=Math.max(acSel-1,0); hiAc(items); e.preventDefault(); }
+  else if(e.key==="Enter"){
+    if(acSel>=0&&items[acSel]){ applyAcItem(acData[acSel]); e.preventDefault(); }
+    else{ startSearch(); closeAc(); e.preventDefault(); }
+  }
+  else if(e.key==="Escape") closeAc();
 });
+document.addEventListener("click",e=>{ if(!acBox.contains(e.target)&&e.target!==tagEl) closeAc(); });
 
-document.addEventListener("click", e => {
-  if (!acBox.contains(e.target) && e.target !== tagInput) closeAc();
-});
+function getLastWord(){ const w=tagEl.value.split(/\s+/); return w[w.length-1]; }
 
-async function fetchAc(q) {
-  try {
-    const url = `https://danbooru.donmai.us/tags/autocomplete.json?search[name_matches]=${encodeURIComponent(q)}*&limit=8&only=name,post_count,category`;
-    const res  = await fetch(url);
-    if (!res.ok) return;
-    acData = await res.json();
-    renderAc(acData);
-  } catch {}
+async function fetchAc(q){
+  try{
+    const r=await fetch(`https://danbooru.donmai.us/tags/autocomplete.json?search[name_matches]=${encodeURIComponent(q)}*&limit=20&only=name,post_count,category`);
+    if(!r.ok) return;
+    acData=await r.json();
+    renderAc(acData,q);
+  }catch{}
 }
 
-function renderAc(data) {
-  if (!data.length) { closeAc(); return; }
-  acBox.innerHTML = "";
-  acActive = -1;
-  data.forEach((t, i) => {
-    const el = document.createElement("div");
-    el.className = "ac-item";
-    el.innerHTML = `
-      <div class="ac-cat cat-${t.category}"></div>
-      <span class="ac-name">${t.name}</span>
-      <span class="ac-count">${fmtNum(t.post_count || 0)}</span>
-    `;
-    el.onmouseenter = () => { acActive = i; highlightAc(acBox.querySelectorAll(".ac-item")); };
-    el.onclick = () => applyAcItem(t);
+function renderAc(data,query){
+  if(!data.length){ closeAc(); return; }
+  acBox.innerHTML=""; acSel=-1;
+  data.forEach((t,i)=>{
+    const el=document.createElement("div");
+    el.className=`ac-item cat-${t.category}`;
+    // Highlight matched portion bold
+    const name=t.name||"", q=(query||"").toLowerCase();
+    const idx=name.toLowerCase().indexOf(q);
+    let dn=name;
+    if(idx>=0) dn=name.slice(0,idx)+`<b>${name.slice(idx,idx+q.length)}</b>`+name.slice(idx+q.length);
+    el.innerHTML=`<span class="ac-name">${dn}</span><span class="ac-count">${fmtN(t.post_count)}</span>`;
+    el.onmouseenter=()=>{ acSel=i; hiAc(acBox.querySelectorAll(".ac-item")); };
+    el.onclick=()=>applyAcItem(t);
     acBox.appendChild(el);
   });
-  acBox.style.display = "block";
+  acBox.style.display="block";
 }
 
-function highlightAc(items) {
-  items.forEach((el, i) => el.classList.toggle("active", i === acActive));
+function hiAc(items){ items.forEach((el,i)=>el.classList.toggle("sel",i===acSel)); }
+
+function applyAcItem(t){
+  const raw=tagEl.value, words=raw.split(/\s+/);
+  const lastRaw=words[words.length-1];
+  const prefix=lastRaw.match(/^[-~]/)?.[0]||"";
+  words[words.length-1]=prefix+t.name;
+  tagEl.value=words.join(" ")+" ";
+  closeAc(); tagEl.focus();
+}
+function closeAc(){ acBox.style.display="none"; acSel=-1; }
+
+/* ═══════════════════════════
+   BUILD TAGS
+═══════════════════════════ */
+function buildTags(){
+  const tag=tagEl.value.trim();
+  const order=document.getElementById("orderInput").value;
+  const rating=document.getElementById("ratingInput").value;
+  return [tag,order,rating].filter(Boolean).join(" ");
 }
 
-function applyAcItem(t) {
-  const raw   = tagInput.value;
-  const words = raw.split(/\s+/);
-  const lastRaw = words[words.length - 1];
-  const prefix  = lastRaw.match(/^[-~]/)?.[0] || "";
-  words[words.length - 1] = prefix + t.name;
-  tagInput.value = words.join(" ") + " ";
-  closeAc();
-  tagInput.focus();
+/* ═══════════════════════════
+   SEARCH / FETCH
+═══════════════════════════ */
+async function startSearch(){ closeAc(); currentPage=1; await fetchRender(); }
+
+async function goPage(p){
+  if(p<1||(p>currentPage&&!hasNext)) return;
+  currentPage=p;
+  await fetchRender();
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-function closeAc() { acBox.style.display = "none"; acActive = -1; }
+async function fetchRender(){
+  const g=document.getElementById("gallery");
+  g.innerHTML=""; showSkel(g);
+  document.getElementById("pagination").style.display="none";
 
-/* ══════════════════════════════════════════════════════
-   SEARCH
-══════════════════════════════════════════════════════ */
-async function startSearch() {
-  closeAc();
-  allPosts  = [];
-  allCards  = [];
-  currentPage = 1;
-  currentLimit = parseInt(document.getElementById("limitInput").value);
+  const perPage=GRID[curGrid].perPage;
+  const tags=buildTags();
 
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = "";
-  showSkeletons(gallery, 8);
+  try{
+    const url=`https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=${perPage+1}&page=${currentPage}`;
+    const res=await fetch(url);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data=await res.json();
+    g.innerHTML="";
 
-  document.getElementById("statusBar").style.display = "none";
-  document.getElementById("pageWrap").style.display  = "none";
+    hasNext=data.length>perPage;
+    curPosts=hasNext?data.slice(0,perPage):data;
 
-  await fetchPage(1, true);
-}
-
-function buildTagString() {
-  const tag   = tagInput.value.trim();
-  const order = document.getElementById("orderInput").value;
-  const rating= document.getElementById("ratingInput").value;
-  let parts   = [];
-  if (tag)    parts.push(tag);
-  if (order)  parts.push(order);
-  if (rating) parts.push(rating);
-  return parts.join(" ");
-}
-
-async function fetchPage(page, fresh=false) {
-  const tagStr = buildTagString();
-  currentTags  = tagStr;
-  const limit  = currentLimit;
-
-  if (!fresh) {
-    const gallery = document.getElementById("gallery");
-    showSkeletons(gallery, 4, false);
-  }
-
-  try {
-    const url = `https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tagStr)}&limit=${limit}&page=${page}`;
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data  = await res.json();
-
-    const gallery = document.getElementById("gallery");
-    // Remove skeletons
-    gallery.querySelectorAll(".skeleton").forEach(s => s.remove());
-
-    if (fresh && data.length === 0) {
-      gallery.innerHTML = `<div class="placeholder"><div class="ph-icon">😕</div><h3>Tidak ada hasil</h3><p>Coba tag atau filter lain.</p></div>`;
+    if(!curPosts.length){
+      g.innerHTML=`<div class="placeholder"><div class="ph-icon">😕</div><h3>Tidak ada hasil</h3><p>Coba tag lain.</p></div>`;
       return;
     }
 
-    allPosts.push(...data);
-
-    data.forEach(post => {
-      if (post.file_url || post.preview_file_url) {
-        const card = createCard(post);
-        gallery.appendChild(card);
-        allCards.push(card);
-      }
+    curPosts.forEach((post,i)=>{
+      if(post.file_url||post.preview_file_url) g.appendChild(makeCard(post,i));
     });
 
-    updateStatusBar();
-    document.getElementById("statusBar").style.display = "flex";
+    // show toolbar
+    ["statusChip","btnSelAll","btnDesel","btnDlSel"].forEach(id=>document.getElementById(id).style.display="");
+    document.getElementById("statusChip").innerHTML=`<b>${curPosts.length}</b> gambar <span>· Hal. ${currentPage}</span>`;
 
-    // Show/hide load more
-    const pageWrap = document.getElementById("pageWrap");
-    if (data.length >= limit) {
-      pageWrap.style.display = "block";
-      document.getElementById("btnMore").disabled = false;
-    } else {
-      pageWrap.style.display = "none";
-    }
+    // pagination
+    const pg=document.getElementById("pagination");
+    pg.style.display="flex";
+    document.getElementById("pgPrev").disabled=currentPage<=1;
+    document.getElementById("pgNext").disabled=!hasNext;
+    document.getElementById("pgInfo").textContent=`Hal. ${currentPage}`;
 
-    // Auto-apply filter
-    if (prefs.autoApply) applyCardFilters();
-    applyHideDone();
-
-  } catch(e) {
-    document.getElementById("gallery").querySelectorAll(".skeleton").forEach(s=>s.remove());
-    document.getElementById("gallery").innerHTML += `<div class="placeholder"><div class="ph-icon">⚠️</div><h3>Terjadi error</h3><p>${e.message}</p></div>`;
+  }catch(e){
+    g.innerHTML=`<div class="placeholder"><div class="ph-icon">⚠️</div><h3>Error</h3><p>${e.message}</p></div>`;
   }
 }
 
-async function loadMore() {
-  const btn = document.getElementById("btnMore");
-  btn.disabled = true;
-  btn.textContent = "Memuat…";
-  currentPage++;
-  await fetchPage(currentPage);
-  btn.disabled = false;
-  btn.textContent = "Muat Lebih Banyak ↓";
-}
-
-function showSkeletons(gallery, count, clear=true) {
-  if (clear) gallery.innerHTML = "";
-  for (let i = 0; i < count; i++) {
-    const s = document.createElement("div");
-    s.className = "card skeleton";
-    s.innerHTML = `<div class="sk-thumb"></div><div class="sk-line w70"></div><div class="sk-line" style="width:50%"></div>`;
-    gallery.appendChild(s);
+function showSkel(g,n=6){
+  for(let i=0;i<n;i++){
+    const s=document.createElement("div");
+    s.className="card skeleton";
+    s.innerHTML=`<div class="sk-thumb"></div><div class="sk-line" style="width:60%"></div><div class="sk-line" style="width:40%"></div>`;
+    g.appendChild(s);
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   CARD CREATION
-══════════════════════════════════════════════════════ */
-function createCard(post) {
-  const card = document.createElement("div");
-  card.className = "card";
-  card.dataset.id     = post.id;
-  card.dataset.tags   = post.tag_string || "";
-  card.dataset.rating = post.rating || "q";
-  card.dataset.score  = post.score || 0;
-  card.dataset.fav    = post.fav_count || 0;
-  card.dataset.sizeBytes = post.file_size || 0;
-  card.dataset.fileUrl   = post.file_url || post.large_file_url || "";
-  card.dataset.fileName  = `danbooru_${post.id}.${post.file_ext || "jpg"}`;
-  card.dataset.ext    = (post.file_ext || "jpg").toUpperCase();
-  card.dataset.width  = post.image_width || 0;
-  card.dataset.height = post.image_height || 0;
+/* ═══════════════════════════
+   MAKE CARD
+═══════════════════════════ */
+function makeCard(post,idx){
+  const card=document.createElement("div");
+  card.className="card";
 
-  const isDone = downloadedSet.has(normalizeUrl(card.dataset.fileUrl));
-  if (isDone) card.classList.add("done");
+  const isDone=downloadedSet.has(norm(post.file_url||""));
+  if(isDone) card.classList.add("done");
 
-  const mb       = bytesToMB(post.file_size);
-  const sizeStr  = formatBytes(post.file_size);
-  const rating   = post.rating || "q";
-  const thumbSrc = post.preview_file_url || post.large_file_url || post.file_url || "";
-  const isVideo  = ["mp4","webm"].includes((post.file_ext||"").toLowerCase());
+  const mb=toMB(post.file_size);
+  const sizeStr=fmtBytes(post.file_size);
+  const rating=post.rating||"q";
+  const thumb=post.preview_file_url||post.large_file_url||post.file_url||"";
+  const showSz=document.getElementById("togSize").checked;
 
-  card.innerHTML = `
-    <div class="card-thumb${isVideo?' is-video':''}">
-      <img src="${thumbSrc}" alt="post ${post.id}" loading="lazy">
-      <span class="badge badge-score">⭐ ${fmtNum(post.score||0)}</span>
-      <span class="badge badge-fav">♡ ${fmtNum(post.fav_count||0)}</span>
-      ${sizeStr && prefs.showSize ? `<span class="badge badge-size ${sizeClass(mb)}">${sizeStr}</span>` : ""}
-      ${isDone ? `<span class="badge badge-done">✓ DL</span>` : ""}
-      <span class="badge-rating ${ratingClass(rating)}">${ratingLabel(rating)}</span>
-      <div class="card-overlay">
-        <div class="btn-icon" title="Preview" data-action="preview">🔍</div>
-        <div class="btn-icon" title="Unduh" data-action="download">⬇️</div>
-        <div class="btn-icon" title="Buka Danbooru" data-action="open">🔗</div>
-      </div>
+  // bottom-left badge: done > size > nothing
+  const blBadge=isDone
+    ?`<span class="badge badge-done">✓ DL</span>`
+    :(sizeStr&&showSz?`<span class="badge badge-size ${scls(mb)}">${sizeStr}</span>`:"");
+
+  card.innerHTML=`
+    <div class="card-thumb">
+      <img src="${thumb}" alt="" loading="lazy">
+      <input type="checkbox" class="card-cb" title="Pilih">
+      <span class="badge badge-top">⭐${fmtN(post.score)} ♡${fmtN(post.fav_count)}</span>
+      <span class="badge-rating ${rcls(rating)}">${rlbl(rating)}</span>
+      ${blBadge}
+      <div class="thumb-dl" title="Unduh">⬇</div>
     </div>
-    <div class="card-info">
-      <div class="card-id">#${post.id}</div>
-      <div class="card-ext">${card.dataset.ext}</div>
-      <div class="card-res">${post.image_width}×${post.image_height}</div>
-    </div>
-  `;
+    <div class="card-foot">
+      <div class="cf-id">#${post.id}</div>
+      <div class="cf-meta">${(post.file_ext||"jpg").toUpperCase()} · ${post.image_width}×${post.image_height}</div>
+    </div>`;
 
-  // Checkbox
-  const cb = document.createElement("input");
-  cb.type = "checkbox";
-  cb.className = "card-check";
-  cb.title = "Pilih untuk batch download";
-  cb.onclick = e => e.stopPropagation();
-  card.querySelector(".card-thumb").appendChild(cb);
+  card.dataset.idx  =idx;
+  card.dataset.id   =post.id;
+  card.dataset.tags =post.tag_string||"";
+  card.dataset.url  =post.file_url||"";
+  card.dataset.fname=`danbooru_${post.id}.${post.file_ext||"jpg"}`;
+  card.dataset.size =post.file_size||0;
 
-  // Action buttons
-  card.querySelector("[data-action='preview']").onclick = e => { e.stopPropagation(); openLightbox(card); };
-  card.querySelector("[data-action='download']").onclick = e => { e.stopPropagation(); downloadCard(card); };
-  card.querySelector("[data-action='open']").onclick = e => { e.stopPropagation(); window.open(`https://danbooru.donmai.us/posts/${post.id}`, "_blank"); };
+  // Checkbox — don't bubble click
+  card.querySelector(".card-cb").onclick=e=>e.stopPropagation();
 
-  card.onclick = () => openLightbox(card);
+  // Download btn — always visible, don't bubble
+  card.querySelector(".thumb-dl").onclick=e=>{ e.stopPropagation(); dlCard(card); };
 
+  // Card click → lightbox
+  card.onclick=()=>openLb(idx);
   return card;
 }
 
-function updateStatusBar() {
-  const info = document.getElementById("statusInfo");
-  const order = document.getElementById("orderInput");
-  const orderText = order.options[order.selectedIndex].text;
-  info.innerHTML = `<b>${allPosts.length}</b> hasil <span>· Urut: ${orderText} · Hal. ${currentPage}</span>`;
-}
-
-/* ══════════════════════════════════════════════════════
-   FILTER (IN-PAGE)
-══════════════════════════════════════════════════════ */
-function parseTagQuery(q) {
-  const must=[], exclude=[], optional=[];
-  q.split(/\s+/).forEach(t => {
-    if (!t) return;
-    if (t.startsWith("-")) exclude.push(t.slice(1).toLowerCase());
-    else if (t.startsWith("~")) optional.push(t.slice(1).toLowerCase());
+/* ═══════════════════════════
+   IN-PAGE FILTER
+═══════════════════════════ */
+function parseQ(q){
+  const must=[],excl=[],opt=[];
+  (q||"").split(/\s+/).forEach(t=>{
+    if(!t) return;
+    if(t.startsWith("-")) excl.push(t.slice(1).toLowerCase());
+    else if(t.startsWith("~")) opt.push(t.slice(1).toLowerCase());
     else must.push(t.toLowerCase());
   });
-  return {must, exclude, optional};
+  return{must,excl,opt};
 }
 
-function cardMatchesTagFilter(card, query) {
-  if (!query.trim()) return true;
-  const tags = (card.dataset.tags || "").toLowerCase().split(" ");
-  const q = parseTagQuery(query);
-  if (!q.must.every(t => tags.includes(t))) return false;
-  if (q.exclude.some(t => tags.includes(t))) return false;
-  if (q.optional.length && !q.optional.some(t => tags.includes(t))) return false;
-  return true;
-}
+function applyFilter(){
+  const tagQ=document.getElementById("tagFilterInput").value;
+  const minMB=parseFloat(document.getElementById("sizeMin").value)||0;
+  const maxMB=parseFloat(document.getElementById("sizeMax").value)||9999;
+  const hideDone=document.getElementById("togHideDone").checked;
+  const q=parseQ(tagQ);
+  let shown=0,hidden=0;
 
-function cardMatchesSizeFilter(card) {
-  const minMB = parseFloat(document.getElementById("sizeMinInput").value) || 0;
-  const maxMB = parseFloat(document.getElementById("sizeMaxInput").value) || 9999;
-  const mb = bytesToMB(parseInt(card.dataset.sizeBytes || 0));
-  if (mb === 0) return true; // unknown size → pass
-  return mb >= minMB && mb <= maxMB;
-}
+  document.querySelectorAll("#gallery .card").forEach(card=>{
+    const tags=(card.dataset.tags||"").toLowerCase().split(" ");
+    const mb=toMB(parseInt(card.dataset.size||0));
+    const done=card.classList.contains("done");
 
-function applyCardFilters() {
-  const tagQ  = document.getElementById("tagFilterInput").value;
-  const hideDone = document.getElementById("toggleHideDone").checked;
-  const auto  = document.getElementById("toggleAutoApply").checked;
-  let shown=0, hidden=0;
+    let tagOk=true;
+    if(q.must.length) tagOk=q.must.every(t=>tags.includes(t));
+    if(tagOk&&q.excl.length) tagOk=!q.excl.some(t=>tags.includes(t));
+    if(tagOk&&q.opt.length) tagOk=q.opt.some(t=>tags.includes(t));
 
-  allCards.forEach(card => {
-    const tagOk  = cardMatchesTagFilter(card, tagQ);
-    const sizeOk = cardMatchesSizeFilter(card);
-    const isDone = card.classList.contains("done");
-    const visible = tagOk && sizeOk && !(hideDone && isDone);
-
-    card.style.display = visible ? "" : "none";
-
-    if (visible) {
-      shown++;
-      if (auto && tagOk && sizeOk) {
-        const cb = card.querySelector(".card-check");
-        if (cb) cb.checked = true;
-      }
-    } else {
-      hidden++;
-      const cb = card.querySelector(".card-check");
-      if (cb) cb.checked = false;
-    }
+    const sizeOk=mb===0||(mb>=minMB&&mb<=maxMB);
+    const show=tagOk&&sizeOk&&!(hideDone&&done);
+    card.style.display=show?"":"none";
+    show?shown++:hidden++;
   });
 
-  showToast(`✅ Filter diterapkan: ${shown} tampil, ${hidden} disembunyikan`);
+  if(tagQ||minMB>0||maxMB<9999) toast(`Filter: ${shown} tampil, ${hidden} disembunyikan`);
 }
 
-function applyHideDone() {
-  if (document.getElementById("toggleHideDone").checked) applyCardFilters();
+function toggleAdv(){
+  const p=document.getElementById("advPanel"),t=document.getElementById("advToggle");
+  const o=p.classList.toggle("open");
+  t.classList.toggle("open",o);
 }
 
-/* ══════════════════════════════════════════════════════
-   SELECTION & BATCH DOWNLOAD
-══════════════════════════════════════════════════════ */
-function selectAll() {
-  allCards.forEach(c => { if (c.style.display !== "none") { const cb = c.querySelector(".card-check"); if(cb) cb.checked=true; } });
-  showToast("☑ Semua dipilih");
+/* ═══════════════════════════
+   SELECT & BATCH DL
+═══════════════════════════ */
+function selectAll(){
+  document.querySelectorAll("#gallery .card").forEach(c=>{
+    if(c.style.display!=="none"){const cb=c.querySelector(".card-cb");if(cb)cb.checked=true;}
+  });
+  toast("☑ Semua dipilih");
 }
-function deselectAll() {
-  allCards.forEach(c => { const cb = c.querySelector(".card-check"); if(cb) cb.checked=false; });
-  showToast("☐ Seleksi dibatalkan");
+function deselectAll(){
+  document.querySelectorAll("#gallery .card .card-cb").forEach(cb=>cb.checked=false);
+  toast("☐ Seleksi dibatalkan");
 }
-
-async function downloadSelected() {
-  const selected = allCards.filter(c => { const cb = c.querySelector(".card-check"); return cb && cb.checked; });
-  if (!selected.length) { showToast("⚠️ Pilih gambar dulu!"); return; }
-  showToast(`⬇️ Mengunduh ${selected.length} gambar…`, 3000);
-  let count = 0;
-  for (const card of selected) {
-    if (!card.dataset.fileUrl) continue;
-    await delay(300 * count);
-    triggerDownload(card.dataset.fileUrl, card.dataset.fileName);
-    markDownloaded(card);
-    count++;
+async function downloadSelected(){
+  const sel=[...document.querySelectorAll("#gallery .card")].filter(c=>{const cb=c.querySelector(".card-cb");return cb&&cb.checked;});
+  if(!sel.length){ toast("⚠️ Pilih gambar dulu!"); return; }
+  toast(`⬇️ Mengunduh ${sel.length} gambar…`,4000);
+  for(let i=0;i<sel.length;i++){
+    if(!sel[i].dataset.url) continue;
+    await new Promise(r=>setTimeout(r,i===0?0:500));
+    await dlCard(sel[i]);
   }
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function triggerDownload(url, filename) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.target = "_blank";
+/* ═══════════════════════════
+   DOWNLOAD (blob fix)
+═══════════════════════════ */
+function dlCard(card){
+  const url=card.dataset.url, name=card.dataset.fname;
+  if(!url){ toast("⚠️ URL tidak tersedia"); return; }
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=name;
+  a.target="_blank";
   document.body.appendChild(a);
   a.click();
   a.remove();
+  toast(`⬇️ ${name}`);
+  markDone(card,url);
 }
 
-function downloadCard(card) {
-  if (!card.dataset.fileUrl) { showToast("⚠️ URL tidak tersedia"); return; }
-  triggerDownload(card.dataset.fileUrl, card.dataset.fileName);
-  markDownloaded(card);
-  showToast(`✅ Mengunduh #${card.dataset.id}`);
-}
-
-function markDownloaded(card) {
-  const url = normalizeUrl(card.dataset.fileUrl);
-  if (!url) return;
-  downloadedSet.add(url);
-  saveDownloaded();
+function markDone(card,url){
+  downloadedSet.add(norm(url)); saveDL();
   card.classList.add("done");
-  // Add done badge if not present
-  const thumb = card.querySelector(".card-thumb");
-  if (thumb && !thumb.querySelector(".badge-done")) {
-    const b = document.createElement("span");
-    b.className = "badge badge-done";
-    b.textContent = "✓ DL";
-    thumb.appendChild(b);
+  const th=card.querySelector(".card-thumb");
+  if(!th.querySelector(".badge-done")){
+    th.querySelector(".badge-size")?.remove();
+    const b=document.createElement("span");
+    b.className="badge badge-done"; b.textContent="✓ DL";
+    th.appendChild(b);
   }
-  updateSettingsStat();
+  updateStat();
 }
 
-/* ══════════════════════════════════════════════════════
+/* ═══════════════════════════
    LIGHTBOX
-══════════════════════════════════════════════════════ */
-function openLightbox(card) {
-  const idx = allCards.indexOf(card);
-  if (idx < 0) return;
-  lbIndex = idx;
-  showLb(idx);
-  document.getElementById("lightbox").classList.add("open");
-  document.body.style.overflow = "hidden";
-}
+═══════════════════════════ */
+function openLb(idx){ lbIdx=idx; showLb(idx); document.getElementById("lb").classList.add("open"); document.body.style.overflow="hidden"; }
 
-function showLb(idx) {
-  const card = allCards[idx];
-  if (!card) return;
-  lbIndex = idx;
-
-  const post = allPosts.find(p => String(p.id) === card.dataset.id);
-
-  document.getElementById("lbImg").src = card.dataset.fileUrl || card.querySelector("img")?.src || "";
-  document.getElementById("lbTitle").textContent = `#${card.dataset.id} · ${card.dataset.ext} · ${card.dataset.width}×${card.dataset.height}`;
-
-  const mb = bytesToMB(parseInt(card.dataset.sizeBytes||0));
-  const sizeStr = formatBytes(parseInt(card.dataset.sizeBytes||0)) || "?";
-  document.getElementById("lbMeta").textContent = `Score: ${card.dataset.score} · Fav: ${card.dataset.fav} · Ukuran: ${sizeStr} · Rating: ${ratingLabel(card.dataset.rating)}`;
-
-  // Tag chips
-  const tagChips = document.getElementById("lbTags");
-  tagChips.innerHTML = "";
-  const tags = (card.dataset.tags || "").split(" ").filter(Boolean).slice(0, 40);
-  tags.forEach(t => {
-    const chip = document.createElement("span");
-    chip.className = "lb-tag";
-    chip.textContent = t;
-    chip.onclick = () => { tagInput.value = t + " "; closeLightbox(); startSearch(); };
-    tagChips.appendChild(chip);
+function showLb(idx){
+  const post=curPosts[idx]; if(!post) return;
+  lbIdx=idx;
+  const url=post.file_url||post.large_file_url||post.preview_file_url||"";
+  document.getElementById("lbImg").src=url;
+  document.getElementById("lbTitle").textContent=`#${post.id} · ${(post.file_ext||"").toUpperCase()} · ${post.image_width}×${post.image_height}`;
+  document.getElementById("lbMeta").textContent=`⭐${post.score}  ♡${post.fav_count}  ${fmtBytes(post.file_size)||""}  [${rlbl(post.rating)}]`;
+  const tc=document.getElementById("lbTags"); tc.innerHTML="";
+  (post.tag_string||"").split(" ").filter(Boolean).slice(0,50).forEach(t=>{
+    const b=document.createElement("button");
+    b.className="lb-tag"; b.textContent=t;
+    b.onclick=()=>{ tagEl.value=t+" "; closeLb(); startSearch(); };
+    tc.appendChild(b);
   });
 }
 
-function lbNav(dir) {
-  const newIdx = lbIndex + dir;
-  if (newIdx < 0 || newIdx >= allCards.length) return;
-  showLb(newIdx);
-}
+function lbNav(dir){ const n=lbIdx+dir; if(n>=0&&n<curPosts.length) showLb(n); }
+function lbDl(){ const c=document.querySelectorAll("#gallery .card")[lbIdx]; if(c) dlCard(c); }
+function lbOpen(){ const p=curPosts[lbIdx]; if(p) window.open(`https://danbooru.donmai.us/posts/${p.id}`,"_blank"); }
+function closeLb(){ document.getElementById("lb").classList.remove("open"); document.body.style.overflow=""; document.getElementById("lbImg").src=""; }
+function lbBgClick(e){ if(e.target===document.getElementById("lb")) closeLb(); }
 
-function lbDownload() {
-  const card = allCards[lbIndex];
-  if (card) downloadCard(card);
-}
-function lbOpenFull() {
-  const card = allCards[lbIndex];
-  if (card) window.open(`https://danbooru.donmai.us/posts/${card.dataset.id}`, "_blank");
-}
-
-function closeLightbox() {
-  document.getElementById("lightbox").classList.remove("open");
-  document.body.style.overflow = "";
-  document.getElementById("lbImg").src = "";
-}
-function closeLb(e) {
-  if (e.target === document.getElementById("lightbox")) closeLightbox();
-}
-
-document.addEventListener("keydown", e => {
-  if (!document.getElementById("lightbox").classList.contains("open")) return;
-  if (e.key === "ArrowLeft")  lbNav(-1);
-  if (e.key === "ArrowRight") lbNav(+1);
-  if (e.key === "Escape")     closeLightbox();
+document.addEventListener("keydown",e=>{
+  if(!document.getElementById("lb").classList.contains("open")) return;
+  if(e.key==="ArrowLeft") lbNav(-1);
+  if(e.key==="ArrowRight") lbNav(+1);
+  if(e.key==="Escape") closeLb();
 });
 
-/* ══════════════════════════════════════════════════════
-   ADVANCED TOGGLE
-══════════════════════════════════════════════════════ */
-function toggleAdv() {
-  const panel  = document.getElementById("advPanel");
-  const toggle = document.getElementById("advToggle");
-  const open   = panel.classList.toggle("open");
-  toggle.classList.toggle("open", open);
-}
-
-/* ══════════════════════════════════════════════════════
-   SETTINGS PANEL
-══════════════════════════════════════════════════════ */
-function toggleSettings() {
-  settingsOpen = !settingsOpen;
-  document.getElementById("settingsPanel").classList.toggle("open", settingsOpen);
-  updateSettingsStat();
-}
-document.addEventListener("click", e => {
-  if (settingsOpen && !document.getElementById("settingsPanel").contains(e.target) && e.target !== document.getElementById("fabBtn")) {
-    settingsOpen = false;
-    document.getElementById("settingsPanel").classList.remove("open");
+/* ═══════════════════════════
+   SETTINGS
+═══════════════════════════ */
+function toggleSettings(){ settingsOpen=!settingsOpen; document.getElementById("settingsPanel").classList.toggle("open",settingsOpen); updateStat(); }
+document.addEventListener("click",e=>{
+  if(settingsOpen&&!document.getElementById("settingsPanel").contains(e.target)&&e.target!==document.getElementById("fabBtn")){
+    settingsOpen=false; document.getElementById("settingsPanel").classList.remove("open");
   }
 });
-function updateSettingsStat() {
-  document.getElementById("settingsStat").innerHTML =
-    `Total DL tercatat: <b>${downloadedSet.size}</b> URL`;
-}
+function updateStat(){ document.getElementById("settingsStat").innerHTML=`DL tercatat: <b>${downloadedSet.size}</b> URL`; }
 
-/* ══════════════════════════════════════════════════════
-   HISTORY EXPORT / IMPORT / CLEAR
-══════════════════════════════════════════════════════ */
-function exportHistory() {
-  const data = { app:"Danbooru Fetcher v2", exported: new Date().toISOString(), count: downloadedSet.size, urls: [...downloadedSet] };
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:"application/json"}));
-  a.download = `danbooru_history_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast(`📤 Export selesai! ${downloadedSet.size} URL`);
+function exportHistory(){
+  const d={app:"Danbooru Fetcher",exported:new Date().toISOString(),count:downloadedSet.size,urls:[...downloadedSet]};
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));
+  a.download=`danbooru_history_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast(`📤 Export: ${downloadedSet.size} URL`);
 }
-
-function importHistory() {
-  const input = document.createElement("input");
-  input.type = "file"; input.accept = ".json,application/json";
-  input.onchange = e => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const parsed = JSON.parse(ev.target.result);
-        const items  = Array.isArray(parsed) ? parsed : (parsed.urls || []);
-        let added = 0;
-        items.forEach(u => { if (!downloadedSet.has(u)) { downloadedSet.add(u); added++; } });
-        saveDownloaded();
-        // Refresh done marks
-        allCards.forEach(card => {
-          if (downloadedSet.has(normalizeUrl(card.dataset.fileUrl))) {
-            markDownloaded(card);
-          }
-        });
-        updateSettingsStat();
-        showToast(`📥 Import selesai! +${added} URL baru`);
-      } catch { showToast("⚠️ File tidak valid"); }
+function importHistory(){
+  const inp=document.createElement("input"); inp.type="file"; inp.accept=".json";
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const p=JSON.parse(ev.target.result);
+        const items=Array.isArray(p)?p:(p.urls||[]);
+        let added=0;
+        items.forEach(u=>{ if(!downloadedSet.has(u)){downloadedSet.add(u);added++;} });
+        saveDL();
+        document.querySelectorAll("#gallery .card").forEach(c=>{ if(downloadedSet.has(norm(c.dataset.url))) markDone(c,c.dataset.url); });
+        toast(`📥 Import: +${added} URL`); updateStat();
+      }catch{ toast("⚠️ File tidak valid"); }
     };
-    reader.readAsText(file);
+    r.readAsText(f);
   };
-  input.click();
+  inp.click();
+}
+function clearHistory(){
+  if(!confirm(`Hapus ${downloadedSet.size} riwayat?`)) return;
+  downloadedSet.clear(); saveDL();
+  document.querySelectorAll("#gallery .card").forEach(c=>{ c.classList.remove("done"); c.querySelector(".badge-done")?.remove(); });
+  updateStat(); toast("🗑️ Riwayat dihapus");
 }
 
-function clearHistory() {
-  if (!confirm(`Hapus semua ${downloadedSet.size} riwayat download?`)) return;
-  downloadedSet.clear();
-  saveDownloaded();
-  allCards.forEach(card => {
-    card.classList.remove("done");
-    card.querySelector(".badge-done")?.remove();
-  });
-  updateSettingsStat();
-  showToast("🗑️ Riwayat dihapus");
-}
-
-/* ══════════════════════════════════════════════════════
+/* ═══════════════════════════
    INIT
-══════════════════════════════════════════════════════ */
+═══════════════════════════ */
 loadPrefs();
-updateSettingsStat();
-// Auto search on load
+updateStat();
+setGrid("s");
 startSearch();
-
-// Enter key on tag input
-tagInput.addEventListener("keydown", e => {
-  if (e.key === "Enter" && acActive < 0) { e.preventDefault(); startSearch(); closeAc(); }
-});
 </script>
 </body>
 </html>
