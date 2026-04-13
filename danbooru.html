@@ -340,7 +340,11 @@ select.ctrl:focus{box-shadow:var(--shadow-sm)}
 
 <button class="fab" id="fabBtn" onclick="toggleSettings()">⚙️</button>
 <div class="settings-panel" id="settingsPanel">
-  <div class="settings-title">⚙️ Riwayat Download</div>
+  <div class="settings-title">⚙️ Settings</div>
+  <div class="settings-stat" id="gmStat">—</div>
+  <button class="btn-sm btn-ink" onclick="installBridge()" style="width:100%" id="btnInstallBridge">📦 Install GM Bridge</button>
+  <div style="height:1px;background:#eee"></div>
+  <div class="settings-title" style="font-size:.78rem">Riwayat Download</div>
   <div class="settings-stat" id="settingsStat">—</div>
   <button class="btn-sm btn-lime"   onclick="exportHistory()" style="width:100%">📤 Export JSON</button>
   <button class="btn-sm btn-white"  onclick="importHistory()" style="width:100%">📥 Import JSON</button>
@@ -568,7 +572,7 @@ function buildDlUrl(post){
   const md5   = post.md5||"";
   const ext   = post.file_ext||"jpg";
   const dir   = md5.length>=4?`${md5.slice(0,2)}/${md5.slice(2,4)}`:"00/00";
-  const chars = (post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).join("_");
+  const chars = (post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,"")).join("_");
   const copy  = (post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1).join("_");
   const arts  = (post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
   const drawn = arts.length?"drawn_by_"+arts.join("_"):"";
@@ -578,7 +582,7 @@ function buildDlUrl(post){
 }
 
 function buildFname(post){
-  const chars  =(post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).join("_");
+  const chars  =(post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,"")).join("_");
   const copy   =(post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1).join("_");
   const artists=(post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
   const drawn  =artists.length?"drawn_by_"+artists.join("_"):"";
@@ -716,12 +720,20 @@ async function downloadSelected(){
 function dlCard(card){
   const dlUrl=card.dataset.dlurl||card.dataset.url;
   const url  =card.dataset.url;
+  const name =card.dataset.fname;
   if(!dlUrl){ toast("⚠️ URL tidak tersedia"); return; }
-  const a=document.createElement("a");
-  a.href=dlUrl;
-  document.body.appendChild(a); a.click(); a.remove();
-  toast(`⬇️ ${card.dataset.fname}`);
-  markDone(card,url);
+  if(gmAvail()){
+    window._GM_dl(dlUrl, name,
+      ()=>{ markDone(card,url); toast(`⬇️ ${name}`); },
+      (e)=>{ toast(`❌ GM error: ${(e&&e.error)||"?"}`); }
+    );
+  } else {
+    const a=document.createElement("a");
+    a.href=dlUrl;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast(`⬇️ ${name}`);
+    markDone(card,url);
+  }
 }
 
 function markDone(card,url){
@@ -772,9 +784,73 @@ document.addEventListener("keydown",e=>{
 });
 
 /* ═══════════════════════════
+   GM BRIDGE (unsafeWindow._GM_dl)
+═══════════════════════════ */
+const GM_BRIDGE_SRC=`// ==UserScript==
+// @name         Danbooru Fetcher — GM Bridge
+// @namespace    https://kur0yami.github.io/
+// @version      1.0.0
+// @description  Expose GM_download ke Danbooru Fetcher HTML tool
+// @match        file://*danbooru*.html
+// @match        file://*danbooru-1*
+// @match        https://kur0yami.github.io/HTML-TOOL/danbooru-1-4.html
+// @grant        GM_download
+// @grant        unsafeWindow
+// @connect      cdn.donmai.us
+// @connect      danbooru.donmai.us
+// @connect      safebooru.donmai.us
+// @run-at       document-end
+// ==/UserScript==
+(function(){
+"use strict";
+unsafeWindow._GM_dl = function(url, name, onSuccess, onError){
+  GM_download({
+    url:    url,
+    name:   name,
+    saveAs: false,
+    onload:  function(){ if(typeof onSuccess==="function") onSuccess(); },
+    onerror: function(e){ if(typeof onError==="function") onError(e); }
+  });
+};
+console.log("[GM Bridge] _GM_dl injected →", unsafeWindow._GM_dl);
+})();`;
+
+function gmAvail(){ return typeof window._GM_dl==="function"; }
+
+// Poll deteksi bridge aktif setelah load (max 5 detik)
+(function pollBridge(){
+  let t=0;
+  const iv=setInterval(()=>{
+    if(gmAvail()){ clearInterval(iv); updateGMStat(); toast("✅ GM Bridge aktif!",2000); return; }
+    if(++t>=50) clearInterval(iv);
+  },100);
+}());
+
+function updateGMStat(){
+  const el=document.getElementById("gmStat");
+  const btn=document.getElementById("btnInstallBridge");
+  if(!el) return;
+  if(gmAvail()){
+    el.innerHTML=`<span style="color:#4ade80">●</span> GM Bridge: <b>Aktif</b> — silent download ✅`;
+    if(btn) btn.style.display="none";
+  } else {
+    el.innerHTML=`<span style="color:#f87171">●</span> GM Bridge: <b>Belum aktif</b><br><small style="color:#aaa">Install userscript → reload</small>`;
+    if(btn) btn.style.display="";
+  }
+}
+
+function installBridge(){
+  const blob=new Blob([GM_BRIDGE_SRC],{type:"text/javascript"});
+  const url=URL.createObjectURL(blob);
+  window.open(url,"_blank");
+  setTimeout(()=>URL.revokeObjectURL(url),8000);
+  toast("📦 Install di script manager → lalu reload halaman ini",5000);
+}
+
+/* ═══════════════════════════
    SETTINGS
 ═══════════════════════════ */
-function toggleSettings(){ settingsOpen=!settingsOpen; document.getElementById("settingsPanel").classList.toggle("open",settingsOpen); updateStat(); }
+function toggleSettings(){ settingsOpen=!settingsOpen; document.getElementById("settingsPanel").classList.toggle("open",settingsOpen); updateStat(); updateGMStat(); }
 document.addEventListener("click",e=>{
   if(settingsOpen&&!document.getElementById("settingsPanel").contains(e.target)&&e.target!==document.getElementById("fabBtn")){
     settingsOpen=false; document.getElementById("settingsPanel").classList.remove("open");
@@ -822,6 +898,7 @@ function clearHistory(){
 ═══════════════════════════ */
 loadPrefs();
 updateStat();
+updateGMStat();
 setGrid("s");
 startSearch();
 </script>
