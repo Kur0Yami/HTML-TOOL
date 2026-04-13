@@ -572,24 +572,26 @@ function buildDlUrl(post){
   const md5   = post.md5||"";
   const ext   = post.file_ext||"jpg";
   const dir   = md5.length>=4?`${md5.slice(0,2)}/${md5.slice(2,4)}`:"00/00";
-  const chars = (post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,"")).join("_");
-  const copy  = (post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1).join("_");
-  const arts  = (post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
-  const drawn = arts.length?"drawn_by_"+arts.join("_"):"";
-  const parts = [chars,copy,drawn].filter(Boolean);
-  const fname = parts.length?`__${parts.join("_")}__${md5}.${ext}`:`${md5}.${ext}`;
+  const charArr = (post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,""));
+  const chars   = charArr.join("_and_");
+  const copy    = (post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1)[0]||"";
+  const arts    = (post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
+  const drawn   = arts.length?"drawn_by_"+arts.join("_"):"";
+  const parts   = [chars, copy, drawn].filter(Boolean);
+  const fname   = parts.length?`__${parts.join("__")}__${md5}.${ext}`:`${md5}.${ext}`;
   return `https://cdn.donmai.us/original/${dir}/${fname}?download=1`;
 }
 
 function buildFname(post){
-  const chars  =(post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,"")).join("_");
-  const copy   =(post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1).join("_");
-  const artists=(post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
-  const drawn  =artists.length?"drawn_by_"+artists.join("_"):"";
-  const md5    =post.md5||String(post.id);
-  const ext    =post.file_ext||"jpg";
-  const parts  =[chars,copy,drawn].filter(Boolean);
-  return(parts.length?`__${parts.join("_")}__`:"")+`${md5}.${ext}`;
+  const charArr =(post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,""));
+  const chars   =charArr.join("_and_");
+  const copy    =(post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1)[0]||"";
+  const artists =(post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
+  const drawn   =artists.length?"drawn_by_"+artists.join("_"):"";
+  const md5     =post.md5||String(post.id);
+  const ext     =post.file_ext||"jpg";
+  const parts   =[chars,copy,drawn].filter(Boolean);
+  return(parts.length?`__${parts.join("__")}__`:"")+`${md5}.${ext}`;
 }
 
 function makeCard(post,idx){
