@@ -132,6 +132,20 @@ select.ctrl:focus{box-shadow:var(--shadow-sm)}
 }
 .thumb-dl:hover{background:var(--lime);border-color:#111;color:#111;transform:scale(1.15)}
 
+/* RIS button on card */
+.thumb-ris{
+  position:absolute;bottom:4px;right:34px;z-index:15;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(0,0,0,.7);border:1.5px solid rgba(255,255,255,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;cursor:pointer;
+  transition:background .15s,transform .12s;
+  color:#fff;user-select:none;
+}
+.thumb-ris:hover{background:#0073ff;border-color:#005ecc;color:#fff;transform:scale(1.15)}
+.card-ris-wrap{position:absolute;bottom:34px;right:4px;z-index:20}
+.card-ris-wrap .ris-menu{bottom:0;left:auto;right:0;transform:none}
+
 /* Checkbox */
 .card-cb{position:absolute;top:4px;left:4px;z-index:15;width:15px;height:15px;cursor:pointer;accent-color:var(--lime)}
 
@@ -205,6 +219,57 @@ select.ctrl:focus{box-shadow:var(--shadow-sm)}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#bbb;border-radius:10px}
+
+/* RIS DROPDOWN */
+.ris-wrap{position:relative;display:inline-block}
+.ris-menu{
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#fff;border:var(--border);border-radius:10px;
+  box-shadow:var(--shadow);min-width:148px;z-index:9999;
+  display:none;flex-direction:column;overflow:hidden;
+}
+.ris-menu.open{display:flex}
+.ris-menu a{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 12px;font-family:var(--font);font-weight:700;font-size:.78rem;
+  color:var(--ink);text-decoration:none;border-bottom:1.5px solid #f0f0f0;
+  transition:background .1s;
+}
+.ris-menu a:last-child{border-bottom:none}
+.ris-menu a:hover{background:var(--lime)}
+.ris-menu a .ri{font-size:14px}
+
+/* SEARCH TABS */
+.search-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #eee}
+.search-tab{padding:7px 14px;font-family:var(--font);font-weight:800;font-size:.78rem;cursor:pointer;border:none;background:none;color:#aaa;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s}
+.search-tab.active{color:var(--ink);border-bottom-color:var(--ink)}
+.search-pane{display:none}.search-pane.active{display:block}
+
+/* DROPZONE */
+.dropzone{
+  border:2.5px dashed #bbb;border-radius:10px;
+  background:#fafafa;text-align:center;padding:18px 10px;cursor:pointer;
+  transition:border-color .15s,background .15s;position:relative;
+}
+.dropzone.drag{border-color:#0073ff;background:#e8f4ff}
+.dropzone.has-img{border-style:solid;border-color:#4ade80;background:#f0fff4;padding:10px}
+.dz-icon{font-size:2rem;margin-bottom:6px}
+.dz-label{font-weight:800;font-size:.82rem;color:#555}
+.dz-sub{font-size:.72rem;color:#aaa;margin-top:3px}
+.dz-preview{display:flex;align-items:center;gap:10px}
+.dz-preview img{width:64px;height:64px;object-fit:cover;border-radius:7px;border:2px solid #4ade80}
+.dz-preview-info{text-align:left;flex:1}
+.dz-preview-name{font-weight:800;font-size:.8rem;word-break:break-all}
+.dz-preview-size{font-size:.7rem;color:#aaa;margin-top:2px}
+.dz-clear{font-size:.7rem;color:#f87171;font-weight:700;cursor:pointer;margin-top:4px;display:inline-block}
+.dz-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.btn-imgsearch{padding:10px 20px;background:var(--ink);color:var(--lime);border:var(--border);border-radius:8px;font-family:var(--font-h);font-size:.9rem;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .1s,box-shadow .1s;white-space:nowrap;margin-top:8px;width:100%}
+.btn-imgsearch:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--lime2)}
+.btn-imgsearch:active{transform:translate(2px,2px);box-shadow:none}
+.btn-imgsearch:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:var(--shadow-sm)!important}
+
+/* IQDB RESULT SCORE badge */
+.badge-score{position:absolute;top:4px;right:4px;z-index:10;pointer-events:none;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:20px;border:1.5px solid #111;line-height:1.4;background:#fff}
 </style>
 </head>
 <body>
@@ -218,36 +283,62 @@ select.ctrl:focus{box-shadow:var(--shadow-sm)}
 
   <!-- SEARCH -->
   <div class="search-wrap">
-    <div class="search-row">
-      <div class="tag-wrap">
-        <label class="field-label" for="tagInput">🏷️ Tags (spasi=AND, -=exclude)</label>
-        <input type="text" id="tagInput" placeholder="arknights 1girl …" autocomplete="off" value="wuthering_waves">
-        <div class="ac-box" id="acBox"></div>
-      </div>
+    <div class="search-tabs">
+      <button class="search-tab active" id="tab-tag" onclick="switchTab('tag')">🏷️ Tag Search</button>
+      <button class="search-tab" id="tab-img" onclick="switchTab('img')">🖼️ Cari Gambar</button>
+    </div>
 
-      <div class="ctrl-group">
-        <label class="field-label">📊 Urut</label>
-        <select id="orderInput" class="ctrl">
-          <option value="">Terbaru</option>
-          <option value="order:score">⭐ Score</option>
-          <option value="order:favcount">♡ Favorit</option>
-          <option value="order:rank">🔥 Trending</option>
-          <option value="order:views">👁 Views</option>
-        </select>
+    <!-- TAG PANE -->
+    <div class="search-pane active" id="pane-tag">
+      <div class="search-row">
+        <div class="tag-wrap">
+          <label class="field-label" for="tagInput">🏷️ Tags (spasi=AND, -=exclude)</label>
+          <input type="text" id="tagInput" placeholder="arknights 1girl …" autocomplete="off" value="wuthering_waves">
+          <div class="ac-box" id="acBox"></div>
+        </div>
+        <div class="ctrl-group">
+          <label class="field-label">📊 Urut</label>
+          <select id="orderInput" class="ctrl">
+            <option value="">Terbaru</option>
+            <option value="order:score">⭐ Score</option>
+            <option value="order:favcount">♡ Favorit</option>
+            <option value="order:rank">🔥 Trending</option>
+            <option value="order:views">👁 Views</option>
+          </select>
+        </div>
+        <div class="ctrl-group">
+          <label class="field-label">🔞 Rating</label>
+          <select id="ratingInput" class="ctrl">
+            <option value="rating:general">General ✅</option>
+            <option value="rating:sensitive">Sensitive 🟡</option>
+            <option value="rating:questionable">Questionable 🟠</option>
+            <option value="rating:explicit">Explicit 🔴</option>
+            <option value="">Semua</option>
+          </select>
+        </div>
+        <button class="btn-search" onclick="startSearch()">🔍 Cari</button>
       </div>
+    </div>
 
-      <div class="ctrl-group">
-        <label class="field-label">🔞 Rating</label>
-        <select id="ratingInput" class="ctrl">
-          <option value="rating:general">General ✅</option>
-          <option value="rating:sensitive">Sensitive 🟡</option>
-          <option value="rating:questionable">Questionable 🟠</option>
-          <option value="rating:explicit">Explicit 🔴</option>
-          <option value="">Semua</option>
-        </select>
+    <!-- IMAGE SEARCH PANE -->
+    <div class="search-pane" id="pane-img">
+      <div class="dropzone" id="dropzone">
+        <input type="file" class="dz-input" id="dzFile" accept="image/*">
+        <div id="dzEmpty">
+          <div class="dz-icon">🖼️</div>
+          <div class="dz-label">Drop gambar di sini atau klik untuk pilih</div>
+          <div class="dz-sub">JPG / PNG / WEBP · maks 8MB</div>
+        </div>
+        <div id="dzPreview" style="display:none" class="dz-preview">
+          <img id="dzThumb" src="" alt="">
+          <div class="dz-preview-info">
+            <div class="dz-preview-name" id="dzName">—</div>
+            <div class="dz-preview-size" id="dzSize">—</div>
+            <span class="dz-clear" onclick="clearDz(event)">✕ Ganti gambar</span>
+          </div>
+        </div>
       </div>
-
-      <button class="btn-search" onclick="startSearch()">🔍 Cari</button>
+      <button class="btn-imgsearch" id="btnImgSearch" onclick="doImageSearch()" disabled>🔍 Cari Gambar Serupa di Danbooru</button>
     </div>
   </div>
 
@@ -331,6 +422,10 @@ select.ctrl:focus{box-shadow:var(--shadow-sm)}
     <div class="lb-acts">
       <button class="btn-sm btn-lime"  onclick="lbDl()">⬇️ Unduh</button>
       <button class="btn-sm btn-white" onclick="lbOpen()">🔗 Danbooru</button>
+      <div class="ris-wrap">
+        <button class="btn-sm btn-white" id="lbRisBtn" onclick="toggleRisLb(event)">🔍 RIS ▾</button>
+        <div class="ris-menu" id="lbRisMenu"></div>
+      </div>
       <button class="btn-sm btn-white" onclick="closeLb()">✕ Tutup</button>
     </div>
   </div>
@@ -377,6 +472,7 @@ let acTimer    = null;
 let acData     = [];
 let acSel      = -1;
 let settingsOpen=false;
+let imgFile    = null; // for image search
 
 /* ═══════════════════════════
    PERSIST
@@ -404,6 +500,123 @@ function toast(msg,dur=2500){
   const c=document.getElementById("toast-ct"),t=document.createElement("div");
   t.className="toast"; t.textContent=msg; c.appendChild(t);
   setTimeout(()=>t.remove(),dur+300);
+}
+
+/* ═══════════════════════════
+   SEARCH TAB SWITCH
+═══════════════════════════ */
+function switchTab(tab){
+  ["tag","img"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("active",t===tab);
+    document.getElementById("pane-"+t).classList.toggle("active",t===tab);
+  });
+}
+
+/* ═══════════════════════════
+   DROPZONE / IMAGE SEARCH
+═══════════════════════════ */
+(function initDz(){
+  const dz=document.getElementById("dropzone");
+  const fi=document.getElementById("dzFile");
+
+  // drag events
+  dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});
+  dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
+  dz.addEventListener("drop",e=>{
+    e.preventDefault(); dz.classList.remove("drag");
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith("image/")) setDzFile(f);
+  });
+  // paste anywhere
+  document.addEventListener("paste",e=>{
+    const items=[...e.clipboardData.items];
+    const img=items.find(i=>i.type.startsWith("image/"));
+    if(img){ switchTab("img"); setDzFile(img.getAsFile()); }
+  });
+  fi.addEventListener("change",()=>{ if(fi.files[0]) setDzFile(fi.files[0]); });
+})();
+
+function setDzFile(f){
+  if(f.size>8*1024*1024){ toast("⚠️ Gambar terlalu besar (maks 8MB)"); return; }
+  imgFile=f;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    document.getElementById("dzThumb").src=ev.target.result;
+    document.getElementById("dzName").textContent=f.name||"clipboard.png";
+    document.getElementById("dzSize").textContent=fmtBytes(f.size)||"";
+    document.getElementById("dzEmpty").style.display="none";
+    document.getElementById("dzPreview").style.display="flex";
+    document.getElementById("dropzone").classList.add("has-img");
+    document.getElementById("btnImgSearch").disabled=false;
+  };
+  reader.readAsDataURL(f);
+}
+
+function clearDz(e){
+  e.stopPropagation();
+  imgFile=null;
+  document.getElementById("dzFile").value="";
+  document.getElementById("dzThumb").src="";
+  document.getElementById("dzEmpty").style.display="";
+  document.getElementById("dzPreview").style.display="none";
+  document.getElementById("dropzone").classList.remove("has-img");
+  document.getElementById("btnImgSearch").disabled=true;
+}
+
+async function doImageSearch(){
+  if(!imgFile){ toast("⚠️ Pilih gambar dulu"); return; }
+  const btn=document.getElementById("btnImgSearch");
+  btn.disabled=true; btn.textContent="⏳ Mencari…";
+
+  const g=document.getElementById("gallery");
+  g.innerHTML=""; showSkel(g);
+  document.getElementById("pagination").style.display="none";
+  ["statusChip","btnSelAll","btnDesel","btnDlSel"].forEach(id=>document.getElementById(id).style.display="none");
+
+  try{
+    const fd=new FormData();
+    fd.append("search[file]", imgFile, imgFile.name||"image.jpg");
+
+    const res=await fetch("https://danbooru.donmai.us/iqdb_queries.json", {method:"POST", body:fd});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+
+    g.innerHTML="";
+    // data adalah array of {score, post:{...}}
+    const posts=data
+      .filter(r=>r.post)
+      .sort((a,b)=>(b.score||0)-(a.score||0));
+
+    if(!posts.length){
+      g.innerHTML=`<div class="placeholder"><div class="ph-icon">😕</div><h3>Tidak ditemukan</h3><p>Tidak ada gambar serupa di Danbooru.</p></div>`;
+      return;
+    }
+
+    curPosts=posts.map(r=>r.post);
+    curPosts.forEach((post,i)=>{
+      if(!post.file_url&&!post.preview_file_url) return;
+      const card=makeCard(post,i);
+      // tambah badge similarity score
+      const score=posts[i].score;
+      if(score!=null){
+        const b=document.createElement("span");
+        b.className="badge badge-score";
+        b.textContent=`${Math.round(score*100)}%`;
+        card.querySelector(".card-thumb").appendChild(b);
+      }
+      g.appendChild(card);
+    });
+
+    document.getElementById("statusChip").style.display="";
+    document.getElementById("statusChip").innerHTML=`<b>${curPosts.length}</b> hasil serupa`;
+
+    toast(`✅ ${curPosts.length} gambar serupa ditemukan`);
+  }catch(err){
+    g.innerHTML=`<div class="placeholder"><div class="ph-icon">⚠️</div><h3>Gagal</h3><p>${err.message}</p></div>`;
+    toast("❌ "+err.message);
+  }finally{
+    btn.disabled=false; btn.textContent="🔍 Cari Gambar Serupa di Danbooru";
+  }
 }
 
 /* ═══════════════════════════
@@ -572,26 +785,24 @@ function buildDlUrl(post){
   const md5   = post.md5||"";
   const ext   = post.file_ext||"jpg";
   const dir   = md5.length>=4?`${md5.slice(0,2)}/${md5.slice(2,4)}`:"00/00";
-  const charArr = (post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,""));
-  const chars   = charArr.join("_and_");
-  const copy    = (post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1)[0]||"";
-  const arts    = (post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
-  const drawn   = arts.length?"drawn_by_"+arts.join("_"):"";
-  const parts   = [chars, copy, drawn].filter(Boolean);
-  const fname   = parts.length?`__${parts.join("__")}__${md5}.${ext}`:`${md5}.${ext}`;
+  const chars = (post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,"")).join("_");
+  const copy  = (post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1).join("_");
+  const arts  = (post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
+  const drawn = arts.length?"drawn_by_"+arts.join("_"):"";
+  const parts = [chars,copy,drawn].filter(Boolean);
+  const fname = parts.length?`__${parts.join("_")}__${md5}.${ext}`:`${md5}.${ext}`;
   return `https://cdn.donmai.us/original/${dir}/${fname}?download=1`;
 }
 
 function buildFname(post){
-  const charArr =(post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,""));
-  const chars   =charArr.join("_and_");
-  const copy    =(post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1)[0]||"";
-  const artists =(post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
-  const drawn   =artists.length?"drawn_by_"+artists.join("_"):"";
-  const md5     =post.md5||String(post.id);
-  const ext     =post.file_ext||"jpg";
-  const parts   =[chars,copy,drawn].filter(Boolean);
-  return(parts.length?`__${parts.join("__")}__`:"")+`${md5}.${ext}`;
+  const chars  =(post.tag_string_character||"").split(" ").filter(Boolean).slice(0,3).map(t=>t.replace(/_\([^)]+\)$/,"")).join("_");
+  const copy   =(post.tag_string_copyright||"").split(" ").filter(Boolean).slice(0,1).join("_");
+  const artists=(post.tag_string_artist||"").split(" ").filter(Boolean).slice(0,2);
+  const drawn  =artists.length?"drawn_by_"+artists.join("_"):"";
+  const md5    =post.md5||String(post.id);
+  const ext    =post.file_ext||"jpg";
+  const parts  =[chars,copy,drawn].filter(Boolean);
+  return(parts.length?`__${parts.join("_")}__`:"")+`${md5}.${ext}`;
 }
 
 function makeCard(post,idx){
@@ -619,6 +830,8 @@ function makeCard(post,idx){
       <span class="badge badge-top">⭐${fmtN(post.score)} ♡${fmtN(post.fav_count)}</span>
       <span class="badge-rating ${rcls(rating)}">${rlbl(rating)}</span>
       ${blBadge}
+      <div class="thumb-ris" title="Reverse Image Search">🔍</div>
+      <div class="card-ris-wrap"><div class="ris-menu" id="ris-${post.id}"></div></div>
       <div class="thumb-dl" title="Unduh">⬇</div>
     </div>
     <div class="card-foot">
@@ -639,6 +852,19 @@ function makeCard(post,idx){
 
   // Download btn — always visible, don't bubble
   card.querySelector(".thumb-dl").onclick=e=>{ e.stopPropagation(); dlCard(card); };
+
+  // RIS btn
+  card.querySelector(".thumb-ris").onclick=e=>{
+    e.stopPropagation();
+    const menu=document.getElementById(`ris-${post.id}`);
+    const isOpen=menu.classList.contains("open");
+    closeAllRis();
+    if(!isOpen){
+      const imgUrl=post.file_url||post.large_file_url||post.preview_file_url||"";
+      buildRisMenu(menu, imgUrl);
+      menu.classList.add("open");
+    }
+  };
 
   // Card click → lightbox
   card.onclick=()=>openLb(idx);
@@ -775,8 +1001,55 @@ function showLb(idx){
 function lbNav(dir){ const n=lbIdx+dir; if(n>=0&&n<curPosts.length) showLb(n); }
 function lbDl(){ const c=document.querySelectorAll("#gallery .card")[lbIdx]; if(c) dlCard(c); }
 function lbOpen(){ const p=curPosts[lbIdx]; if(p) window.open(`https://danbooru.donmai.us/posts/${p.id}`,"_blank"); }
-function closeLb(){ document.getElementById("lb").classList.remove("open"); document.body.style.overflow=""; document.getElementById("lbImg").src=""; }
+function closeLb(){ document.getElementById("lb").classList.remove("open"); document.body.style.overflow=""; document.getElementById("lbImg").src=""; closeAllRis(); }
 function lbBgClick(e){ if(e.target===document.getElementById("lb")) closeLb(); }
+
+/* ═══════════════════════════
+   REVERSE IMAGE SEARCH
+═══════════════════════════ */
+const RIS_ENGINES=[
+  {name:"SauceNAO", icon:"🍜", fn:u=>`https://saucenao.com/search.php?url=${encodeURIComponent(u)}`},
+  {name:"IQDB",     icon:"🖼️", fn:u=>`https://iqdb.org/?url=${encodeURIComponent(u)}`},
+  {name:"Google",   icon:"🔵", fn:u=>`https://lens.google.com/uploadbyurl?url=${encodeURIComponent(u)}`},
+  {name:"Yandex",   icon:"🔴", fn:u=>`https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(u)}`},
+  {name:"Ascii2d",  icon:"🐄", fn:u=>`https://ascii2d.net/search/url/${encodeURIComponent(u)}`},
+  {name:"TinEye",   icon:"👁️", fn:u=>`https://tineye.com/search?url=${encodeURIComponent(u)}`},
+];
+
+function getRisUrl(){
+  const p=curPosts[lbIdx]; if(!p) return "";
+  return p.file_url||p.large_file_url||p.preview_file_url||"";
+}
+
+function buildRisMenu(menuEl, imgUrl){
+  menuEl.innerHTML="";
+  RIS_ENGINES.forEach(eng=>{
+    const a=document.createElement("a");
+    a.href=eng.fn(imgUrl);
+    a.target="_blank"; a.rel="noopener noreferrer";
+    a.innerHTML=`<span class="ri">${eng.icon}</span>${eng.name}`;
+    a.onclick=e=>{ e.stopPropagation(); closeAllRis(); };
+    menuEl.appendChild(a);
+  });
+}
+
+function toggleRisLb(e){
+  e.stopPropagation();
+  const menu=document.getElementById("lbRisMenu");
+  const isOpen=menu.classList.contains("open");
+  closeAllRis();
+  if(!isOpen){
+    buildRisMenu(menu, getRisUrl());
+    menu.classList.add("open");
+  }
+}
+
+function closeAllRis(){
+  document.querySelectorAll(".ris-menu").forEach(m=>m.classList.remove("open"));
+}
+
+// Close ris when clicking outside
+document.addEventListener("click",()=>closeAllRis());
 
 document.addEventListener("keydown",e=>{
   if(!document.getElementById("lb").classList.contains("open")) return;
