@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorter Injector</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a24; --surface3:#222232;
+    --border:#2a2a3a; --border2:#353550;
+    --accent:#7c6aff; --accent2:#ff6a9b; --text:#e8e8f0; --text-dim:#6b6b80;
+    --green:#4aff9a; --red:#ff4a6a; --yellow:#ffd94a; --cyan:#4afff0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(124,106,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,255,0.02) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+  .glow-orb { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
+  .orb1 { width:400px; height:400px; background:rgba(124,106,255,0.08); top:-80px; right:-80px; }
+  .orb2 { width:300px; height:300px; background:rgba(255,106,155,0.06); bottom:-80px; left:-80px; }
+
+  /* ── Toolbar ── */
+  .toolbar { position:relative; z-index:10; display:flex; align-items:center; gap:10px; padding:10px 20px; background:rgba(17,17,24,0.95); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; backdrop-filter:blur(8px); }
+  .toolbar-brand { font-size:1rem; font-weight:800; letter-spacing:-0.02em; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-right:8px; white-space:nowrap; }
+  .sep { flex:1; }
+  .btn { display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:9px; border:none; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; cursor:pointer; transition:all 0.18s; white-space:nowrap; }
+  .btn-accent { background:rgba(124,106,255,0.15); color:var(--accent); border:1px solid rgba(124,106,255,0.3); }
+  .btn-accent:hover { background:rgba(124,106,255,0.25); }
+  .btn-pink { background:rgba(255,106,155,0.12); color:var(--accent2); border:1px solid rgba(255,106,155,0.3); }
+  .btn-pink:hover { background:rgba(255,106,155,0.22); }
+  .btn-green { background:rgba(74,255,154,0.1); color:var(--green); border:1px solid rgba(74,255,154,0.25); }
+  .btn-green:hover { background:rgba(74,255,154,0.2); }
+  .btn-ghost { background:var(--surface2); color:var(--text-dim); border:1px solid var(--border); }
+  .btn-ghost:hover { color:var(--text); border-color:var(--border2); }
+  .btn-danger { background:rgba(255,74,106,0.08); color:var(--red); border:1px solid rgba(255,74,106,0.2); }
+  .btn-danger:hover { background:rgba(255,74,106,0.18); }
+  .btn-sm { padding:5px 10px; font-size:11px; }
+  .btn-xs { padding:3px 8px; font-size:10px; border-radius:6px; }
+
+  /* ── Main layout ── */
+  .main { position:relative; z-index:1; display:flex; flex:1; overflow:hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar { width:210px; flex-shrink:0; display:flex; flex-direction:column; background:rgba(17,17,24,0.8); border-right:1px solid var(--border); overflow:hidden; }
+  .sidebar-top { padding:10px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .sidebar-search { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:7px; color:var(--text); padding:7px 10px; font-size:12px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.2s; }
+  .sidebar-search:focus { border-color:var(--accent); }
+  .sidebar-search::placeholder { color:var(--text-dim); }
+  .sidebar-checks { display:flex; gap:5px; margin-top:7px; }
+  .franchise-list { overflow-y:auto; flex:1; }
+  .fr-item { display:flex; align-items:center; gap:8px; padding:7px 12px; cursor:pointer; border-left:3px solid transparent; transition:background 0.15s; user-select:none; }
+  .fr-item:hover { background:var(--surface2); }
+  .fr-item.active { background:rgba(124,106,255,0.08); border-left-color:var(--accent); }
+  .fr-item input[type=checkbox] { accent-color:var(--accent); width:13px; height:13px; flex-shrink:0; cursor:pointer; }
+  .fr-name { font-size:11.5px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim); }
+  .fr-item.active .fr-name { color:var(--text); }
+  .fr-badge { font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; background:var(--surface2); border-radius:4px; padding:1px 5px; flex-shrink:0; }
+  .fr-item.active .fr-badge { background:rgba(124,106,255,0.15); color:var(--accent); }
+  .sidebar-empty { padding:20px 12px; text-align:center; color:var(--text-dim); font-size:12px; line-height:1.7; }
+
+  /* ── Panel ── */
+  .panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .panel-header { display:flex; align-items:center; gap:10px; padding:10px 16px; background:rgba(17,17,24,0.6); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+  .panel-title { font-size:14px; font-weight:800; flex:1; letter-spacing:-0.01em; }
+  .char-list { overflow-y:auto; flex:1; padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
+  .char-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; display:flex; gap:10px; align-items:flex-start; transition:border-color 0.18s; }
+  .char-card:hover { border-color:var(--border2); }
+  .char-info { flex:1; min-width:0; }
+  .char-name { font-size:13px; font-weight:700; margin-bottom:4px; }
+  .char-folder { font-size:11px; color:var(--yellow); font-family:'JetBrains Mono',monospace; margin-bottom:6px; word-break:break-all; }
+  .kw-chips { display:flex; flex-wrap:wrap; gap:4px; }
+  .kw-chip { font-size:10px; font-family:'JetBrains Mono',monospace; background:rgba(124,106,255,0.1); border:1px solid rgba(124,106,255,0.2); color:#a99eff; border-radius:10px; padding:2px 7px; }
+  .char-actions { display:flex; gap:4px; flex-shrink:0; }
+  .panel-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--text-dim); }
+  .panel-empty-icon { font-size:2.5rem; opacity:0.3; }
+
+  /* ── Statusbar ── */
+  .statusbar { position:relative; z-index:10; display:flex; align-items:center; gap:10px; padding:7px 20px; background:rgba(17,17,24,0.95); border-top:1px solid var(--border); flex-shrink:0; }
+  .status-text { font-size:11.5px; color:var(--text-dim); flex:1; }
+  .status-text strong { color:var(--text); }
+  .status-flash { font-size:11px; color:var(--green); opacity:0; transition:opacity 0.3s; }
+  .status-flash.show { opacity:1; }
+
+  /* ── Modal ── */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(6px); }
+  .modal { background:var(--surface); border:1px solid var(--border2); border-radius:16px; width:100%; max-width:520px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,0.6); animation:modalIn 0.25s ease; }
+  .modal-wide { max-width:640px; }
+  @keyframes modalIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  .modal-header { display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .modal-header h2 { font-size:14px; font-weight:800; flex:1; }
+  .modal-close { background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:2px; line-height:1; }
+  .modal-close:hover { color:var(--text); }
+  .modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
+  .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid var(--border); flex-shrink:0; }
+
+  /* ── Form ── */
+  .fg { margin-bottom:13px; }
+  .fg label { display:block; font-size:11px; color:var(--text-dim); margin-bottom:5px; letter-spacing:0.05em; text-transform:uppercase; }
+  .fi { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:9px 12px; font-size:13px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.2s; }
+  .fi:focus { border-color:var(--accent); }
+  .fi::placeholder { color:var(--text-dim); }
+  textarea.fi { resize:vertical; min-height:110px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.7; }
+  .frow { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .fhint { font-size:11px; color:var(--text-dim); margin-top:3px; }
+  .falert { padding:8px 12px; border-radius:7px; font-size:12px; margin-bottom:10px; }
+  .falert-error { background:rgba(255,74,106,0.08); border:1px solid rgba(255,74,106,0.2); color:#ff9aaa; }
+  .falert-ok { background:rgba(74,255,154,0.07); border:1px solid rgba(74,255,154,0.2); color:#8affc0; }
+
+  /* Keyword tag input */
+  .tag-wrap { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 8px; display:flex; flex-wrap:wrap; gap:4px; cursor:text; min-height:38px; align-items:center; transition:border-color 0.2s; }
+  .tag-wrap:focus-within { border-color:var(--accent); }
+  .tag-item { display:inline-flex; align-items:center; gap:4px; background:rgba(124,106,255,0.12); border:1px solid rgba(124,106,255,0.25); color:#a99eff; border-radius:12px; padding:2px 8px; font-size:10.5px; font-family:'JetBrains Mono',monospace; }
+  .tag-rm { background:none; border:none; color:rgba(124,106,255,0.5); cursor:pointer; font-size:13px; line-height:1; padding:0; }
+  .tag-rm:hover { color:var(--red); }
+  .tag-new-input { background:none; border:none; color:var(--text); font-size:12px; font-family:'Syne',sans-serif; outline:none; min-width:120px; flex:1; padding:2px 4px; }
+
+  /* Export list */
+  .exp-list { background:var(--surface2); border:1px solid var(--border); border-radius:8px; max-height:200px; overflow-y:auto; }
+  .exp-item { display:flex; align-items:center; gap:8px; padding:7px 12px; }
+  .exp-item:hover { background:var(--surface3); }
+  .exp-item input[type=checkbox] { accent-color:var(--accent); width:13px; height:13px; }
+  .exp-item label { font-size:12px; color:var(--text-dim); cursor:pointer; flex:1; }
+  .exp-cnt { font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+
+  /* Code preview */
+  .code-preview { background:#080810; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#8888a8; line-height:1.7; max-height:120px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+
+  /* Keyword auto-gen */
+  .autokw-box { background:var(--surface2); border:1px solid var(--border2); border-radius:9px; padding:12px 14px; margin-top:8px; animation:fadeIn 0.2s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .autokw-title { font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-dim); margin-bottom:9px; display:flex; align-items:center; justify-content:space-between; }
+  .kw-gen-list { display:flex; flex-direction:column; gap:5px; }
+  .kw-gen-row { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:6px; cursor:pointer; transition:background 0.15s; }
+  .kw-gen-row:hover { background:rgba(124,106,255,0.07); }
+  .kw-gen-row input[type=checkbox] { accent-color:var(--accent); width:13px; height:13px; flex-shrink:0; cursor:pointer; }
+  .kw-gen-label { font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#c4c4e0; flex:1; }
+  .kw-gen-badge { font-size:10px; padding:1px 6px; border-radius:4px; flex-shrink:0; }
+  .badge-name  { background:rgba(124,106,255,0.15); color:#a99eff; }
+  .badge-rev   { background:rgba(255,106,155,0.12); color:#ff9abf; }
+  .badge-short { background:rgba(74,255,154,0.1);   color:#7affa8; }
+  .badge-fr    { background:rgba(255,212,74,0.1);   color:#ffe07a; }
+  .kw-gen-apply { width:100%; margin-top:10px; padding:8px; border-radius:7px; font-size:12px; justify-content:center; }
+  /* Suggest strip */
+  .suggest-strip { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--surface2); border:1px solid var(--green); color:var(--green); padding:10px 16px; border-radius:9px; font-size:12px; font-weight:700; z-index:200; animation:toastIn 0.3s ease; }
+  @keyframes toastIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+
+  @media(max-width:560px) { .sidebar{width:160px} .frow{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="glow-orb orb1"></div>
+<div class="glow-orb orb2"></div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <span class="toolbar-brand">Sorter Injector</span>
+  <button class="btn btn-ghost" onclick="show('loadModal')">📂 Load .sh</button>
+  <button class="btn btn-accent" onclick="openAdd()">＋ Tambah Karakter</button>
+  <button class="btn btn-pink" onclick="show('pasteModal')">📥 Paste Generator</button>
+  <div class="sep"></div>
+  <button class="btn btn-green" onclick="openExport()">💾 Export .sh</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <input class="sidebar-search" type="text" placeholder="🔍 Cari franchise..." id="searchInput" oninput="renderSidebar()"/>
+      <div class="sidebar-checks">
+        <button class="btn btn-xs btn-ghost" onclick="checkAll(true)">✓ All</button>
+        <button class="btn btn-xs btn-ghost" onclick="checkAll(false)">✕ None</button>
+      </div>
+    </div>
+    <div class="franchise-list" id="frList">
+      <div class="sidebar-empty">Load .sh atau<br>tambah karakter dulu</div>
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div class="panel">
+    <div class="panel-header" id="panelHeader" style="display:none">
+      <span class="panel-title" id="panelTitle"></span>
+      <button class="btn btn-accent btn-sm" onclick="openAdd(currentFr)">＋ Karakter Baru</button>
+    </div>
+    <div class="char-list" id="charList">
+      <div class="panel-empty">
+        <div class="panel-empty-icon">📂</div>
+        <span style="font-size:13px">Pilih franchise di sidebar</span>
+        <button class="btn btn-accent" onclick="show('loadModal')">📂 Load .sh untuk mulai</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUSBAR -->
+<div class="statusbar">
+  <span class="status-text" id="statusText">Belum ada data</span>
+  <span class="status-flash" id="flashEl"></span>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- LOAD .sh -->
+<div class="modal-bg" id="loadModal" style="display:none" onclick="bgClose(event,'loadModal')">
+  <div class="modal">
+    <div class="modal-header"><h2>📂 Load File .sh</h2><button class="modal-close" onclick="hide('loadModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Upload file .sh</label><input type="file" accept=".sh" class="fi" id="fileInput" onchange="readFile(event)"/></div>
+      <div style="text-align:center;color:var(--text-dim);font-size:12px;margin:8px 0">— atau paste isi file —</div>
+      <div class="fg"><label>Paste isi .sh</label><textarea class="fi" id="shContent" placeholder="#!/system/bin/sh ..."></textarea></div>
+      <div id="loadAlert"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="hide('loadModal')">Batal</button>
+      <button class="btn btn-accent" onclick="doLoad()">Parse & Load</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASTE GENERATOR -->
+<div class="modal-bg" id="pasteModal" style="display:none" onclick="bgClose(event,'pasteModal')">
+  <div class="modal">
+    <div class="modal-header"><h2>📥 Paste Hasil Generator</h2><button class="modal-close" onclick="hide('pasteModal')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;line-height:1.7">
+        Paste lines dari <strong style="color:var(--text)">franchise_generator.html</strong>. Format:<br>
+        <code style="color:var(--accent);font-size:11px">keyword1|alias:::Franchise/Character</code>
+      </div>
+      <div class="fg"><label>Lines KEYWORD_TABLE</label><textarea class="fi" id="pasteContent" placeholder="# Header komentar (opsional)
+keyword1|alias1:::Franchise/Character
+keyword2|alias2:::Franchise/Character2"></textarea></div>
+      <div id="pasteAlert"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="hide('pasteModal')">Batal</button>
+      <button class="btn btn-pink" onclick="doPaste()">Import Lines</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT -->
+<div class="modal-bg" id="addModal" style="display:none" onclick="bgClose(event,'addModal')">
+  <div class="modal">
+    <div class="modal-header"><h2 id="addTitle">＋ Tambah Karakter</h2><button class="modal-close" onclick="hide('addModal')">✕</button></div>
+    <div class="modal-body">
+      <div id="addAlert"></div>
+      <div class="fg"><label>Franchise *</label><input class="fi" type="text" id="aFr" list="frDl" placeholder="cth: High School DxD" oninput="autoFolder()"/><datalist id="frDl"></datalist></div>
+      <div class="frow">
+        <div class="fg"><label>Nama Karakter</label><input class="fi" type="text" id="aCh" placeholder="cth: Rias Gremory" oninput="autoFolder();suggestKw()"/></div>
+        <div class="fg"><label>Folder Path *</label><input class="fi" type="text" id="aFolder" placeholder="Franchise/Karakter"/></div>
+      </div>
+      <div class="fg">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Keywords * <span style="color:var(--text-dim);text-transform:none;letter-spacing:0">(Enter/koma untuk tambah)</span></span>
+          <button type="button" class="btn btn-xs btn-accent" onclick="autoGenKw()" style="margin-left:8px;flex-shrink:0">⚡ Auto-Generate</button>
+        </label>
+        <div class="tag-wrap" id="tagWrap" onclick="document.getElementById('tagInput').focus()"></div>
+        <div class="fhint">Isi franchise + nama karakter → klik ⚡ Auto-Generate untuk buat keyword otomatis</div>
+      </div>
+      <div id="autokwBox" style="display:none" class="autokw-box">
+        <div class="autokw-title">
+          Pilih keyword yang mau dipakai
+          <span id="autokwCount">0 dipilih</span>
+        </div>
+        <div class="kw-gen-list" id="kwGenList"></div>
+        <button class="btn btn-accent kw-gen-apply" onclick="applyGenKw()">✓ Terapkan yang Dipilih</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="hide('addModal')">Batal</button>
+      <button class="btn btn-accent" id="addSaveBtn" onclick="saveEntry()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT -->
+<div class="modal-bg" id="exportModal" style="display:none" onclick="bgClose(event,'exportModal')">
+  <div class="modal modal-wide">
+    <div class="modal-header"><h2>💾 Export Script .sh</h2><button class="modal-close" onclick="hide('exportModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg">
+        <label>Franchise yang di-export</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="btn btn-xs btn-ghost" onclick="checkExp(true)">✓ Semua</button>
+          <button class="btn btn-xs btn-ghost" onclick="checkExp(false)">✕ Kosongkan</button>
+          <button class="btn btn-xs btn-ghost" onclick="checkExp('sync')">↻ Sama sidebar</button>
+        </div>
+        <div class="exp-list" id="expList"></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px" id="expInfo"></div>
+      <div class="fg"><label>Preview (10 baris pertama)</label><div class="code-preview" id="expPreview">—</div></div>
+      <div id="expAlert"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="copyExport()">⎘ Copy Clipboard</button>
+      <button class="btn btn-ghost" onclick="hide('exportModal')">Batal</button>
+      <button class="btn btn-green" onclick="downloadExport()">⬇ Download .sh</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TEMPLATE ══════════════ -->
+<script id="tmpl" type="text/plain">#!/system/bin/sh
+# ============================================================
+#  MEDIA SORTER v5.0 — MT Manager Edition (FAST)
+#  Arsitektur baru: 1 grep per file, bukan 300+
+#  Kompatibel mksh/ash/sh Android
+# ============================================================
+
+cd "$(dirname "$0")"
+
+DRY_RUN=false
+VERBOSE=false
+MOVE_UNKNOWN=true
+
+LOG_FILE="sorter_log_$(date +%Y%m%d_%H%M%S).txt"
+log() { printf '%s\n' "$1" | tee -a "$LOG_FILE"; }
+
+$DRY_RUN && log "════════ [DRY RUN — tidak ada file dipindah] ════════"
+log "Mulai  : $(date)"
+log "────────────────────────────────────────────────────────"
+
+# ============================================================
+#  TABEL KEYWORD → FOLDER
+# ============================================================
+KEYWORD_TABLE='{{TABLE}}'
+
+# ============================================================
+#  FUNGSI UTAMA: 1 grep per file
+# ============================================================
+get_folder() {
+  local name="$1"
+  local clean
+  clean=$(printf '%s' "$name" \
+    | sed 's/ honkai and [0-9][0-9]* more/ honkai/;s/ and [0-9][0-9]* more//')
+
+  case "$clean" in
+    *"2b"*) case "$clean" in *"nier"*|*"yorha"*|*"automata"*) echo "Nier Automata/2B"; return ;; esac ;;
+    *"9s"*) case "$clean" in *"nier"*|*"yorha"*|*"automata"*) echo "Nier Automata/9S"; return ;; esac ;;
+    *" a2"*|*"a2 "*) case "$clean" in *"nier"*|*"yorha"*|*"automata"*) echo "Nier Automata/A2"; return ;; esac ;;
+  esac
+
+  local match
+  match=$(printf ' %s ' "$clean" \
+    | grep -ioE \
+      '{{PATTERN}}' \
+    | head -1 | tr 'A-Z' 'a-z' | sed 's/^ //;s/ $//')
+
+  [ -z "$match" ] && return
+
+  case "$match" in
+{{CASES}}
+  esac
+}
+
+get_dominant_franchise() {
+  local name="$1"
+  local flist="" seg rest folder fr
+  rest="$name"
+  while true; do
+    seg="${rest%% and *}"
+    folder=$(get_folder "$seg")
+    if [ -n "$folder" ]; then
+      fr="${folder%%/*}"
+      flist="$flist
+$fr"
+    fi
+    [ "$rest" = "$seg" ] && break
+    rest="${rest#* and }"
+  done
+  [ -z "$flist" ] && return
+  printf '%s\n' "$flist" | grep -v '^$' | sort | uniq -c | sort -rn | head -1 | sed 's/^ *[0-9]* *//'
+}
+
+sort_files() {
+  local moved=0 unknown=0 folder franchise f base name
+  for f in *; do
+    [ -f "$f" ] || continue
+    case "$f" in *.sh|sorter_log_*.txt) continue ;; esac
+    base="${f%.*}"
+    name=$(printf '%s' "$base" \
+      | sed 's/_drawn_by_[^_].*//;s/_[0-9a-f]\{16,\}$//' \
+      | tr '_-' '  ' \
+      | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz')
+    folder=$(get_folder "$name")
+    if [ -n "$folder" ]; then
+      if $DRY_RUN; then log "  [DRY] $f  →  $folder/"
+      else mkdir -p "$folder" && mv -- "$f" "$folder/"; log "  ✓ $f  →  $folder/"; fi
+      moved=$((moved+1))
+    else
+      franchise=$(get_dominant_franchise "$name")
+      if [ -n "$franchise" ]; then
+        if $DRY_RUN; then log "  [DRY] $f  →  $franchise/ [multi]"
+        else mkdir -p "$franchise" && mv -- "$f" "$franchise/"; log "  ✓ $f  →  $franchise/ [multi]"; fi
+        moved=$((moved+1))
+      else
+        if $MOVE_UNKNOWN; then
+          if $DRY_RUN; then log "  [DRY] $f  →  _Unknown/"
+          else mkdir -p "_Unknown" && mv -- "$f" "_Unknown/"; fi
+        fi
+        $VERBOSE && log "  ? $f  (tidak dikenali)"
+        unknown=$((unknown+1))
+      fi
+    fi
+  done
+  log "────────────────────────────────────────────────────────"
+  log "Selesai: $(date)"
+  log "  Dipindah : $moved file"
+  log "  Unknown  : $unknown file"
+  $DRY_RUN && log "  (DRY RUN — tidak ada yang benar-benar dipindah)"
+}
+
+sort_files
+</script>
+
+<script>
+// ══ State ══
+let entries = [];         // [{id, keywords:[], folder:''}]
+let editId   = null;
+let currentFr = null;
+let exportChecked = new Set();
+let sidebarChecked = new Set();
+let addKws = [];
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const fr  = e => e.folder.split('/')[0];
+const ch  = e => e.folder.split('/').slice(1).join('/') || '(karakter)';
+const allFr = () => [...new Set(entries.map(fr))].sort((a,b)=>a.localeCompare(b));
+const frEntries = f => entries.filter(e => fr(e) === f);
+
+// ══ Parse .sh ══
+function parseScript(text) {
+  const m = text.match(/KEYWORD_TABLE='([\s\S]*?)'/);
+  if (!m) return [];
+  return m[1].split('\n').map(l => l.trim()).filter(l => l.includes(':::')).map(l => {
+    const i = l.indexOf(':::');
+    return { id: uid(), keywords: l.slice(0,i).split('|').map(k=>k.trim()).filter(Boolean), folder: l.slice(i+3).trim() };
+  }).filter(e => e.keywords.length && e.folder);
+}
+
+// ══ Parse pasted keyword lines ══
+function parseLines(text) {
+  return text.split('\n').map(l=>l.trim()).filter(l => l.includes(':::') && !l.startsWith('#')).map(l => {
+    const i = l.indexOf(':::');
+    return { id: uid(), keywords: l.slice(0,i).split('|').map(k=>k.trim().toLowerCase()).filter(Boolean), folder: l.slice(i+3).trim() };
+  }).filter(e => e.keywords.length && e.folder);
+}
+
+// ══ Build .sh ══
+function buildScript(sel) {
+  if (!sel.length) return null;
+  const table   = sel.map(e => e.keywords.join('|') + ':::' + e.folder).join('\n');
+  const pattern = sel.flatMap(e => e.keywords).join('|');
+  const cases   = sel.map(e => '    ' + e.keywords.map(k=>`"${k}"`).join('|') + `) echo "${e.folder}" ;;`).join('\n');
+  return document.getElementById('tmpl').textContent.replace('{{TABLE}}',table).replace('{{PATTERN}}',pattern).replace('{{CASES}}',cases);
+}
+
+// ══ Render ══
+function renderSidebar() {
+  const q  = document.getElementById('searchInput').value.toLowerCase();
+  const fl = allFr().filter(f => !q || f.toLowerCase().includes(q));
+  const el = document.getElementById('frList');
+  if (!fl.length) { el.innerHTML='<div class="sidebar-empty">Tidak ada franchise</div>'; return; }
+  allFr().forEach(f => { if (!exportChecked.has(f)) exportChecked.add(f); });
+  el.innerHTML = fl.map(f => {
+    const active = f === currentFr ? 'active' : '';
+    const chk    = exportChecked.has(f) ? 'checked' : '';
+    return `<div class="fr-item ${active}" data-fr="${esc(f)}" onclick="selFr(this.dataset.fr)">
+      <input type="checkbox" ${chk} data-fr="${esc(f)}" onclick="toggleFr(event,this.dataset.fr)"/>
+      <span class="fr-name">${esc(f)}</span>
+      <span class="fr-badge">${frEntries(f).length}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPanel(f) {
+  const h = document.getElementById('panelHeader'), cl = document.getElementById('charList');
+  if (!f) { h.style.display='none'; cl.innerHTML=`<div class="panel-empty"><div class="panel-empty-icon">📂</div><span style="font-size:13px">Pilih franchise di sidebar</span></div>`; return; }
+  h.style.display='flex';
+  document.getElementById('panelTitle').textContent = f;
+  const list = frEntries(f);
+  if (!list.length) { cl.innerHTML=`<div class="panel-empty"><div class="panel-empty-icon">👾</div><span>Belum ada karakter</span></div>`; return; }
+  cl.innerHTML = list.map(e => `<div class="char-card" id="cc-${e.id}">
+    <div class="char-info">
+      <div class="char-name">${esc(ch(e))}</div>
+      <div class="char-folder">📂 ${esc(e.folder)}</div>
+      <div class="kw-chips">${e.keywords.map(k=>`<span class="kw-chip">${esc(k)}</span>`).join('')}</div>
+    </div>
+    <div class="char-actions">
+      <button class="btn btn-ghost btn-xs" onclick="openEdit('${e.id}')">✏</button>
+      <button class="btn btn-danger btn-xs" onclick="delEntry('${e.id}')">✕</button>
+    </div>
+  </div>`).join('');
+}
+
+function updateStatus() {
+  const frc = allFr().length, cc = entries.length, sc = [...exportChecked].filter(f=>allFr().includes(f)).length;
+  document.getElementById('statusText').innerHTML = `<strong>${cc}</strong> karakter · <strong>${frc}</strong> franchise · <strong>${sc}</strong> dipilih export`;
+}
+
+function selFr(f) { currentFr = f; renderSidebar(); renderPanel(f); }
+
+function toggleFr(e, f) { e.stopPropagation(); if(e.target.checked) exportChecked.add(f); else exportChecked.delete(f); sidebarChecked = new Set(exportChecked); updateStatus(); }
+
+function checkAll(v) { const all=allFr(); if(v) all.forEach(f=>exportChecked.add(f)); else exportChecked.clear(); sidebarChecked=new Set(exportChecked); renderSidebar(); updateStatus(); }
+
+// ══ Load ══
+function readFile(e) {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = ev => document.getElementById('shContent').value = ev.target.result; r.readAsText(f);
+}
+
+function doLoad() {
+  const txt = document.getElementById('shContent').value.trim();
+  if (!txt) { setAlert('loadAlert','Paste isi file .sh terlebih dahulu!','error'); return; }
+  const parsed = parseScript(txt);
+  if (!parsed.length) { setAlert('loadAlert','KEYWORD_TABLE tidak ditemukan. Pastikan format file benar.','error'); return; }
+  entries = parsed; exportChecked = new Set(allFr()); sidebarChecked = new Set(exportChecked);
+  currentFr = null; renderSidebar(); renderPanel(null); updateStatus();
+  hide('loadModal'); document.getElementById('shContent').value='';
+  flash(`✓ Loaded ${parsed.length} karakter dari ${allFr().length} franchise`);
+}
+
+// ══ Paste ══
+function doPaste() {
+  const txt = document.getElementById('pasteContent').value.trim();
+  if (!txt) { setAlert('pasteAlert','Paste lines terlebih dahulu!','error'); return; }
+  const parsed = parseLines(txt);
+  if (!parsed.length) { setAlert('pasteAlert','Tidak ada baris keyword:::folder yang valid.','error'); return; }
+  let added = 0;
+  for (const e of parsed) { entries.push(e); exportChecked.add(fr(e)); added++; }
+  const lastFr = fr(parsed[parsed.length-1]);
+  currentFr = lastFr; renderSidebar(); renderPanel(lastFr); updateStatus();
+  hide('pasteModal'); document.getElementById('pasteContent').value='';
+  flash(`✓ Import ${added} karakter berhasil`);
+}
+
+// ══ Add / Edit ══
+function openAdd(f) {
+  editId = null; addKws = [];
+  document.getElementById('addTitle').textContent = '＋ Tambah Karakter';
+  document.getElementById('addSaveBtn').textContent = 'Tambah';
+  document.getElementById('aFr').value = f || ''; document.getElementById('aCh').value = '';
+  document.getElementById('aFolder').value = f ? f+'/' : '';
+  document.getElementById('addAlert').innerHTML = '';
+  document.getElementById('autokwBox').style.display = 'none';
+  refreshDl(); renderTags(); show('addModal');
+  setTimeout(()=>document.getElementById(f?'aCh':'aFr').focus(),80);
+}
+
+function openEdit(id) {
+  const e = entries.find(x=>x.id===id); if(!e) return;
+  editId = id; addKws = [...e.keywords];
+  document.getElementById('addTitle').textContent = '✏ Edit Karakter';
+  document.getElementById('addSaveBtn').textContent = 'Simpan';
+  document.getElementById('aFr').value = fr(e); document.getElementById('aCh').value = ch(e);
+  document.getElementById('aFolder').value = e.folder;
+  document.getElementById('addAlert').innerHTML = '';
+  document.getElementById('autokwBox').style.display = 'none';
+  refreshDl(); renderTags(); show('addModal');
+}
+
+function autoFolder() {
+  if (editId) return;
+  const f = document.getElementById('aFr').value.trim(), c = document.getElementById('aCh').value.trim();
+  if (f && c) document.getElementById('aFolder').value = f+'/'+c;
+  else if (f) document.getElementById('aFolder').value = f+'/';
+}
+
+// ── Keyword auto-generator (offline) ──
+function buildFrTag(franchise) {
+  // Known short tags
+  const known = {
+    'honkai star rail':'hsr', 'honkai impact':'hi3', 'honkai impact 3':'hi3',
+    'blue archive':'ba', 'arknights':'ak', 'genshin impact':'genshin',
+    'girls frontline':'gfl', 'girls frontline 2':'gfl2',
+    'punishing gray raven':'pgr',
+    'nier automata':'nier', 'nier replicant':'nier',
+    'sword art online':'sao',
+    'no game no life':'ngnl',
+    'overlord':'overlord',
+    'date a live':'dal',
+    'to love ru':'tlr',
+    'high school dxd':'dxd',
+    'sword art online alicization':'sao',
+    're zero':'rezero', 'rezero':'rezero',
+    'fate stay night':'fate', 'fate grand order':'fgo', 'fate':'fate',
+    'attack on titan':'aot', 'shingeki no kyojin':'aot',
+    'my hero academia':'mha', 'boku no hero academia':'mha',
+    'demon slayer':'ds', 'kimetsu no yaiba':'kimetsu',
+    'jujutsu kaisen':'jjk',
+    'one piece':'op',
+    'naruto':'naruto',
+    'bleach':'bleach',
+    'chainsaw man':'csm',
+    'spy x family':'spyfamily',
+    'xenoblade chronicles':'xenoblade',
+    'final fantasy':'ff',
+    'persona':'persona',
+    'azur lane':'al',
+    'nikke goddess of victory':'nikke', 'nikke':'nikke',
+    'wuthering waves':'wuwa',
+    'zenless zone zero':'zzz',
+    'black clover':'bc',
+    'fire emblem':'fe',
+    'touhou project':'touhou', 'touhou':'touhou',
+    'kantai collection':'kancolle',
+    'love live':'lovelive',
+    'idolmaster':'imas',
+    'sailor moon':'sailormoon',
+  };
+  const key = franchise.toLowerCase().trim();
+  if (known[key]) return known[key];
+  // Acronym from first letters (skip filler words)
+  const skip = new Set(['the','a','an','of','in','at','to','and','or','no','wa','ga','wo','de','ni','ha']);
+  const words = key.split(/\s+/).filter(w => w.length > 0 && !skip.has(w));
+  if (words.length >= 2) {
+    const acronym = words.map(w => w[0]).join('');
+    if (acronym.length <= 4) return acronym;
+  }
+  // First word of franchise (max 8 chars)
+  return words[0]?.slice(0,8) || key.slice(0,8);
+}
+
+function detectConflicts(name, currentFrVal) {
+  // Cek apakah keyword (atau bagian dari nama) sudah dipakai di franchise lain
+  const curFr = currentFrVal.toLowerCase().trim();
+  const nameWords = name.toLowerCase().split(/\s+/);
+  const conflicts = []; // [{keyword, franchise}]
+
+  for (const entry of entries) {
+    const entryFr = fr(entry).toLowerCase();
+    if (entryFr === curFr) continue; // same franchise, skip
+    if (editId && entry.id === editId) continue;
+
+    for (const kw of entry.keywords) {
+      const kwWords = kw.split(/\s+/);
+      // Nama lengkap match
+      if (kw === name) { conflicts.push({keyword: kw, franchise: fr(entry)}); break; }
+      // Kata pertama sama (misal "mio" cocok dengan "mio (arknights)")
+      if (kwWords[0] === nameWords[0] && nameWords[0].length >= 3) {
+        conflicts.push({keyword: kw, franchise: fr(entry)}); break;
+      }
+    }
+  }
+  // Deduplicate by franchise
+  const seen = new Set();
+  return conflicts.filter(c => { if(seen.has(c.franchise)) return false; seen.add(c.franchise); return true; });
+}
+
+function autoGenKw() {
+  const frVal = document.getElementById('aFr').value.trim();
+  const chVal = document.getElementById('aCh').value.trim();
+  if (!chVal) { setAlert('addAlert','Isi nama karakter dulu!','error'); return; }
+  document.getElementById('addAlert').innerHTML = '';
+
+  const name    = chVal.toLowerCase();
+  const words   = name.split(/\s+/).filter(Boolean);
+  const frTag   = frVal ? buildFrTag(frVal) : '';
+  const frLow   = frVal.toLowerCase();
+
+  // Deteksi konflik dengan franchise lain
+  const conflicts = detectConflicts(name, frVal);
+  const isAmbiguous = conflicts.length > 0;
+
+  const candidates = []; // [{kw, badge, checked}]
+  const seen = new Set();
+  const add = (kw, badge, checked=true) => {
+    kw = kw.trim();
+    if (!kw || seen.has(kw)) return;
+    seen.add(kw);
+    candidates.push({kw, badge, checked});
+  };
+
+  if (isAmbiguous) {
+    // ── MODE AMBIGU: nama mentah dimatikan, prioritaskan kombinasi konteks ──
+
+    // 1. nama (franchise) — format Danbooru parenthetical, paling reliable
+    if (frVal) {
+      add(name+' ('+frLow+')', 'danbooru', true);
+      // versi singkat pakai frtag jika beda
+      const frLow1 = frLow.split(/\s+/)[0];
+      add(name+' ('+frLow1+')', 'danbooru', true);
+    }
+
+    // 2. nama + frtag
+    if (frTag) {
+      add(name+' '+frTag, 'fr', true);
+      // kata pertama + frtag
+      if (words.length >= 2 && words[0].length >= 3) add(words[0]+' '+frTag, 'fr', true);
+    }
+
+    // 3. Nama lengkap — unchecked (bisa menyebabkan bentrok)
+    add(name, 'name', false);
+
+    // 4. Urutan terbalik — unchecked karena juga ambigu
+    if (words.length === 2) add(words[1]+' '+words[0], 'rev', false);
+    else if (words.length === 3) {
+      add(words[1]+' '+words[2]+' '+words[0], 'rev', false);
+    }
+
+    // 5. Nama pendek — unchecked
+    if (words.length >= 2) {
+      if (words[0].length >= 3) add(words[0], 'short', false);
+      if (words[words.length-1].length >= 3 && words[words.length-1] !== words[0])
+        add(words[words.length-1], 'short', false);
+    }
+
+  } else {
+    // ── MODE NORMAL: tidak ada konflik ──
+
+    // 1. Nama lengkap
+    add(name, 'name', true);
+
+    // 2. Urutan terbalik
+    if (words.length === 2) add(words[1]+' '+words[0], 'rev', true);
+    else if (words.length === 3) {
+      add(words[1]+' '+words[2]+' '+words[0], 'rev', true);
+      add(words[2]+' '+words[0]+' '+words[1], 'rev', false);
+    }
+
+    // 3. Nama pendek — opsional
+    if (words.length >= 2) {
+      if (words[0].length >= 3) add(words[0], 'short', false);
+      if (words[words.length-1].length >= 3 && words[words.length-1] !== words[0])
+        add(words[words.length-1], 'short', false);
+    }
+
+    // 4. nama (franchise) & nama+frtag — opsional, berguna untuk masa depan
+    if (frTag) {
+      const isShort = words.length === 1 || name.length <= 6;
+      add(name+' '+frTag, 'fr', isShort);
+      if (frVal) add(name+' ('+frLow+')', 'danbooru', false);
+      if (words.length >= 2 && words[0].length >= 3) add(words[0]+' '+frTag, 'fr', false);
+    }
+  }
+
+  // Render warning jika ambigu
+  const warningHtml = isAmbiguous ? `
+    <div style="display:flex;align-items:flex-start;gap:8px;background:rgba(255,212,74,0.08);border:1px solid rgba(255,212,74,0.25);border-radius:7px;padding:8px 10px;margin-bottom:10px;font-size:11.5px;line-height:1.6">
+      <span style="font-size:14px;flex-shrink:0">⚠️</span>
+      <div>
+        <strong style="color:#ffe07a">Nama ambigu terdeteksi!</strong><br>
+        <span style="color:var(--text-dim)">Nama "<strong style="color:var(--text)">${esc(name)}</strong>" sudah dipakai di: 
+        ${conflicts.map(c=>`<strong style="color:var(--accent3,#ff9abf)">${esc(c.franchise)}</strong>`).join(', ')}</span><br>
+        <span style="color:var(--text-dim)">Keyword kombinasi franchise <strong style="color:var(--text)">diaktifkan otomatis</strong> untuk menghindari bentrok.</span>
+      </div>
+    </div>` : '';
+
+  const list = document.getElementById('kwGenList');
+  const badgeLabel = { name:'nama lengkap', rev:'urutan balik', short:'nama pendek', fr:'+ franchise tag', danbooru:'parenthetical' };
+  list.innerHTML = warningHtml + candidates.map((c,i) => `
+    <div class="kw-gen-row" onclick="toggleGenRow(${i})">
+      <input type="checkbox" id="gkw${i}" ${c.checked?'checked':''} onchange="updateGenCount()" onclick="event.stopPropagation()"/>
+      <label class="kw-gen-label" for="gkw${i}">${esc(c.kw)}</label>
+      <span class="kw-gen-badge badge-${c.badge==='danbooru'?'fr':c.badge}">${badgeLabel[c.badge]}</span>
+    </div>`).join('');
+
+  document.getElementById('kwGenList').dataset.cands = JSON.stringify(candidates);
+  updateGenCount();
+  document.getElementById('autokwBox').style.display = 'block';
+}
+
+function toggleGenRow(i) {
+  const cb = document.getElementById('gkw'+i);
+  cb.checked = !cb.checked;
+  updateGenCount();
+}
+
+function updateGenCount() {
+  const boxes = document.querySelectorAll('#kwGenList input[type=checkbox]');
+  const n = [...boxes].filter(b=>b.checked).length;
+  document.getElementById('autokwCount').textContent = `${n} dipilih`;
+}
+
+function applyGenKw() {
+  const list = document.getElementById('kwGenList');
+  const cands = JSON.parse(list.dataset.cands || '[]');
+  const boxes = list.querySelectorAll('input[type=checkbox]');
+  boxes.forEach((cb,i) => {
+    if (cb.checked && cands[i] && !addKws.includes(cands[i].kw)) {
+      addKws.push(cands[i].kw);
+    }
+  });
+  document.getElementById('autokwBox').style.display = 'none';
+  renderTags();
+}
+
+function addKwSug(kw) { if(!addKws.includes(kw)){addKws.push(kw);renderTags();} }
+
+function renderTags() {
+  const wrap = document.getElementById('tagWrap');
+  wrap.innerHTML = addKws.map((k,i)=>`<span class="tag-item">${esc(k)}<button class="tag-rm" onclick="removeKw(${i})">×</button></span>`).join('') +
+    `<input class="tag-new-input" id="tagInput" placeholder="ketik lalu Enter..." autocomplete="off" onkeydown="kwKey(event)" oninput="suggestKw()"/>`;
+}
+
+function removeKw(i) { addKws.splice(i,1); renderTags(); }
+
+function kwKey(e) {
+  if (e.key==='Enter'||e.key===',') {
+    e.preventDefault();
+    const v = e.target.value.trim().toLowerCase().replace(/,/g,'');
+    if (v && !addKws.includes(v)) { addKws.push(v); renderTags(); }
+    else { e.target.value=''; }
+  } else if (e.key==='Backspace' && !e.target.value && addKws.length) { addKws.pop(); renderTags(); }
+}
+
+function saveEntry() {
+  const rawInput = document.getElementById('tagInput')?.value.trim().toLowerCase().replace(/,/g,'');
+  if (rawInput && !addKws.includes(rawInput)) addKws.push(rawInput);
+  const folder = document.getElementById('aFolder').value.trim();
+  const franchise = document.getElementById('aFr').value.trim();
+  if (!franchise) { setAlert('addAlert','Franchise wajib diisi!','error'); return; }
+  if (!folder || !folder.includes('/')) { setAlert('addAlert','Folder path harus format "Franchise/Karakter"!','error'); return; }
+  if (!addKws.length) { setAlert('addAlert','Minimal 1 keyword!','error'); return; }
+  if (editId) {
+    const idx = entries.findIndex(e=>e.id===editId);
+    if (idx>=0) entries[idx] = {id:editId, keywords:[...addKws], folder};
+  } else {
+    entries.push({id:uid(), keywords:[...addKws], folder});
+  }
+  exportChecked.add(franchise); sidebarChecked.add(franchise);
+  if (currentFr===franchise||!currentFr) { currentFr=franchise; renderPanel(franchise); }
+  renderSidebar(); updateStatus(); hide('addModal');
+  flash(`✓ Karakter "${ch({folder})}" ${editId?'diupdate':'ditambahkan'}`);
+}
+
+function delEntry(id) {
+  const e = entries.find(x=>x.id===id); if(!e) return;
+  if (!confirm(`Hapus "${ch(e)}"?`)) return;
+  entries = entries.filter(x=>x.id!==id);
+  renderPanel(currentFr); renderSidebar(); updateStatus();
+  flash(`✓ Karakter dihapus`);
+}
+
+// ══ Export ══
+function openExport() {
+  if (!entries.length) { alert('Belum ada karakter!'); return; }
+  refreshExpList(); updateExpInfo(); updatePreview();
+  document.getElementById('expAlert').innerHTML='';
+  show('exportModal');
+}
+
+function refreshExpList() {
+  const all = allFr();
+  document.getElementById('expList').innerHTML = all.map(f => `
+    <div class="exp-item">
+      <input type="checkbox" id="exp_${esc(f)}" ${exportChecked.has(f)?'checked':''} onchange="toggleExp('${esc(f)}',this.checked)"/>
+      <label for="exp_${esc(f)}">${esc(f)}</label>
+      <span class="exp-cnt">${frEntries(f).length}</span>
+    </div>`).join('') || '<div style="padding:10px;font-size:12px;color:var(--text-dim)">Belum ada data</div>';
+}
+
+function toggleExp(f,v) { if(v) exportChecked.add(f); else exportChecked.delete(f); updateExpInfo(); updatePreview(); }
+
+function checkExp(v) {
+  const all = allFr();
+  if (v===true) all.forEach(f=>exportChecked.add(f));
+  else if (v===false) exportChecked.clear();
+  else exportChecked = new Set(sidebarChecked);
+  refreshExpList(); updateExpInfo(); updatePreview();
+}
+
+function updateExpInfo() {
+  const sel = [...exportChecked].filter(f=>allFr().includes(f));
+  const cnt = entries.filter(e=>sel.includes(fr(e))).length;
+  document.getElementById('expInfo').textContent = `${sel.length}/${allFr().length} franchise · ${cnt} karakter akan di-export`;
+}
+
+function updatePreview() {
+  const sel = entries.filter(e=>exportChecked.has(fr(e)));
+  document.getElementById('expPreview').textContent = sel.slice(0,10).map(e=>e.keywords.join('|')+':::'+e.folder).join('\n') || '—';
+}
+
+function getExportSel() { return entries.filter(e=>exportChecked.has(fr(e))); }
+
+function downloadExport() {
+  const sel = getExportSel();
+  if (!sel.length) { setAlert('expAlert','Pilih minimal 1 franchise!','error'); return; }
+  const content = buildScript(sel);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:'text/plain'}));
+  a.download = 'sorter_mtmanager_fast.sh'; a.click(); URL.revokeObjectURL(a.href);
+  flash('✓ sorter_mtmanager_fast.sh berhasil didownload');
+}
+
+function copyExport() {
+  const sel = getExportSel();
+  if (!sel.length) { setAlert('expAlert','Pilih minimal 1 franchise!','error'); return; }
+  navigator.clipboard.writeText(buildScript(sel)).then(()=>{ toast('Script disalin ke clipboard!'); hide('exportModal'); });
+}
+
+// ══ Utilities ══
+function refreshDl() { document.getElementById('frDl').innerHTML = allFr().map(f=>`<option value="${esc(f)}">`).join(''); }
+function show(id) { document.getElementById(id).style.display='flex'; }
+function hide(id) { document.getElementById(id).style.display='none'; }
+function bgClose(e,id) { if(e.target===e.currentTarget) hide(id); }
+function setAlert(id,msg,type) { document.getElementById(id).innerHTML=`<div class="falert falert-${type==='error'?'error':'ok'}">${msg}</div>`; }
+function flash(msg) { const el=document.getElementById('flashEl'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3000); updateStatus(); }
+function toast(msg) { document.querySelector('.toast')?.remove(); const t=document.createElement('div'); t.className='toast'; t.textContent='✓ '+msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══ Init ══
+updateStatus(); renderSidebar();
+</script>
+</body>
+</html>
