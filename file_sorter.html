@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Danbooru Sorter Injector Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+  :root {
+    --bg:#0d0f18;--surface:#151827;--card:#1c2035;--border:#2a2f4a;
+    --accent:#7c6af7;--accent2:#e86bda;--green:#4af5b8;--red:#f54a6b;
+    --yellow:#f5c84a;--text:#e2e6f3;--muted:#6b7299;
+    --mono:'Space Mono',monospace;--sans:'Syne',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+  header{background:linear-gradient(135deg,#1a1535,#0d1a2e);border-bottom:1px solid var(--border);padding:14px 16px 12px;position:sticky;top:0;z-index:100;}
+  header h1{font-size:15px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  header p{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+  main{padding:12px;display:flex;flex-direction:column;gap:10px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .panel-head{padding:9px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .panel-head span{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+  .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:20px;}
+
+  .search-container{padding:10px 12px 0;background:var(--surface);}
+  .search-bar{width:100%;background:#0d0f18;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:all .2s;}
+  .search-bar:focus{border-color:var(--accent2);box-shadow:0 0 8px rgba(232,107,218,0.15);}
+
+  /* Tree Controls */
+  .tree-controls{display:flex;align-items:center;gap:6px;padding:8px 12px 0;flex-wrap:wrap;}
+  .ctrl-btn{background:#181d35;border:1px solid var(--border);color:var(--muted);font-size:10px;font-family:var(--mono);padding:4px 10px;border-radius:6px;cursor:pointer;transition:color .15s,background .15s;white-space:nowrap;}
+  .ctrl-btn:hover{color:var(--text);background:#232b48;}
+  .ctrl-btn.cat{color:var(--accent2);border-color:#3a2055;}
+  .ctrl-btn.cat:hover{background:#231535;}
+  .ctrl-btn.edit-on{color:var(--yellow);border-color:#3a2f10;background:#1e1a10;}
+  .char-chip.sel{border-color:var(--accent)!important;background:#1a1d3a!important;}
+  .cb{width:13px;height:13px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:2px;}
+  .sel-fac{background:none;border:none;color:var(--muted);font-size:10px;font-family:var(--mono);cursor:pointer;padding:1px 4px;border-radius:3px;}
+  .sel-fac:hover{color:var(--accent);}
+  .edit-bar{position:fixed;bottom:0;left:0;right:0;background:#12162e;border-top:2px solid var(--accent);padding:10px 14px;display:flex;align-items:center;gap:8px;z-index:300;transform:translateY(100%);transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+  .edit-bar.show{transform:translateY(0);}
+  .edit-count{font-family:var(--mono);font-size:11px;color:var(--accent2);flex:1;}
+  .op-toggle{display:flex;gap:4px;background:#1c2035;border-radius:6px;padding:3px;}
+  .op-btn{padding:4px 10px;border:none;border-radius:4px;font-size:11px;font-family:var(--sans);font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .15s;}
+  .op-btn.active{background:var(--accent);color:#fff;}
+
+  /* Category Block */
+  .category-block{margin-bottom:6px;}
+  .category-head{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#12162a;border:1px solid #1e2345;border-radius:9px;cursor:pointer;user-select:none;margin-bottom:5px;transition:background .15s;}
+  .category-head:hover{background:#181d38;}
+  .cat-label{font-size:12px;font-weight:800;color:var(--accent2);flex:1;letter-spacing:.3px;}
+  .cat-count{font-family:var(--mono);font-size:10px;color:var(--muted);}
+  .cat-chevron{font-size:10px;color:var(--muted);transition:transform .2s;}
+  .category-block.collapsed .cat-chevron{transform:rotate(-90deg);}
+  .category-body{padding-left:6px;}
+  .category-block.collapsed .category-body{display:none;}
+  .no-cat-section .category-head{background:transparent;border-color:transparent;padding-left:2px;}
+  .no-cat-section .cat-label{color:var(--muted);font-size:11px;}
+
+  .quick-add{padding:12px;display:flex;flex-direction:column;gap:8px;}
+  .path-input{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s;}
+  .path-input:focus{border-color:var(--accent);}
+  .path-input::placeholder{color:var(--muted);}
+  .hint{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.7;padding:8px 10px;background:var(--card);border-radius:6px;border-left:3px solid var(--accent);}
+  .hint b{color:var(--accent2);}
+  .hint .ok{color:var(--green);}
+  .btn-row{display:flex;gap:6px;}
+  .btn{flex:1;padding:10px 12px;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-dl{background:linear-gradient(135deg,#0d3a22,#0d2a3a);color:var(--green);border:1px solid #1a4a32;font-size:14px;padding:14px;}
+  .btn-ghost{background:#1a2540;color:var(--accent);border:1px solid var(--border);}
+  .btn-danger{background:#2a1a2e;color:var(--red);border:1px solid #3a1a2e;flex:none;padding:10px 14px;}
+  .btn-sm{padding:5px 10px;font-size:11px;border-radius:6px;flex:none;}
+
+  .tree{padding:8px;}
+  .franchise-block{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;animation:fadeIn .2s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+  .franchise-head{padding:10px 12px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;background:linear-gradient(90deg,#1e2545 0%,transparent 100%);}
+  .franchise-head:active{background:#252a45;}
+  .franchise-name{font-weight:800;font-size:14px;flex:1;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .franchise-id{font-family:var(--mono);font-size:9px;color:var(--accent);background:#1a1535;padding:2px 6px;border-radius:4px;border:1px solid #2a1f55;flex-shrink:0;}
+  .char-count{font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;}
+  .chevron{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+  .franchise-block.collapsed .chevron{transform:rotate(-90deg);}
+  .franchise-body{padding:0 8px 8px;}
+  .franchise-block.collapsed .franchise-body{display:none;}
+
+  .factions-grid-wrapper{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;width:100%;margin-bottom:8px;}
+  .faction-block{border-radius:8px;overflow:hidden;border:1px solid #252a45;background:#141828;display:flex;flex-direction:column;min-width:0;margin-top:6px;}
+  .faction-block.direct{border-color:#1e3a28;background:#0f1c12;}
+  .faction-head{padding:7px 10px;display:flex;align-items:center;gap:6px;background:#191e35;cursor:pointer;min-width:0;}
+  .faction-block.direct .faction-head{background:#131e15;}
+  .faction-head:active{background:#202545;}
+  .faction-name{font-size:12px;font-weight:600;flex:1;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .faction-block.direct .faction-name{color:var(--green);font-size:11px;}
+  .faction-body{padding:6px 8px 8px;background:#141828;display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0;}
+  .faction-block.direct .faction-body{background:#0f1c12;}
+  .faction-block.collapsed .faction-body{display:none;}
+
+  .char-chip{display:inline-flex;align-items:center;gap:3px;background:#1c2240;border:1px solid #2a3060;border-radius:20px;padding:3px 6px 3px 9px;font-family:var(--mono);font-size:11px;color:var(--text);animation:popIn .15s ease;white-space:nowrap;}
+  .direct .char-chip{background:#142218;border-color:#1e3a28;}
+  @keyframes popIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .char-name{cursor:pointer;}
+  .char-name:hover{color:var(--accent);}
+  .char-del,.char-move{background:none;border:none;cursor:pointer;line-height:1;padding:0 2px;border-radius:3px;transition:color .15s;font-size:11px;color:var(--muted);}
+  .char-del:hover{color:var(--red);}
+  .char-move:hover{color:var(--accent2);}
+
+  .add-inline{display:flex;gap:5px;margin-top:6px;align-items:center;width:100%;min-width:0;}
+  .input-sm{flex:1;min-width:0;background:#1c2240;border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;}
+  .input-sm:focus{border-color:var(--accent);}
+  .del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px;border-radius:4px;transition:color .15s,background .15s;}
+  .del-btn:hover{color:var(--red);background:#2a1020;}
+  .mode-badge{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid #2a2f5a;background:#181d35;color:var(--accent);cursor:pointer;user-select:none;transition:background .15s,color .15s;flex-shrink:0;}
+  .mode-badge.m2{color:var(--yellow);border-color:#3a2f10;background:#1e1a10;}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:3px 4px;border-radius:3px;transition:color .15s,background .15s;color:var(--muted);flex-shrink:0;}
+  .icon-btn:hover{color:var(--accent);}
+  .icon-btn.kw:hover{color:var(--yellow);}
+  .icon-btn.folder:hover{color:var(--accent2);}
+  .icon-btn.danger:hover{color:var(--red);}
+
+  .chmod-hint{font-family:var(--mono);font-size:10px;background:#0a0f1e;border:1px solid #1a2545;border-radius:6px;padding:8px 10px;color:var(--muted);margin-top:4px;}
+  .chmod-hint b{color:var(--green);}
+  .chmod-cmd{color:var(--green);user-select:all;}
+  .gen-area{padding:12px;display:flex;flex-direction:column;gap:10px;}
+  .config-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .config-item{display:flex;flex-direction:column;gap:4px;}
+  .config-label{font-size:10px;color:var(--muted);font-family:var(--mono);}
+  .config-input{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 9px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:100%;}
+  .config-input:focus{border-color:var(--accent);}
+  .preview-box{background:#0a0c14;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.7;color:#6b7299;max-height:140px;overflow-y:auto;white-space:pre;overflow-x:auto;}
+  .empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:12px;}
+  .empty .icon{font-size:36px;margin-bottom:8px;}
+
+  /* Toast */
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:8px 20px;font-size:12px;font-family:var(--mono);color:var(--green);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;white-space:nowrap;}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* Move Modal */
+  .move-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .move-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;width:calc(100% - 40px);max-width:320px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .move-title{font-weight:800;font-size:14px;color:var(--accent2);}
+  .move-char-pill{font-family:var(--mono);font-size:11px;color:var(--green);background:#101e14;border:1px solid #1e3a28;border-radius:8px;padding:6px 10px;word-break:break-all;}
+  .move-sep{height:1px;background:var(--border);margin:2px 0;}
+
+  /* Tabs */
+  .tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border);}
+  .tab-btn{flex:1;padding:9px 12px;border:none;border-bottom:2px solid transparent;background:none;color:var(--muted);font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:color .2s,border-color .2s;}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-btn:not(.active):hover{color:var(--text);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .bulk-textarea{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;transition:border-color .2s;min-height:148px;resize:vertical;line-height:1.8;}
+  .bulk-textarea:focus{border-color:var(--accent);box-shadow:0 0 8px rgba(124,106,247,.15);}
+  .bulk-textarea::placeholder{color:var(--muted);}
+  .bulk-stats{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+  .bulk-stats b{color:var(--green);}
+</style>
+</head>
+<body>
+<header>
+  <h1>⬡ DANBOORU SOURCE INJECTOR PRO</h1>
+  <p>define hierarchy → download .sh → import di MT Manager</p>
+</header>
+<main>
+
+  <div class="panel">
+    <div class="panel-head"><span>➕ Tambah Path &amp; Import</span></div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('quick',this)">⚡ Quick Add</button>
+      <button class="tab-btn" onclick="switchTab('bulk',this)">📋 Bulk Import</button>
+    </div>
+
+    <div class="tab-content active" id="tab-quick">
+      <div class="quick-add">
+        <input class="path-input" id="pathInput" type="text"
+          placeholder="Kategori/Franchise/Faksi/Char1,Alias;Char2 | Franchise/Faksi/Char | Franchise/Char"
+          autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="hint">
+          <b>Format:</b> karakter pisah <b>;</b> alias pisah <b>,</b><br>
+          <b>4-level:</b> <b>Idolmaster/Gakumas/Re IRIS/saki,saki;temari,temari</b><br>
+          <b>3-level:</b> <b>Blue Archive/Abydos/shiroko,shiroko;hoshino,hoshino</b><br>
+          <b>2-level (direct):</b> <b>Sousou no Frieren/fern,fern;stark</b><br>
+          <span class="ok">★ 4-level: Level 1 = Kategori (jadi folder prefix di script)</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="quickAdd()">➕ Tambah</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">📂 Import .sh</button>
+          <input type="file" id="importFile" accept=".sh,text/plain,*/*" style="display:none" onchange="importSh(event)">
+          <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" onclick="exportJson()" style="flex:none">📤 Export JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importJsonFile').click()" style="flex:none">📥 Import JSON</button>
+          <input type="file" id="importJsonFile" accept=".json,application/json,text/plain,*/*" style="display:none" onchange="importJson(event)">
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-bulk">
+      <div class="quick-add">
+        <textarea class="bulk-textarea" id="bulkInput" spellcheck="false" autocorrect="off"
+          placeholder="Idolmaster/Gakumas/Re IRIS/saki,saki;temari,temari;kotone,kotone&#10;Blue Archive/Abydos/shiroko,shiroko;hoshino&#10;Blue Archive/Gehenna/hina,hina;chise&#10;Sousou no Frieren/fern,fern;stark&#10;&#10;4-level = Kategori/Franchise/Faksi/char&#10;3-level = Franchise/Faksi/char&#10;2-level = Franchise/char (direct)"
+          oninput="updateBulkStats()"></textarea>
+        <div class="bulk-stats" id="bulkStats">0 baris valid</div>
+        <div class="hint">
+          <b>4-level:</b> <b>Kategori/Franchise/Faksi/char1;char2</b> ← auto set category<br>
+          <b>3-level:</b> <b>Franchise/Faksi/char1;char2</b><br>
+          <b>2-level (direct):</b> <b>Franchise/char1;char2</b>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="bulkImport()">📥 Import Semua</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bulkInput').value='';updateBulkStats()" style="flex:none;padding:10px 14px">🗑 Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span>🗂 Struktur Folder</span>
+      <div class="badge" id="totalBadge">0 karakter</div>
+    </div>
+    <div class="search-container">
+      <input type="text" id="liveSearch" class="search-bar" placeholder="🔍 Cari karakter, faksi, atau franchise..." oninput="doLiveSearch()">
+    </div>
+    <div class="tree-controls">
+      <button class="ctrl-btn" onclick="collapseAll()">⊟ Collapse All</button>
+      <button class="ctrl-btn" onclick="expandAll()">⊞ Expand All</button>
+      <button class="ctrl-btn cat" onclick="addCategory()">📁 +Kategori</button>
+      <button class="ctrl-btn" id="editModeBtn" onclick="toggleEditMode()" title="Edit Mode: bulk select/move/copy/delete">✏ Edit</button>
+      <button class="ctrl-btn" onclick="exportHtmlWithData()" style="color:var(--green);border-color:#1e3a28;margin-left:auto">💾 Simpan HTML+Data</button>
+    </div>
+    <div class="tree" id="tree"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span>⬇ Generate &amp; Download</span></div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="gtab-classic" onclick="switchGenTab('classic',this)">🔧 Classic</button>
+      <button class="tab-btn" id="gtab-compat" onclick="switchGenTab('compat',this)">📱 Compatible</button>
+    </div>
+    <div id="genNote-classic" class="gen-note" style="background:#13162a;border-bottom:1px solid var(--border);padding:7px 14px;font-family:var(--mono);font-size:10px;color:var(--muted)">
+      ✦ grep-based · Android 14+ · Toybox · lebih ringkas
+    </div>
+    <div id="genNote-compat" class="gen-note" style="display:none;background:#0f1e14;border-bottom:1px solid #1e3a28;padding:7px 14px;font-family:var(--mono);font-size:10px;color:var(--green)">
+      ✦ pure shell case · Android 9–14 · BusyBox &amp; Toybox · tanpa grep
+    </div>
+    <div class="gen-area">
+      <div class="config-grid">
+        <div class="config-item">
+          <div class="config-label">SOURCE DIR</div>
+          <input class="config-input" id="cfgSrc" value="." placeholder="/sdcard/Download">
+        </div>
+        <div class="config-item">
+          <div class="config-label">DEST DIR</div>
+          <input class="config-input" id="cfgDst" value="." placeholder="/sdcard/sorted">
+        </div>
+        <div class="config-item">
+          <div class="config-label">EKSTENSI</div>
+          <input class="config-input" id="cfgExt" value="jpg jpeg png gif webp">
+        </div>
+        <div class="config-item">
+          <div class="config-label">STRUKTUR FOLDER</div>
+          <select class="config-input" id="cfgMode">
+            <option value="3">Franchise/Faksi/Char</option>
+            <option value="2">Franchise/Char</option>
+          </select>
+        </div>
+        <div class="config-item">
+          <div class="config-label">OPERASI FILE</div>
+          <select class="config-input" id="cfgOp">
+            <option value="mv">✂ Move — pindah file</option>
+            <option value="cp">📋 Copy — asli tetap ada</option>
+          </select>
+        </div>
+        <div class="config-item">
+          <div class="config-label">FOLDER TAK DIKENAL</div>
+          <input class="config-input" id="cfgUnknown" value="_Unknown" placeholder="kosong = skip">
+        </div>
+      </div>
+      <div class="preview-box" id="previewBox">Klik Preview atau Download untuk generate script...</div>
+      <button class="btn btn-dl" onclick="downloadSh()">⬇ Download danbooru_sorter.sh</button>
+      <button class="btn btn-ghost btn-sm" onclick="previewSh()" style="font-size:12px">👁 Preview Full Script</button>
+      <div class="chmod-hint">💡 <b>MT Manager:</b> <span class="chmod-cmd">sh danbooru_sorter.sh</span> &nbsp;|&nbsp; <b>Termux:</b> <span class="chmod-cmd">bash danbooru_sorter.sh</span></div>
+    </div>
+  </div>
+
+</main>
+<div id="toast"></div>
+
+<!-- Move Character Modal -->
+<div id="moveOverlay" class="move-overlay" style="display:none" onclick="if(event.target===this)closeMove()">
+  <div class="move-card">
+    <div class="move-title">Pindah / Salin Karakter</div>
+    <div class="move-char-pill" id="moveCharPill">—</div>
+    <div class="op-toggle" style="margin:2px 0">
+      <button class="op-btn active" id="opMvBtn" onclick="setMoveOp('mv')">✂ Move</button>
+      <button class="op-btn" id="opCpBtn" onclick="setMoveOp('cp')">📋 Copy</button>
+    </div>
+    <div class="move-sep"></div>
+    <div class="config-label">FRANCHISE TUJUAN</div>
+    <select class="config-input" id="moveFrSel" onchange="updateMoveFacSel()"></select>
+    <div class="config-label">FAKSI TUJUAN</div>
+    <select class="config-input" id="moveFacSel"></select>
+    <div class="btn-row" style="margin-top:2px">
+      <button class="btn btn-primary btn-sm" style="flex:1;font-size:12px" onclick="confirmMove()">✓ Konfirmasi</button>
+      <button class="btn btn-ghost btn-sm" style="flex:none;font-size:12px" onclick="closeMove()">✕ Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Mode Action Bar -->
+<div id="editBar" class="edit-bar">
+  <span class="edit-count" id="editCount">0 dipilih</span>
+  <button class="btn btn-ghost btn-sm" onclick="bulkOp('mv')" style="font-size:11px">↩ Move</button>
+  <button class="btn btn-ghost btn-sm" onclick="bulkOp('cp')" style="font-size:11px;color:var(--green)">📋 Copy</button>
+  <button class="btn btn-danger btn-sm" onclick="bulkDelete()" style="font-size:11px">🗑 Hapus</button>
+  <button class="ctrl-btn" onclick="clearSel()" style="font-size:10px">✕ Clear</button>
+</div>
+
+<script>
+// ── GLOBALS ──────────────────────────────────────────────────
+let data = {};
+let categoryMeta = {}; // { "Idolmaster": { keywords: ["idolmaster","im@s"] } }
+const collFr  = new Set();
+const collFac = new Set();
+const collCat = new Set();
+let editMode  = false;
+const selChars = new Set();
+let moveState = null;
+let genMode   = 'classic';
+let _uid = 0;
+const uid = () => 'u' + (++_uid);
+
+// ── DEFAULT DATA ─────────────────────────────────────────────
+const DEFAULT = {
+  "Blue Archive":{id:"ba",category:"Gacha Games",keywords:["blue archive","ba"],factions:{
+    "Abydos":["takanashi hoshino,hoshino","sunaookami shiroko,shiroko","kuromi serika,serika","izayoi nonomi,nonomi","okusora ayane,ayane"],
+    "Millennium":["hayase yuuka,yuuka","ushio noa,noa","saiba midori,midori","saiba momoi,momoi","ajitani hifumi,hifumi","shirasu azusa,azusa","amau ako,ako","asagi mutsuki,mutsuki","tendou aris,aris,alice","kakudate karin,karin"],
+    "Trinity":["shimoe koharu,koharu","urawa hanako,hanako","igusa haruka,haruka","onikata kayoko,kayoko","kyoyama kazusa,kazusa"],
+    "Gehenna":["sorasaki hina,hina","tsukimori chise,chise"],
+    "Hyakkiyako":["kasuga tsubaki,tsubaki","kosaka wakamo,wakamo"]
+  }},
+  "Sousou no Frieren":{id:"frieren",category:"Anime",keywords:["sousou no frieren","frieren","葬送のフリーレン"],factions:{
+    "__direct__":["fern,fern","methode,methode","frieren,フリーレン","stark,シュタルク","sein,ザイン","himmel,ヒンメル"]
+  }},
+  "Akame ga Kill":{id:"akame",category:"Anime",keywords:["akame ga kill","akame ga kiru","アカメが斬る"],factions:{
+    "Night Raid":["akame,アカメ","mine,マイン","leone,レオーネ","tatsumi,タツミ","bulat,ブラート"],
+    "Jaegers":["esdeath,エスデス","wave,ウェイブ","kurome,クロメ","run,ラン"]
+  }}
+};
+
+const DEFAULT_META = {};
+
+// ── UTILS ─────────────────────────────────────────────────────
+function toId(n){return n.toLowerCase().replace(/[^a-z0-9 ]/g,'').trim().replace(/\s+/g,'_').slice(0,12);}
+function totalChars(){let n=0;for(const f of Object.values(data))for(const c of Object.values(f.factions))n+=c.length;return n;}
+function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function varName(fr,fac){
+  const id=data[fr].id.toUpperCase();
+  const fid=fac.toUpperCase().replace(/[^A-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').slice(0,16);
+  return `CHARS_${id}_${fid}`;
+}
+function frVar(fr){return `CHARS_${data[fr].id.toUpperCase()}`;}
+function frId(fr){try{return 'fr_'+btoa(unescape(encodeURIComponent(fr))).replace(/[^a-zA-Z0-9]/g,'_');}catch{return 'fr_'+(++_uid);}}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg,color){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.color=color||'var(--green)';
+  t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── LOCAL STORAGE ─────────────────────────────────────────────
+function exportHtmlWithData(){
+  const dataJson=JSON.stringify(data,null,2);
+  const metaJson=JSON.stringify(categoryMeta,null,2);
+  let html=document.documentElement.outerHTML;
+  html=html.replace(/const DEFAULT\s*=\s*\{[\s\S]*?\n?\};/,'const DEFAULT = '+dataJson+';');
+  html=html.replace(/const DEFAULT_META\s*=\s*\{[\s\S]*?\n?\};/,'const DEFAULT_META = '+metaJson+';');
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='danbooru_injector_saved.html';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+  showToast('✓ HTML+Data tersimpan!');
+}
+function autoSave(){try{localStorage.setItem('dsbp_v2',JSON.stringify(data));localStorage.setItem('dsbp_catmeta',JSON.stringify(categoryMeta));}catch(e){}}
+function autoLoad(){
+  try{const s=localStorage.getItem('dsbp_v2');if(s){data=JSON.parse(s);
+    const cm=localStorage.getItem('dsbp_catmeta');if(cm)categoryMeta=JSON.parse(cm);
+    return true;}}catch(e){}
+  return false;
+}
+
+// ── SEARCH ────────────────────────────────────────────────────
+function doLiveSearch(){
+  const q=document.getElementById('liveSearch').value.toLowerCase().trim();
+  document.querySelectorAll('.franchise-block').forEach(fb=>{
+    const fn=fb.querySelector('.franchise-name').textContent.toLowerCase();
+    const facs=fb.querySelectorAll('.faction-block');
+    let hit=false;
+    if(!q){
+      fb.style.display='';
+      const fo=fb.querySelector('.franchise-name').textContent;
+      collFr.has(fo)?fb.classList.add('collapsed'):fb.classList.remove('collapsed');
+      facs.forEach(ab=>{
+        ab.style.display='';
+        const ao=ab.querySelector('.faction-name').textContent;
+        collFac.has(fo+'§'+ao)?ab.classList.add('collapsed'):ab.classList.remove('collapsed');
+        ab.querySelectorAll('.char-chip').forEach(c=>c.style.display='');
+      });
+      return;
+    }
+    facs.forEach(ab=>{
+      const an=ab.querySelector('.faction-name').textContent.toLowerCase();
+      const chips=ab.querySelectorAll('.char-chip');
+      let mc=0;
+      chips.forEach(c=>{
+        const ok=c.getAttribute('data-full').toLowerCase().includes(q)||an.includes(q)||fn.includes(q);
+        c.style.display=ok?'':'none';if(ok)mc++;
+      });
+      if(an.includes(q)||fn.includes(q)||mc>0){ab.style.display='';ab.classList.remove('collapsed');hit=true;}
+      else{ab.style.display='none';}
+    });
+    if(hit||fn.includes(q)){fb.style.display='';fb.classList.remove('collapsed');}
+    else{fb.style.display='none';}
+  });
+  // Category visibility
+  document.querySelectorAll('.category-block').forEach(cb=>{
+    if(q){
+      const any=[...cb.querySelectorAll('.franchise-block')].some(fb=>fb.style.display!=='none');
+      cb.style.display=any?'':'none';
+      cb.classList.remove('collapsed');
+    }else{
+      cb.style.display='';
+    }
+  });
+}
+
+// ── QUICK ADD ─────────────────────────────────────────────────
+function quickAdd(){
+  const raw=document.getElementById('pathInput').value.trim();
+  if(!raw)return;
+  const parts=raw.split('/');
+  let franchise,faction,charsRaw,category=null;
+  if(parts.length>=4){category=parts[0].trim();franchise=parts[1].trim();faction=parts[2].trim()||'Uncategorized';charsRaw=parts.slice(3).join('/');}
+  else if(parts.length>=3){franchise=parts[0].trim();faction=parts[1].trim()||'Uncategorized';charsRaw=parts.slice(2).join('/');}
+  else if(parts.length===2){franchise=parts[0].trim();faction='__direct__';charsRaw=parts[1].trim();}
+  else{showToast('⚠ Format salah!','#f54a6b');return;}
+  if(!franchise||!charsRaw){showToast('⚠ Franchise & karakter wajib!','#f54a6b');return;}
+  const chars=charsRaw.split(';').map(c=>c.trim().toLowerCase()).filter(Boolean);
+  if(!chars.length)return;
+  if(!data[franchise]){data[franchise]={id:toId(franchise),keywords:[franchise.toLowerCase()],factions:{}};collFr.add(franchise);}
+  if(category)data[franchise].category=category;
+  if(!data[franchise].factions[faction])data[franchise].factions[faction]=[];
+  let added=0;
+  chars.forEach(c=>{if(!data[franchise].factions[faction].includes(c)){data[franchise].factions[faction].push(c);added++;}});
+  document.getElementById('pathInput').value='';
+  autoSave();render();
+  const catTag=category?`[${category}] `:'';
+  showToast(`✓ +${added} → ${catTag}${franchise}/${faction==='__direct__'?'(direct)':faction}`);
+}
+
+// ── IMPORT .SH ────────────────────────────────────────────────
+function importSh(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    const marker='# METADATA_INJECTOR_PRO:';
+    const idx=text.indexOf(marker);
+    if(idx!==-1){
+      try{
+        let sub=text.substring(idx+marker.length);
+        let end=sub.indexOf('\n');if(end!==-1)sub=sub.substring(0,end);
+        let json=sub.trim();
+        const fb=json.indexOf('{'),lb=json.lastIndexOf('}');
+        if(fb!==-1&&lb!==-1)json=json.substring(fb,lb+1);
+        const meta=JSON.parse(json);
+        if(meta&&meta.structure){
+          data=meta.structure;
+          if(meta.categoryMeta)categoryMeta=meta.categoryMeta;
+          collFr.clear();Object.keys(data).forEach(fr=>collFr.add(fr));
+          autoSave();render();showToast(`✓ Loaded ${meta.total_characters||totalChars()} karakter.`);
+        }else{showToast('⚠ Struktur metadata kosong.','#f54a6b');}
+      }catch(err){console.error(err);showToast('⚠ Gagal decode JSON.','#f54a6b');}
+    }else{showToast('⚠ Penanda METADATA tidak ditemukan.','#f54a6b');}
+    event.target.value='';
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function clearAll(){if(!confirm('Hapus semua data?'))return;data={};collFr.clear();collFac.clear();autoSave();render();}
+
+// ── EXPORT / IMPORT JSON ──────────────────────────────────────
+function exportJson(){
+  if(!Object.keys(data).length){showToast('⚠ Tidak ada data untuk di-export!','#f5c84a');return;}
+  const payload={
+    generator:'Danbooru Sorter Injector Pro',
+    version:'3.4.0',
+    exported:new Date().toLocaleString('id-ID'),
+    total_characters:totalChars(),
+    structure:data,
+    categoryMeta:categoryMeta
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download='danbooru_data.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+  showToast(`✓ Export JSON (${totalChars()} karakter)`);
+}
+function importJson(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const meta=JSON.parse(e.target.result);
+      if(!meta||!meta.structure){showToast('⚠ Format JSON tidak valid (tidak ada "structure").','#f54a6b');return;}
+      const frCount=Object.keys(meta.structure).length;
+      if(!frCount){showToast('⚠ JSON kosong — tidak ada franchise.','#f5c84a');return;}
+      if(!confirm(`Import JSON: ${meta.total_characters||'?'} karakter, ${frCount} franchise.\nData saat ini akan DIGANTI. Lanjut?`))return;
+      data=meta.structure;
+      categoryMeta=meta.categoryMeta||{};
+      collFr.clear();Object.keys(data).forEach(fr=>collFr.add(fr));
+      autoSave();render();
+      showToast(`✓ Import JSON: ${totalChars()} karakter dari ${frCount} franchise`);
+    }catch(err){
+      console.error(err);
+      showToast('⚠ Gagal parse JSON — file rusak?','#f54a6b');
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(tab,btn){
+  const panel=btn.closest('.panel');
+  panel.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  panel.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── BULK IMPORT ───────────────────────────────────────────────
+function parseBulkLines(raw){return raw.split('\n').map(l=>l.trim()).filter(l=>l&&l.includes('/'));}
+function updateBulkStats(){
+  const v=parseBulkLines(document.getElementById('bulkInput').value).length;
+  document.getElementById('bulkStats').innerHTML=v>0?`<b>${v}</b> baris valid siap diimport`:'0 baris valid';
+}
+function bulkImport(){
+  const raw=document.getElementById('bulkInput').value.trim();
+  if(!raw){showToast('⚠ Textarea kosong!','#f5c84a');return;}
+  const lines=parseBulkLines(raw);
+  if(!lines.length){showToast('⚠ Tidak ada baris valid!','#f54a6b');return;}
+  let added=0,skip=0;
+  lines.forEach(line=>{
+    const parts=line.split('/');
+    let fr,fac,cr,cat=null;
+    if(parts.length>=4){cat=parts[0].trim();fr=parts[1].trim();fac=parts[2].trim()||'Uncategorized';cr=parts.slice(3).join('/').trim();}
+    else if(parts.length>=3){fr=parts[0].trim();fac=parts[1].trim()||'Uncategorized';cr=parts.slice(2).join('/').trim();}
+    else if(parts.length===2){fr=parts[0].trim();fac='__direct__';cr=parts[1].trim();}
+    else{skip++;return;}
+    if(!fr||!cr){skip++;return;}
+    if(!data[fr]){data[fr]={id:toId(fr),keywords:[fr.toLowerCase()],factions:{}};collFr.add(fr);}
+    if(cat)data[fr].category=cat;
+    if(!data[fr].factions[fac])data[fr].factions[fac]=[];
+    cr.split(';').map(c=>c.trim().toLowerCase()).filter(Boolean).forEach(c=>{
+      if(!data[fr].factions[fac].includes(c)){data[fr].factions[fac].push(c);added++;}else{skip++;}
+    });
+  });
+  autoSave();render();updateBulkStats();
+  if(added>0)showToast(`✓ +${added} karakter diimport`);
+  else showToast('⚠ Semua sudah ada / tidak valid','#f5c84a');
+}
+
+// ── LOAD DEFAULTS ─────────────────────────────────────────────
+function loadDefaults(){
+  data=JSON.parse(JSON.stringify(DEFAULT));
+  collFr.clear();Object.keys(data).forEach(fr=>collFr.add(fr));
+  autoSave();render();showToast('✓ Default dimuat');
+}
+
+// ── DELETE ────────────────────────────────────────────────────
+function deleteChar(fr,fac,ch){
+  data[fr].factions[fac]=data[fr].factions[fac].filter(c=>c!==ch);
+  if(!data[fr].factions[fac].length)delete data[fr].factions[fac];
+  if(!Object.keys(data[fr].factions).length)delete data[fr];
+  autoSave();render();
+}
+function deleteFaction(fr,fac){
+  if(!confirm(`Hapus faksi "${fac==='__direct__'?'Direct':fac}"?`))return;
+  delete data[fr].factions[fac];
+  if(!Object.keys(data[fr].factions).length)delete data[fr];
+  autoSave();render();
+}
+function deleteFranchise(fr){
+  if(!confirm(`Hapus franchise "${fr}"?`))return;
+  delete data[fr];collFr.delete(fr);autoSave();render();
+}
+
+// ── TOGGLE / RENAME ───────────────────────────────────────────
+function toggleFrMode(fr){
+  const cur=data[fr].mode||(document.getElementById('cfgMode').value==='3'?'3':'2');
+  data[fr].mode=cur==='3'?'2':'3';autoSave();render();
+  showToast(`✓ ${fr}: mode ${data[fr].mode==='3'?'3L':'2L'}`);
+}
+function renameFranchise(fr){
+  const nw=prompt('Rename franchise:',fr);
+  if(!nw||!nw.trim()||nw.trim()===fr)return;
+  const n=nw.trim();if(data[n]){showToast('⚠ Sudah ada!','#f54a6b');return;}
+  data[n]=data[fr];delete data[fr];
+  if(collFr.has(fr)){collFr.delete(fr);collFr.add(n);}
+  autoSave();render();showToast(`✓ Renamed → ${n}`);
+}
+function editFrKeywords(fr){
+  const cur=data[fr].keywords?data[fr].keywords.join(', '):fr.toLowerCase();
+  const nw=prompt(`Keyword/Alias "${fr}":`,cur);if(nw===null)return;
+  const parsed=nw.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
+  data[fr].keywords=parsed.length?parsed:[fr.toLowerCase()];
+  autoSave();showToast('✓ Keywords updated');
+}
+function renameFaction(fr,fac){
+  const nw=prompt('Rename faksi:',fac);
+  if(!nw||!nw.trim()||nw.trim()===fac)return;
+  const n=nw.trim();if(data[fr].factions[n]){showToast('⚠ Faksi sudah ada!','#f54a6b');return;}
+  data[fr].factions[n]=data[fr].factions[fac];delete data[fr].factions[fac];
+  autoSave();render();showToast('✓ Faksi renamed');
+}
+function renameChar(fr,fac,ch){
+  const nw=prompt(`Nama & Alias (pisah koma):\nContoh: tokisaki kurumi,kurumi,skrm`,ch);
+  if(!nw||!nw.trim())return;
+  const arr=data[fr].factions[fac];const i=arr.indexOf(ch);if(i===-1)return;
+  arr[i]=nw.trim().toLowerCase();autoSave();render();showToast('✓ Alias terupdate');
+}
+
+// ── ADD INLINE ────────────────────────────────────────────────
+function addCharInline(fr,fac,iid){
+  const inp=document.getElementById(iid);if(!inp.value.trim())return;
+  const v=inp.value.trim().toLowerCase();
+  if(!data[fr].factions[fac].includes(v))data[fr].factions[fac].push(v);
+  inp.value='';autoSave();render();
+}
+function addFaction(fr,iid){
+  const name=document.getElementById(iid).value.trim();if(!name)return;
+  if(!data[fr].factions[name])data[fr].factions[name]=[];
+  document.getElementById(iid).value='';autoSave();render();
+}
+function addFranchise(iid){
+  const name=document.getElementById(iid).value.trim();if(!name||data[name])return;
+  data[name]={id:toId(name),keywords:[name.toLowerCase()],factions:{'__direct__':[]}};
+  collFr.add(name);document.getElementById(iid).value='';autoSave();render();
+}
+
+// ── CATEGORY ─────────────────────────────────────────────────
+function addCategory(){
+  const name=prompt('Nama kategori baru (contoh: Gacha Games, Anime, VTuber):');
+  if(!name||!name.trim())return;
+  const cat=name.trim();
+  const frs=Object.keys(data);
+  if(!frs.length){showToast(`✓ Kategori "${cat}" siap — tambah franchise lalu assign via 📁`,'var(--accent2)');return;}
+  const unassigned=frs.filter(f=>!data[f].category);
+  const listFrs=unassigned.length?unassigned:frs;
+  const list=listFrs.map((f,i)=>`${i+1}. ${f}${data[f].category?' ['+data[f].category+']':''}`).join('\n');
+  const hint=unassigned.length?'Franchise belum punya kategori:':'Semua franchise (sudah ada kategori):';
+  const sel=prompt(`Kategori: "${cat}"\n\n${hint}\n${list}\n\nKetik nomor franchise (pisah koma), kosongkan = skip.`);
+  if(sel===null)return;
+  const chosen=sel.split(',').map(s=>parseInt(s.trim())-1).filter(i=>i>=0&&i<listFrs.length);
+  chosen.forEach(i=>{data[listFrs[i]].category=cat;});
+  autoSave();render();
+  showToast(chosen.length?`✓ "${cat}" → ${chosen.length} franchise`:`✓ Kategori "${cat}" siap — assign via 📁`,'var(--accent2)');
+}
+function setFranchiseCategory(fr){
+  const cats=[...new Set(Object.values(data).map(fd=>fd.category).filter(Boolean))].sort();
+  const cur=data[fr].category||'';
+  const hint=cats.length?`\nKategori: ${cats.join(', ')}`:'\n(belum ada kategori)';
+  const nw=prompt(`Kategori untuk "${fr}":${hint}\n\n(kosongkan = tidak dikategorikan)`,cur);
+  if(nw===null)return;
+  const cat=nw.trim();
+  if(cat)data[fr].category=cat;else delete data[fr].category;
+  autoSave();render();
+  showToast(cat?`✓ ${fr} → ${cat}`:'✓ Kategori dihapus');
+}
+function editCategoryKeywords(cat){
+  if(!categoryMeta[cat])categoryMeta[cat]={keywords:[]};
+  const cur=categoryMeta[cat].keywords.join(', ');
+  const nw=prompt(`Keywords untuk kategori "${cat}":\n(pisah koma, dipakai sbg trigger detect di script)\n\nContoh: idolmaster, im@s, アイドルマスター`,cur);
+  if(nw===null)return;
+  const parsed=nw.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
+  if(parsed.length){categoryMeta[cat].keywords=parsed;}else{delete categoryMeta[cat];}
+  autoSave();render();
+  showToast(parsed.length?`✓ ${cat} keywords: ${parsed.join(', ')}`:'✓ Category keywords dihapus');
+}
+function toggleCat(cat){collCat.has(cat)?collCat.delete(cat):collCat.add(cat);render();}
+
+// ── COLLAPSE / EXPAND ─────────────────────────────────────────
+function toggleFr(fr){collFr.has(fr)?collFr.delete(fr):collFr.add(fr);render();}
+function toggleFac(fr,fac){const k=fr+'§'+fac;collFac.has(k)?collFac.delete(k):collFac.add(k);render();}
+function collapseAll(){Object.keys(data).forEach(fr=>collFr.add(fr));render();}
+function expandAll(){collFr.clear();render();}
+
+// ── EDIT MODE ────────────────────────────────────────────────
+function toggleEditMode(){
+  editMode=!editMode;
+  if(!editMode)selChars.clear();
+  const btn=document.getElementById('editModeBtn');
+  btn.classList.toggle('edit-on',editMode);
+  btn.textContent=editMode?'✏ Edit ON':'✏ Edit';
+  updateEditBar();render();
+}
+function selKey(fr,fac,ch){return fr+'§'+fac+'§'+ch;}
+function parseKey(k){const p=k.split('§');return{fr:p[0],fac:p[1],ch:p.slice(2).join('§')};}
+function toggleSelChar(fr,fac,ch,e){
+  e.stopPropagation();
+  const k=selKey(fr,fac,ch);
+  selChars.has(k)?selChars.delete(k):selChars.add(k);
+  const chip=e.target.closest('.char-chip');
+  if(chip)chip.classList.toggle('sel',selChars.has(k));
+  updateEditBar();
+}
+function selAllInFac(fr,fac,e){
+  e.stopPropagation();
+  const chars=data[fr]?.factions[fac]||[];
+  const allSel=chars.every(ch=>selChars.has(selKey(fr,fac,ch)));
+  chars.forEach(ch=>{const k=selKey(fr,fac,ch);allSel?selChars.delete(k):selChars.add(k);});
+  updateEditBar();render();
+}
+function selAllInFr(fr,e){
+  e.stopPropagation();
+  const fks=Object.keys(data[fr]?.factions||{});
+  const all=fks.flatMap(fac=>(data[fr].factions[fac]||[]).map(ch=>selKey(fr,fac,ch)));
+  const allSel=all.every(k=>selChars.has(k));
+  all.forEach(k=>allSel?selChars.delete(k):selChars.add(k));
+  updateEditBar();render();
+}
+function updateEditBar(){
+  const n=selChars.size;
+  document.getElementById('editCount').textContent=n+' karakter dipilih';
+  document.getElementById('editBar').classList.toggle('show',n>0&&editMode);
+}
+function clearSel(){selChars.clear();updateEditBar();render();}
+function bulkDelete(){
+  if(!selChars.size)return;
+  if(!confirm(`Hapus ${selChars.size} karakter yang dipilih?`))return;
+  selChars.forEach(k=>{
+    const{fr,fac,ch}=parseKey(k);
+    if(data[fr]?.factions[fac]){
+      data[fr].factions[fac]=data[fr].factions[fac].filter(c=>c!==ch);
+      if(!data[fr].factions[fac].length)delete data[fr].factions[fac];
+      if(!Object.keys(data[fr]?.factions||{}).length)delete data[fr];
+    }
+  });
+  selChars.clear();autoSave();render();updateEditBar();
+  showToast('✓ Karakter dihapus');
+}
+function bulkOp(op){
+  if(!selChars.size)return;
+  moveState={bulk:true,op};
+  document.getElementById('moveCharPill').textContent=`${selChars.size} karakter dipilih`;
+  setMoveOp(op);
+  const frSel=document.getElementById('moveFrSel');
+  const frs=Object.keys(data);
+  frSel.innerHTML=frs.map(f=>`<option value="${escH(f)}">${escH(f)}</option>`).join('');
+  _populateMoveFac(frs[0]||'');
+  document.getElementById('moveOverlay').style.display='flex';
+}
+function setMoveOp(op){
+  if(moveState)moveState.op=op;
+  document.getElementById('opMvBtn').classList.toggle('active',op==='mv');
+  document.getElementById('opCpBtn').classList.toggle('active',op==='cp');
+}
+
+// ── MOVE CHARACTER ────────────────────────────────────────────
+function openMoveChar(fr,fac,ch){
+  moveState={fr,fac,ch,op:'mv',bulk:false};
+  document.getElementById('moveCharPill').textContent=`${ch}  ·  ${fr} / ${fac==='__direct__'?'direct':fac}`;
+  setMoveOp('mv');
+  const frSel=document.getElementById('moveFrSel');
+  frSel.innerHTML=Object.keys(data).map(f=>`<option value="${escH(f)}"${f===fr?' selected':''}>${escH(f)}</option>`).join('');
+  _populateMoveFac(fr);
+  document.getElementById('moveOverlay').style.display='flex';
+}
+function updateMoveFacSel(){
+  _populateMoveFac(document.getElementById('moveFrSel').value);
+}
+function _populateMoveFac(fr){
+  const sel=document.getElementById('moveFacSel');
+  const facs=Object.keys(data[fr]?.factions||{}).filter(f=>f!=='__direct__');
+  const opts=[{v:'__direct__',l:'📌 Direct (no subfolder)'},...facs.map(f=>({v:f,l:f}))];
+  sel.innerHTML=opts.map(o=>`<option value="${escH(o.v)}">${escH(o.l)}</option>`).join('');
+  // Pre-select current faction if same franchise
+  if(fr===moveState?.fr){
+    const cur=moveState.fac;
+    [...sel.options].forEach(o=>{if(o.value===cur)o.selected=true;});
+  }
+}
+function confirmMove(){
+  if(!moveState)return;
+  const newFr=document.getElementById('moveFrSel').value;
+  const newFac=document.getElementById('moveFacSel').value;
+  const op=moveState.op||'mv';
+
+  // ── BULK ──
+  if(moveState.bulk){
+    const targets=[...selChars];
+    if(!data[newFr])data[newFr]={id:toId(newFr),keywords:[newFr.toLowerCase()],factions:{}};
+    if(!data[newFr].factions[newFac])data[newFr].factions[newFac]=[];
+    targets.forEach(k=>{
+      const{fr,fac,ch}=parseKey(k);
+      if(!data[newFr].factions[newFac].includes(ch))data[newFr].factions[newFac].push(ch);
+      if(op==='mv'&&data[fr]?.factions[fac]){
+        data[fr].factions[fac]=data[fr].factions[fac].filter(c=>c!==ch);
+        if(!data[fr].factions[fac].length)delete data[fr].factions[fac];
+        if(!Object.keys(data[fr]?.factions||{}).length)delete data[fr];
+      }
+    });
+    selChars.clear();
+    closeMove();autoSave();render();updateEditBar();
+    showToast(`✓ ${op==='mv'?'Dipindah':'Disalin'} ${targets.length}c → ${newFr}/${newFac==='__direct__'?'direct':newFac}`);
+    return;
+  }
+
+  // ── SINGLE ──
+  const{fr,fac,ch}=moveState;
+  if(op==='mv'&&newFr===fr&&newFac===fac){showToast('⚠ Tujuan sama!','#f5c84a');return;}
+  if(!data[newFr])data[newFr]={id:toId(newFr),keywords:[newFr.toLowerCase()],factions:{}};
+  if(!data[newFr].factions[newFac])data[newFr].factions[newFac]=[];
+  if(!data[newFr].factions[newFac].includes(ch))data[newFr].factions[newFac].push(ch);
+  if(op==='mv'){
+    data[fr].factions[fac]=data[fr].factions[fac].filter(c=>c!==ch);
+    if(!data[fr].factions[fac].length)delete data[fr].factions[fac];
+    if(!Object.keys(data[fr].factions).length)delete data[fr];
+  }
+  closeMove();autoSave();render();
+  showToast(`✓ ${op==='mv'?'Dipindah':'Disalin'} → ${newFr}/${newFac==='__direct__'?'direct':newFac}`);
+}
+function closeMove(){document.getElementById('moveOverlay').style.display='none';moveState=null;}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderFranchise(fr){
+  const fd=data[fr];
+  const fks=Object.keys(fd.factions);
+  const total=fks.reduce((s,f)=>s+fd.factions[f].length,0);
+  const frid=frId(fr);
+  const cls=collFr.has(fr)?'collapsed':'';
+  const frMode=fd.mode||(document.getElementById('cfgMode').value==='3'?'3':'2');
+  const catLabel=fd.category?`📁${fd.category}`:'—';
+
+  let h=`<div class="franchise-block ${cls}" id="${frid}">
+    <div class="franchise-head" onclick="toggleFr('${esc(fr)}')">
+      <span class="franchise-name">${escH(fr)}</span>
+      <span class="franchise-id">${fd.id}</span>
+      <span class="char-count">${total}c</span>
+      <span class="mode-badge ${frMode==='2'?'m2':''}" onclick="event.stopPropagation();toggleFrMode('${esc(fr)}')" title="Toggle 3L/2L">${frMode==='3'?'3L':'2L'}</span>
+      <button class="icon-btn folder" onclick="event.stopPropagation();setFranchiseCategory('${esc(fr)}')" title="Set Kategori (${catLabel})">📁</button>
+      <button class="icon-btn" onclick="event.stopPropagation();renameFranchise('${esc(fr)}')" title="Rename">✏</button>
+      <button class="icon-btn kw" onclick="event.stopPropagation();editFrKeywords('${esc(fr)}')" title="Edit Keyword">🔑</button>
+      ${editMode?`<button class="sel-fac" onclick="selAllInFr('${esc(fr)}',event)" title="Pilih semua">☐All</button>`:''}
+      <button class="icon-btn danger" onclick="event.stopPropagation();deleteFranchise('${esc(fr)}')">🗑</button>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="franchise-body"><div class="factions-grid-wrapper">`;
+
+  // __direct__ first
+  const sorted=['__direct__',...fks.filter(f=>f!=='__direct__')].filter(f=>fks.includes(f));
+
+  sorted.forEach(fac=>{
+    const chars=fd.factions[fac];
+    const fcls=collFac.has(fr+'§'+fac)?'collapsed':'';
+    const isDirect=fac==='__direct__';
+    const iid=uid();
+    h+=`<div class="faction-block ${fcls}${isDirect?' direct':''}">
+      <div class="faction-head" onclick="toggleFac('${esc(fr)}','${esc(fac)}')">
+        <span>${isDirect?'📌':'📂'}</span>
+        <span class="faction-name">${isDirect?'Direct (no subfolder)':escH(fac)}</span>
+        <span class="char-count">${chars.length}</span>
+        ${editMode?`<button class="sel-fac" onclick="selAllInFac('${esc(fr)}','${esc(fac)}',event)" title="Pilih semua">☐All</button>`:''}
+        ${!isDirect?`<button class="icon-btn" onclick="event.stopPropagation();renameFaction('${esc(fr)}','${esc(fac)}')" title="Rename">✏</button>`:''}
+        <button class="del-btn" onclick="event.stopPropagation();deleteFaction('${esc(fr)}','${esc(fac)}')">✕</button>
+      </div>
+      <div class="faction-body">`;
+    chars.forEach(c=>{
+      const dn=c.split(',')[0].trim();
+      const isSel=editMode&&selChars.has(selKey(fr,fac,c));
+      if(editMode){
+        h+=`<span class="char-chip${isSel?' sel':''}" data-full="${escH(c)}" onclick="toggleSelChar('${esc(fr)}','${esc(fac)}','${esc(c)}',event)" style="cursor:pointer">
+          <input type="checkbox" class="cb" ${isSel?'checked':''} onclick="toggleSelChar('${esc(fr)}','${esc(fac)}','${esc(c)}',event)">
+          <span class="char-name" title="${escH(c)}">${escH(dn)}</span>
+        </span>`;
+      }else{
+        h+=`<span class="char-chip" data-full="${escH(c)}">
+          <span class="char-name" onclick="renameChar('${esc(fr)}','${esc(fac)}','${esc(c)}')" title="${escH(c)}">${escH(dn)}</span>
+          <button class="char-move" onclick="openMoveChar('${esc(fr)}','${esc(fac)}','${esc(c)}')" title="Pindah/Salin">→</button>
+          <button class="char-del" onclick="deleteChar('${esc(fr)}','${esc(fac)}','${esc(c)}')">✕</button>
+        </span>`;
+      }
+    });
+    h+=`<div class="add-inline"><input class="input-sm" id="${iid}" placeholder="nama,alias" onkeydown="if(event.key==='Enter')addCharInline('${esc(fr)}','${esc(fac)}','${iid}')"><button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="addCharInline('${esc(fr)}','${esc(fac)}','${iid}')">+</button></div>
+      </div></div>`;
+  });
+
+  const fid=uid();
+  h+=`</div>
+    <div class="add-inline" style="padding:4px 2px 0">
+      <input class="input-sm" id="${fid}" placeholder="Nama Faksi Baru" onkeydown="if(event.key==='Enter')addFaction('${esc(fr)}','${fid}')">
+      <button class="btn btn-sm" style="background:#1a2540;color:var(--accent);border:1px solid var(--border)" onclick="addFaction('${esc(fr)}','${fid}')">+Faksi</button>
+    </div>
+  </div></div>`;
+  return h;
+}
+
+function render(){
+  document.getElementById('totalBadge').textContent=totalChars()+' karakter';
+  const tree=document.getElementById('tree');
+  const frs=Object.keys(data);
+  if(!frs.length){
+    tree.innerHTML=`<div class="empty"><div class="icon">🌸</div>Belum ada data.<br><br><button class="btn btn-primary btn-sm" onclick="loadDefaults()" style="margin:auto;display:inline-flex">📥 Muat Default</button></div>`;
+    return;
+  }
+
+  // Group by category
+  const catMap={};
+  frs.forEach(fr=>{
+    const cat=data[fr].category||'__none__';
+    if(!catMap[cat])catMap[cat]=[];
+    catMap[cat].push(fr);
+  });
+  const catOrder=[...Object.keys(catMap).filter(c=>c!=='__none__').sort()];
+  if(catMap['__none__'])catOrder.push('__none__');
+  const hasRealCats=catOrder.some(c=>c!=='__none__');
+
+  let h='';
+  catOrder.forEach(cat=>{
+    const frList=catMap[cat];
+    const isNone=cat==='__none__';
+    const catCls=collCat.has(cat)?'collapsed':'';
+    if(!isNone){
+      const catKws=categoryMeta[cat]&&categoryMeta[cat].keywords&&categoryMeta[cat].keywords.length;
+      const kwBadge=catKws?`<span style="font-family:var(--mono);font-size:9px;color:var(--yellow);background:#1e1a10;border:1px solid #3a2f10;border-radius:4px;padding:1px 5px;margin-left:4px" title="${categoryMeta[cat].keywords.join(', ')}">🔑${categoryMeta[cat].keywords.length}kw</span>`:'';
+      h+=`<div class="category-block ${catCls}">
+        <div class="category-head" onclick="toggleCat('${esc(cat)}')">
+          <span class="cat-chevron">▼</span>
+          <span class="cat-label">📁 ${escH(cat)}</span>
+          ${kwBadge}
+          <span class="cat-count">${frList.length} franchise</span>
+          <button class="icon-btn kw" onclick="event.stopPropagation();editCategoryKeywords('${esc(cat)}')" title="Edit keyword kategori" style="margin-left:4px">🔑</button>
+        </div>
+        <div class="category-body">`;
+      h+=frList.map(fr=>renderFranchise(fr)).join('');
+      h+=`</div></div>`;
+    }else{
+      if(hasRealCats){
+        h+=`<div class="category-block no-cat-section ${catCls}">
+          <div class="category-head" onclick="toggleCat('__none__')">
+            <span class="cat-chevron">▼</span>
+            <span class="cat-label">📂 Lainnya</span>
+            <span class="cat-count">${frList.length} franchise</span>
+          </div>
+          <div class="category-body">`;
+        h+=frList.map(fr=>renderFranchise(fr)).join('');
+        h+=`</div></div>`;
+      }else{
+        h+=frList.map(fr=>renderFranchise(fr)).join('');
+      }
+    }
+  });
+
+  const afid=uid();
+  h+=`<div class="add-inline" style="margin-top:4px">
+    <input class="input-sm" id="${afid}" placeholder="Franchise Baru" onkeydown="if(event.key==='Enter')addFranchise('${afid}')">
+    <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="addFranchise('${afid}')">+Franchise</button>
+  </div>`;
+  tree.innerHTML=h;
+  doLiveSearch();
+}
+
+// ── SCRIPT BUILDER ────────────────────────────────────────────
+function wrapList(list,max=90){
+  const parts=list.split('|');let out='',cur='';
+  parts.forEach((p,i)=>{const add=p+(i<parts.length-1?'|':'');if(cur.length+add.length>max&&cur.length){out+=cur+'\\\n';cur=add;}else{cur+=add;}});
+  return out+cur;
+}
+
+function buildScript(){
+  const src=document.getElementById('cfgSrc').value||'.';
+  const dst=document.getElementById('cfgDst').value||'.';
+  const exts=document.getElementById('cfgExt').value.trim().split(/\s+/).filter(Boolean);
+  const globalMode=document.getElementById('cfgMode').value;
+  const fileOp=(document.getElementById('cfgOp')||{}).value||'mv';
+  const unknownFolder=(document.getElementById('cfgUnknown')||{value:''}).value.trim();
+  const frs=Object.keys(data);
+
+  const metaJson=JSON.stringify({generator:"Danbooru Sorter Injector Pro",version:"3.4.0",total_characters:totalChars(),structure:data,categoryMeta});
+  let charsSection='',folderCases='',detectCases='';
+
+  frs.forEach(fr=>{
+    const fd=data[fr];
+    const frMode3=(fd.mode||globalMode)==='3';
+    const fks=Object.keys(fd.factions);
+    charsSection+=`\n# ▸ ${fr}\n`;
+    if(frMode3){
+      fks.filter(f=>f!=='__direct__').forEach(fac=>{
+        const chars=fd.factions[fac];if(!chars.length)return;
+        const list=chars.map(c=>c.split(',').map(a=>` ${a.trim()} `).join('|')).join('|');
+        charsSection+=`${varName(fr,fac)}=\\\n"${wrapList(list)}"\n`;
+      });
+    }
+    const all=[];
+    fks.forEach(fac=>fd.factions[fac].forEach(c=>c.split(',').forEach(a=>all.push(a.trim()))));
+    if(all.length){
+      const list=all.map(a=>` ${a} `).join('|');
+      charsSection+=`${frVar(fr)}=\\\n"${wrapList(list)}"\n`;
+    }
+  });
+
+  // Group franchises by category WITH keywords
+  const catKeywordedFrs=new Set();
+  const catGroups={};
+  frs.forEach(fr=>{
+    const cat=data[fr].category;
+    if(cat&&categoryMeta[cat]&&categoryMeta[cat].keywords&&categoryMeta[cat].keywords.length){
+      catKeywordedFrs.add(fr);
+      if(!catGroups[cat])catGroups[cat]=[];
+      catGroups[cat].push(fr);
+    }
+  });
+
+  // Category keyword detect cases (grouped — check chars to pick sub-franchise)
+  Object.entries(catGroups).forEach(([cat,catFrs])=>{
+    const kws=categoryMeta[cat].keywords;
+    const pats=kws.map(k=>`*" ${k} "*`).join('|');
+    detectCases+=`    # ── Category: ${cat}\n    ${pats})\n`;
+    catFrs.forEach(fr=>{
+      const id=data[fr].id;
+      detectCases+=`      if detect_char "\$p" "\$CHARS_${id.toUpperCase()}" | grep -q .; then printf '${id}'; return; fi\n`;
+    });
+    detectCases+=`      printf '' ;;\n`;
+  });
+
+  // Individual franchise detect cases (not covered by category keywords)
+  frs.filter(fr=>!catKeywordedFrs.has(fr)).forEach(fr=>{
+    const fd=data[fr];
+    const myKws=fd.keywords||[fr.toLowerCase()];
+    const pats=myKws.map(k=>`*" ${k} "*`).join('|');
+    const children=frs.filter(other=>other!==fr&&!catKeywordedFrs.has(other)&&(data[other].keywords||[other.toLowerCase()]).some(ok=>myKws.some(mk=>ok!==mk&&ok.includes(mk))));
+    if(children.length){
+      detectCases+=`    ${pats})\n`;
+      children.forEach(child=>{
+        const cid=data[child].id;
+        detectCases+=`      if detect_char "\$p" "\$CHARS_${cid.toUpperCase()}" | grep -q .; then printf '%s' "${cid}"; return; fi\n`;
+      });
+      detectCases+=`      printf '%s' "${fd.id}" ;;\n`;
+    }else{
+      detectCases+=`    ${pats})  printf '%s' "${fd.id}" ;;\n`;
+    }
+  });
+
+  frs.forEach(fr=>{
+    const fd=data[fr];const id=fd.id;const idU=id.toUpperCase();
+    const frMode3=(fd.mode||globalMode)==='3';
+    const fks=Object.keys(fd.factions).filter(f=>fd.factions[f].length>0);
+    const directChars=fd.factions['__direct__']||[];
+    const realFks=fks.filter(f=>f!=='__direct__');
+    // Category prefix: "Gacha Games/" or "" if no category
+    const catPrefix=fd.category?fd.category+'/':'';
+    folderCases+=`\n    # ── ${catPrefix}${fr}\n    "${id}")\n`;
+
+    const useComplex=frMode3&&(realFks.length>1||(realFks.length>0&&directChars.length>0));
+    if(useComplex){
+      const jUc=s=>s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1):w).join(' ');
+      folderCases+=`      local match char faction\n`;
+      folderCases+=`      match=\$(detect_char "\$padded" "\$CHARS_${idU}")\n`;
+      folderCases+=`      char="\$match"\n`;
+      // Alias pairs (all factions including __direct__)
+      const ap=[];
+      fks.forEach(fac=>fd.factions[fac].forEach(c=>{
+        const pts=c.split(',').map(a=>a.trim());
+        pts.slice(1).forEach(alias=>ap.push([alias,pts[0]]));
+      }));
+      if(ap.length){
+        folderCases+=`      case "\$match" in\n`;
+        ap.forEach(([a,canon])=>{folderCases+=`        ${a.includes(' ')?`"${a}"`:a}) char="${canon}" ;;\n`;});
+        folderCases+=`      esac\n`;
+      }
+      folderCases+=`      char=\$(ucfirst "\$char")\n`;
+      // Faction detection case
+      folderCases+=`      case "\$char" in\n`;
+      if(directChars.length){
+        const pats=directChars.map(c=>{const n=jUc(c.split(',')[0].trim());return n.includes(' ')?`"${n}"`:n;}).join('|');
+        folderCases+=`        ${pats}) faction="__direct__" ;;\n`;
+      }
+      realFks.forEach(fac=>{
+        const chars=fd.factions[fac];if(!chars.length)return;
+        const pats=chars.map(c=>{const n=jUc(c.split(',')[0].trim());return n.includes(' ')?`"${n}"`:n;}).join('|');
+        folderCases+=`        ${pats}) faction="${fac}" ;;\n`;
+      });
+      folderCases+=`        *) faction="Uncategorized" ;;\n      esac\n`;
+      // Build path — __direct__ skips faction subfolder
+      folderCases+=`      if [ -n "\$char" ]; then\n`;
+      folderCases+=`        if [ "\$faction" = "__direct__" ]; then\n`;
+      folderCases+=`          folder="${catPrefix}${fr}/\$char"\n`;
+      folderCases+=`        else\n`;
+      folderCases+=`          folder="${catPrefix}${fr}/\$faction/\$char"\n`;
+      folderCases+=`        fi\n`;
+      folderCases+=`      else\n        folder="${catPrefix}${fr}"\n      fi\n`;
+    }else{
+      // Simple 2L path
+      folderCases+=`      local match char\n      match=\$(detect_char "\$padded" "\$CHARS_${idU}")\n      char="\$match"\n`;
+      fks.forEach(fac=>{
+        fd.factions[fac].forEach(c=>{
+          const aliases=c.split(',').map(a=>a.trim());const fn=aliases[0];
+          aliases.forEach(alias=>{folderCases+=`      if [ "\$match" = "${alias}" ]; then char="${fn}"; fi\n`;});
+        });
+      });
+      folderCases+=`      char=\$(ucfirst "\$char")\n`;
+      folderCases+=`      if [ -n "\$char" ]; then\n        folder="${catPrefix}${fr}/\$char"\n      else\n        folder="${catPrefix}${fr}"\n      fi\n`;
+    }
+    folderCases+=`      ;;\n`;
+  });
+
+  const extFind=exts.map(e=>`-iname "*.${e}"`).join(` \\\n       -o `);
+  const modeLabel=frs.map(fr=>{const m=(data[fr].mode||globalMode)==='3'?'3L':'2L';const cat=data[fr].category?`[${data[fr].category}] `:'';return `${cat}${fr}:${m}`;}).join(', ');
+
+  return `#!/system/bin/sh
+# METADATA_INJECTOR_PRO: ${metaJson}
+# ============================================================
+#  DANBOORU FILE SORTER PRO v3.3.0
+#  Generated: ${new Date().toLocaleString('id-ID')}
+#  Mode: ${modeLabel}
+# ============================================================
+
+RED=\$(printf '\\033[0;31m')
+GREEN=\$(printf '\\033[0;32m')
+YELLOW=\$(printf '\\033[1;33m')
+CYAN=\$(printf '\\033[0;36m')
+BOLD=\$(printf '\\033[1m')
+RESET=\$(printf '\\033[0m')
+
+DRY_RUN=false
+VERBOSE=false
+BASE_DIR="${src}"
+DEST_DIR="${dst}"
+
+pad() {
+  printf ' %s ' "\$(printf '%s' "\$1" | tr '_' ' ' | tr 'A-Z' 'a-z' | tr -s ' ')"
+}
+ucfirst() {
+  printf '%s' "\$1" | awk '{for(i=1;i<=NF;i++) {sub(/./,toupper(substr(\$i,1,1)),\$i)} print}'
+}
+detect_char() {
+  local padded="\$1"; shift
+  printf '%s' "\$padded" \\
+    | grep -ioE "\$*" \\
+    | head -1 \\
+    | sed 's/^ //;s/ \$//'
+}
+
+# ── CHARACTER LISTS ─────────────────────────────────────────${charsSection}
+# ── DETECT FRANCHISE ─────────────────────────────────────────
+detect_franchise() {
+  local p="\$1"
+  case "\$p" in
+${detectCases}    *) printf '' ;;
+  esac
+}
+
+get_folder() {
+  local raw="\$1"
+  local padded; padded=\$(pad "\$raw")
+  local franchise; franchise=\$(detect_franchise "\$padded")
+  [ -z "\$franchise" ] && printf '' && return
+  local folder
+  case "\$franchise" in
+${folderCases}    *) folder="" ;;
+  esac
+  printf '%s' "\$folder"
+}
+
+process_file() {
+  local file="\$1"
+  local filename; filename=\$(basename "\$file")
+  local name="\${filename%.*}"
+  local folder; folder=\$(get_folder "\$name")
+  local dest
+  if [ -z "\$folder" ]; then
+    if [ -n "\$UNKNOWN_DIR" ]; then
+      dest="\$DEST_DIR/\$UNKNOWN_DIR"; folder="\$UNKNOWN_DIR"
+    else
+      \$VERBOSE && printf '%s[SKIP]%s %s\\n' "\$YELLOW" "\$RESET" "\$filename"; return 1
+    fi
+  else
+    dest="\$DEST_DIR/\$folder"
+  fi
+  if \$DRY_RUN; then
+    printf '%s[DRY]%s  %s -> %s\\n' "\$CYAN" "\$RESET" "\$filename" "\$folder"; return 0
+  fi
+  mkdir -p "\$dest"
+  local target="\$dest/\$filename"
+  if [ -f "\$target" ]; then
+    local base="\${filename%.*}" ext="\${filename##*.}" n=1
+    while [ -f "\$dest/\${base}_\${n}.\${ext}" ]; do n=\$((n+1)); done
+    target="\$dest/\${base}_\${n}.\${ext}"
+  fi
+  if \$FILE_OP "\$file" "\$target"; then
+    printf '%s[OK]%s   %s -> %s\\n' "\$GREEN" "\$RESET" "\$filename" "\$folder"
+    printf '%s\\t%s\\n' "\$filename" "\$folder" >> "\$LOG_FILE"; return 0
+  else
+    printf '%s[ERR]%s  Gagal: %s\\n' "\$RED" "\$RESET" "\$filename"; return 1
+  fi
+}
+
+main() {
+  LOG_FILE="\$DEST_DIR/_sort.log"
+  FILE_OP="${fileOp}"
+  UNKNOWN_DIR="${unknownFolder}"
+  printf '%s%s\xe2\x95\x94\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\\n\xe2\x95\x91   DANBOORU FILE SORTER PRO  v3.4.0  \xe2\x95\x91\\n\xe2\x95\x9a\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\\n%s' "\$CYAN" "\$BOLD" "\$RESET"
+  printf '  Source  : %s%s%s\\n' "\$BOLD" "\$BASE_DIR" "\$RESET"
+  printf '  Dest    : %s%s%s\\n' "\$BOLD" "\$DEST_DIR" "\$RESET"
+  printf '  Mode    : %s%s%s\\n' "\$BOLD" "\$FILE_OP" "\$RESET"
+  [ -n "\$UNKNOWN_DIR" ] && printf '  Unknown : %s%s%s\\n' "\$BOLD" "\$UNKNOWN_DIR" "\$RESET"
+  \$DRY_RUN && printf '\\n  %s★ DRY RUN%s\\n' "\$YELLOW" "\$RESET"
+  printf '\\n'
+  printf '# sort log\\n' > "\$LOG_FILE" 2>/dev/null
+  local total=0 ok=0 skip=0 unk=0
+  _tmp="\$BASE_DIR/.dbs_\$\$"
+  find "\$BASE_DIR" -maxdepth 1 -type f \\
+    \\( ${extFind} \\) | sort > "\$_tmp"
+  while IFS= read -r file; do
+    [ -z "\$file" ] && continue
+    local filename; filename=\$(basename "\$file")
+    local folder; folder=\$(get_folder "\${filename%.*}")
+    if [ -z "\$folder" ] && [ -z "\$UNKNOWN_DIR" ]; then skip=\$((skip+1))
+    else
+      if process_file "\$file"; then
+        ok=\$((ok+1)); [ -z "\$folder" ] && unk=\$((unk+1))
+      else skip=\$((skip+1)); fi
+    fi
+    total=\$((total+1))
+  done < "\$_tmp"
+  rm -f "\$_tmp"
+  printf '\\n%s\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90%s\\n' "\$BOLD" "\$RESET"
+  printf '  Total    : %s file\\n' "\$total"
+  printf '  %sOK       : %s file%s\\n' "\$GREEN" "\$ok" "\$RESET"
+  [ "\$unk" -gt 0 ] && printf '  %s_Unknown : %s file%s\\n' "\$YELLOW" "\$unk" "\$RESET"
+  printf '  %sDilewati : %s file%s\\n' "\$YELLOW" "\$skip" "\$RESET"
+  printf '  Log      : %s\\n' "\$LOG_FILE"
+  printf '\\n'
+}
+
+print_help() { printf 'Usage: %s [-d|--dry] [-v|--verbose] [SOURCE] [DEST]\\n' "\$0"; }
+while [ \$# -gt 0 ]; do
+  case "\$1" in
+    -d|--dry)     DRY_RUN=true ;;
+    -v|--verbose) VERBOSE=true ;;
+    -h|--help)    print_help; exit 0 ;;
+    -*) exit 1 ;;
+    *) break ;;
+  esac
+  shift
+done
+BASE_DIR="\${1:-${src}}"
+DEST_DIR="\${2:-${dst}}"
+main
+`;
+}
+
+function switchGenTab(mode,btn){
+  genMode=mode;
+  document.querySelectorAll('#gtab-classic,#gtab-compat').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('genNote-classic').style.display=mode==='classic'?'block':'none';
+  document.getElementById('genNote-compat').style.display=mode==='compat'?'block':'none';
+  document.getElementById('previewBox').textContent='Klik Preview atau Download untuk generate script...';
+}
+
+// ── SCRIPT BUILDER: COMPATIBLE (pure shell case, no grep) ─────
+function buildScriptCompat(){
+  const src=document.getElementById('cfgSrc').value||'.';
+  const dst=document.getElementById('cfgDst').value||'.';
+  const exts=document.getElementById('cfgExt').value.trim().split(/\s+/).filter(Boolean);
+  const globalMode=document.getElementById('cfgMode').value;
+  const fileOp=(document.getElementById('cfgOp')||{}).value||'mv';
+  const unknownFolder=(document.getElementById('cfgUnknown')||{value:''}).value.trim();
+  const globExts=exts.map(e=>`"\${BASE_DIR}"/*.${e} "\${BASE_DIR}"/*.${e.toUpperCase()}`).join(' ');
+  const frs=Object.keys(data);
+  const metaJson=JSON.stringify({generator:"Danbooru Sorter Injector Pro",version:"3.4.0-compat",total_characters:totalChars(),structure:data,categoryMeta});
+  const modeLabel=frs.map(fr=>{const m=(data[fr].mode||globalMode)==='3'?'3L':'2L';const cat=data[fr].category?`[${data[fr].category}] `:'';return `${cat}${fr}:${m}`;}).join(', ');
+
+  // Helper: ucfirst in JS (mirrors shell ucfirst)
+  const jUc=s=>s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1):w).join(' ');
+
+  // Helper: get all aliases flat for a franchise (for child disambiguation)
+  const allAliases=fr=>{
+    const out=[];
+    Object.values(data[fr].factions).forEach(chars=>chars.forEach(c=>c.split(',').forEach(a=>out.push(a.trim()))));
+    return out;
+  };
+
+  // ── detect_franchise (pure case, child disambig via inline case) ──
+  let detectFr='';
+
+  // Category keyword groups
+  const catKeywordedFrs2=new Set();
+  const catGroups2={};
+  frs.forEach(fr=>{
+    const cat=data[fr].category;
+    if(cat&&categoryMeta[cat]&&categoryMeta[cat].keywords&&categoryMeta[cat].keywords.length){
+      catKeywordedFrs2.add(fr);
+      if(!catGroups2[cat])catGroups2[cat]=[];
+      catGroups2[cat].push(fr);
+    }
+  });
+
+  Object.entries(catGroups2).forEach(([cat,catFrs])=>{
+    const kws=categoryMeta[cat].keywords;
+    const pats=kws.map(k=>`*" ${k} "*`).join('|');
+    detectFr+=`    # ── Category: ${cat}\n    ${pats})\n`;
+    catFrs.forEach(fr=>{
+      const aliases=allAliases(fr).sort((a,b)=>b.length-a.length);
+      if(!aliases.length)return;
+      const cp=aliases.map(a=>`*" ${a} "*`).join('|');
+      detectFr+=`      case "\$p" in\n        ${cp}) printf '%s' "${data[fr].id}"; return ;;\n      esac\n`;
+    });
+    detectFr+=`      printf '' ;;\n`;
+  });
+
+  frs.filter(fr=>!catKeywordedFrs2.has(fr)).forEach(fr=>{
+    const fd=data[fr];
+    const myKws=fd.keywords||[fr.toLowerCase()];
+    const pats=myKws.map(k=>`*" ${k} "*`).join('|');
+    const children=frs.filter(other=>other!==fr&&!catKeywordedFrs2.has(other)&&(data[other].keywords||[other.toLowerCase()]).some(ok=>myKws.some(mk=>ok!==mk&&ok.includes(mk))));
+    if(children.length){
+      detectFr+=`    ${pats})\n`;
+      children.forEach(child=>{
+        const aliases=allAliases(child).sort((a,b)=>b.length-a.length);
+        if(!aliases.length)return;
+        const cp=aliases.map(a=>`*" ${a} "*`).join('|');
+        detectFr+=`      case "\$p" in\n        ${cp}) printf '%s' "${data[child].id}"; return ;;\n      esac\n`;
+      });
+      detectFr+=`      printf '%s' "${fd.id}" ;;\n`;
+    }else{
+      detectFr+=`    ${pats}) printf '%s' "${fd.id}" ;;\n`;
+    }
+  });
+
+  // ── get_folder body (inline case per franchise) ───────────────
+  let folderBody='';
+  frs.forEach(fr=>{
+    const fd=data[fr];
+    const catPrefix=fd.category?fd.category+'/':'';
+    const frMode3=(fd.mode||globalMode)==='3';
+    const fks=Object.keys(fd.factions).filter(f=>fd.factions[f].length>0);
+    const directChars=fd.factions['__direct__']||[];
+    const realFks=fks.filter(f=>f!=='__direct__');
+    folderBody+=`\n    # ── ${catPrefix}${fr}\n    "${fd.id}")\n`;
+
+    // Collect entries, sort longest canonical first (specificity)
+    const entries=[];
+    fks.forEach(fac=>fd.factions[fac].forEach(c=>{
+      const pts=c.split(',').map(a=>a.trim());
+      entries.push({canonical:pts[0],aliases:pts.slice(1),faction:fac});
+    }));
+    entries.sort((a,b)=>b.canonical.length-a.canonical.length);
+
+    // Character detection case
+    if(entries.length){
+      folderBody+=`      case "\$padded" in\n`;
+      entries.forEach(({canonical,aliases})=>{
+        const names=[canonical,...aliases];
+        const pats=names.map(n=>`*" ${n} "*`).join('|');
+        folderBody+=`        ${pats}) char="${canonical}" ;;\n`;
+      });
+      folderBody+=`      esac\n`;
+    }
+    folderBody+=`      char=\$(ucfirst "\$char")\n`;
+
+    // Folder path building
+    const useComplex=frMode3&&(realFks.length>1||(realFks.length>0&&directChars.length>0));
+    if(useComplex){
+      folderBody+=`      case "\$char" in\n`;
+      if(directChars.length){
+        const pats=directChars.map(c=>{const n=jUc(c.split(',')[0].trim());return n.includes(' ')?`"${n}"`:n;}).join('|');
+        folderBody+=`        ${pats}) faction="__direct__" ;;\n`;
+      }
+      realFks.forEach(fac=>{
+        const chars=fd.factions[fac];if(!chars.length)return;
+        const pats=chars.map(c=>{const n=jUc(c.split(',')[0].trim());return n.includes(' ')?`"${n}"`:n;}).join('|');
+        folderBody+=`        ${pats}) faction="${fac}" ;;\n`;
+      });
+      folderBody+=`        *) faction="Uncategorized" ;;\n      esac\n`;
+      folderBody+=`      if [ -n "\$char" ]; then\n`;
+      folderBody+=`        if [ "\$faction" = "__direct__" ]; then\n`;
+      folderBody+=`          folder="${catPrefix}${fr}/\$char"\n`;
+      folderBody+=`        else\n`;
+      folderBody+=`          folder="${catPrefix}${fr}/\$faction/\$char"\n`;
+      folderBody+=`        fi\n`;
+      folderBody+=`      else\n        folder="${catPrefix}${fr}"\n      fi\n`;
+    }else{
+      folderBody+=`      if [ -n "\$char" ]; then\n        folder="${catPrefix}${fr}/\$char"\n      else\n        folder="${catPrefix}${fr}"\n      fi\n`;
+    }
+    folderBody+=`      ;;\n`;
+  });
+
+  const extFind=exts.map(e=>`-iname "*.${e}"`).join(` \\\n       -o `);
+
+  return `#!/bin/sh
+# METADATA_INJECTOR_PRO: ${metaJson}
+# ============================================================
+#  DANBOORU FILE SORTER PRO v3.4.0 [COMPATIBLE MODE]
+#  Generated: ${new Date().toLocaleString('id-ID')}
+#  Mode: ${modeLabel}
+#  Engine: pure shell case (no grep) — Android 9-14 compatible
+# ============================================================
+
+RED=\$(printf '\\033[0;31m')
+GREEN=\$(printf '\\033[0;32m')
+YELLOW=\$(printf '\\033[1;33m')
+CYAN=\$(printf '\\033[0;36m')
+BOLD=\$(printf '\\033[1m')
+RESET=\$(printf '\\033[0m')
+
+DRY_RUN=false
+VERBOSE=false
+BASE_DIR="${src}"
+DEST_DIR="${dst}"
+
+cd "\$(dirname "\$0")"
+
+pad() {
+  printf ' %s ' "\$(printf '%s' "\$1" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ_.()/abcdefghijklmnopqrstuvwxyz    /' | tr -s ' ')"
+}
+ucfirst() {
+  local _s="\$1" _out="" _w _h _t
+  for _w in \$_s; do
+    _h=\$(printf '%s' "\$_w" | cut -c1 | tr 'a-z' 'A-Z')
+    _t=\$(printf '%s' "\$_w" | cut -c2-)
+    _out="\${_out:+\$_out }\${_h}\${_t}"
+  done
+  printf '%s' "\$_out"
+}
+
+# ── DETECT FRANCHISE ─────────────────────────────────────────
+detect_franchise() {
+  local p="\$1"
+  case "\$p" in
+${detectFr}    *) printf '' ;;
+  esac
+}
+
+# ── GET FOLDER (pure shell, no grep) ─────────────────────────
+get_folder() {
+  local raw="\$1"
+  local padded; padded=\$(pad "\$raw")
+  local franchise; franchise=\$(detect_franchise "\$padded")
+  [ -z "\$franchise" ] && printf '' && return
+  local folder="" char="" faction=""
+  case "\$franchise" in
+${folderBody}    *) folder="" ;;
+  esac
+  printf '%s' "\$folder"
+}
+
+mkdir_p() {
+  local _rem="\$1" _acc="" _s
+  case "\$_rem" in /*) _acc="/"; _rem="\${_rem#/}" ;; esac
+  while [ -n "\$_rem" ]; do
+    _s="\${_rem%%/*}"; _rem="\${_rem#"\$_s"}"; _rem="\${_rem#/}"
+    _acc="\${_acc}\${_s}"
+    [ ! -d "\$_acc" ] && mkdir "\$_acc" 2>/dev/null
+    _acc="\${_acc}/"
+  done
+}
+
+process_file() {
+  local file="\$1"
+  local filename; filename=\$(basename "\$file")
+  local name="\${filename%.*}"
+  local folder; folder=\$(get_folder "\$name")
+  local dest
+  if [ -z "\$folder" ]; then
+    if [ -n "\$UNKNOWN_DIR" ]; then
+      dest="\$DEST_DIR/\$UNKNOWN_DIR"; folder="\$UNKNOWN_DIR"
+    else
+      \$VERBOSE && printf '%s[SKIP]%s %s\\n' "\$YELLOW" "\$RESET" "\$filename"; return 1
+    fi
+  else
+    dest="\$DEST_DIR/\$folder"
+  fi
+  if \$DRY_RUN; then
+    printf '%s[DRY]%s  %s -> %s\\n' "\$CYAN" "\$RESET" "\$filename" "\$folder"; return 0
+  fi
+  mkdir_p "\$dest"
+  local target="\$dest/\$filename"
+  if [ -f "\$target" ]; then
+    local base="\${filename%.*}" ext="\${filename##*.}" n=1
+    while [ -f "\$dest/\${base}_\${n}.\${ext}" ]; do n=\$((n+1)); done
+    target="\$dest/\${base}_\${n}.\${ext}"
+  fi
+  if \$FILE_OP "\$file" "\$target" 2>/dev/null; then
+    printf '%s[OK]%s   %s -> %s\\n' "\$GREEN" "\$RESET" "\$filename" "\$folder"
+    printf '%s\\t%s\\n' "\$filename" "\$folder" >> "\$LOG_FILE"; return 0
+  else
+    printf '%s[ERR]%s  Gagal: %s\\n' "\$RED" "\$RESET" "\$filename"; return 1
+  fi
+}
+
+main() {
+  LOG_FILE="\$DEST_DIR/_sort.log"
+  FILE_OP="${fileOp}"
+  UNKNOWN_DIR="${unknownFolder}"
+  printf '%s%s\xe2\x95\x94\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\\n\xe2\x95\x91  DANBOORU SORTER PRO  [COMPATIBLE]  \xe2\x95\x91\\n\xe2\x95\x9a\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\\n%s' "\$CYAN" "\$BOLD" "\$RESET"
+  printf '  Source  : %s%s%s\\n' "\$BOLD" "\$BASE_DIR" "\$RESET"
+  printf '  Dest    : %s%s%s\\n' "\$BOLD" "\$DEST_DIR" "\$RESET"
+  printf '  Mode    : %s%s%s\\n' "\$BOLD" "\$FILE_OP" "\$RESET"
+  [ -n "\$UNKNOWN_DIR" ] && printf '  Unknown : %s%s%s\\n' "\$BOLD" "\$UNKNOWN_DIR" "\$RESET"
+  \$DRY_RUN && printf '\\n  %s★ DRY RUN%s\\n' "\$YELLOW" "\$RESET"
+  printf '\\n'
+  printf '# sort log\\n' > "\$LOG_FILE" 2>/dev/null
+  local total=0 ok=0 skip=0 unk=0
+  for file in ${globExts}; do
+    [ -f "\$file" ] || continue
+    local filename; filename=\$(basename "\$file")
+    local folder; folder=\$(get_folder "\${filename%.*}")
+    if [ -z "\$folder" ] && [ -z "\$UNKNOWN_DIR" ]; then skip=\$((skip+1))
+    else
+      if process_file "\$file"; then
+        ok=\$((ok+1)); [ -z "\$folder" ] && unk=\$((unk+1))
+      else skip=\$((skip+1)); fi
+    fi
+    total=\$((total+1))
+  done
+  printf '\\n%s\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90\xe2\x95\x90%s\\n' "\$BOLD" "\$RESET"
+  printf '  Total    : %s file\\n' "\$total"
+  printf '  %sOK       : %s file%s\\n' "\$GREEN" "\$ok" "\$RESET"
+  [ "\$unk" -gt 0 ] && printf '  %s_Unknown : %s file%s\\n' "\$YELLOW" "\$unk" "\$RESET"
+  printf '  %sDilewati : %s file%s\\n' "\$YELLOW" "\$skip" "\$RESET"
+  printf '  Log      : %s\\n' "\$LOG_FILE"
+  printf '\\n'
+}
+
+print_help() { printf 'Usage: %s [-d|--dry] [-v|--verbose] [SOURCE] [DEST]\\n' "\$0"; }
+while [ \$# -gt 0 ]; do
+  case "\$1" in
+    -d|--dry)     DRY_RUN=true ;;
+    -v|--verbose) VERBOSE=true ;;
+    -h|--help)    print_help; exit 0 ;;
+    -*) exit 1 ;;
+    *) break ;;
+  esac
+  shift
+done
+BASE_DIR="\${1:-${src}}"
+DEST_DIR="\${2:-${dst}}"
+main
+`;
+}
+
+function downloadSh(){
+  const s=genMode==='compat'?buildScriptCompat():buildScript();
+  const fname=genMode==='compat'?'danbooru_sorter_compat.sh':'danbooru_sorter.sh';
+  const blob=new Blob([s],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+  showToast(`✓ ${fname} diunduh!`);
+}
+function previewSh(){
+  const s=genMode==='compat'?buildScriptCompat():buildScript();
+  document.getElementById('previewBox').textContent=s;
+  showToast('✓ Preview dimuat!');
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+if(!autoLoad()){data=JSON.parse(JSON.stringify(DEFAULT));categoryMeta=JSON.parse(JSON.stringify(DEFAULT_META));}
+// Default: semua collapsed
+Object.keys(data).forEach(fr=>collFr.add(fr));
+render();
+</script>
+</body>
+</html>
