@@ -195,6 +195,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .hint{text-align:center;padding:40px 20px;color:var(--dim);font-size:14px;line-height:2}
 .hint b{color:var(--accent)}
 
+/* BULK BAR */
+#bulk-bar{display:flex;gap:6px;padding:6px 10px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
+#bulk-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:13px;outline:none;min-width:0}
+#bulk-input:focus{border-color:var(--red)}
+#pr-search-bar{display:flex;gap:6px;align-items:center;padding:8px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+#pr-fr{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:14px;outline:none;min-width:0}
+#pr-fr:focus{border-color:var(--accent)}
+.pr-save-btn{background:var(--green)!important;color:#000!important;border-color:var(--green)!important;font-weight:700;padding:8px 14px;white-space:nowrap}
+#pr-preview{padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px;display:flex;flex-direction:column;gap:4px}
+.pr-prev-fr{font-size:11px;color:var(--dim)}
+.pr-prev-chars{font-size:13px;color:var(--green);font-family:'Cascadia Code','JetBrains Mono',monospace;word-break:break-all}
+.pr-prev-empty{font-size:12px;color:var(--dim);font-style:italic}
+.pr-prev-count{font-size:11px;color:var(--accent)}
+#pr-body{flex:1;overflow-y:auto;font-family:'Cascadia Code','JetBrains Mono',monospace;font-size:12px;line-height:1.8;padding:10px 12px;background:var(--bg);color:var(--text);white-space:pre-wrap;word-break:break-word}
+#pr-body::-webkit-scrollbar{width:3px}
+#pr-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+#pr-body mark{background:var(--yellow);color:#000;border-radius:2px;padding:0 1px}
+#pr-bar{background:var(--bg2);border-top:1px solid var(--border);padding:8px 10px;display:flex;gap:6px;flex-shrink:0;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+#pr-bar .btn{flex:1}
+
 /* TOAST */
 #toast{
   position:fixed;bottom:80px;left:50%;
@@ -215,6 +235,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div id="tabs">
     <div class="tab active" onclick="showTab('editor')" id="t-editor">✏️ Editor</div>
     <div class="tab" onclick="showTab('list')" id="t-list">📋 List <span class="badge" id="badge">0</span></div>
+    <div class="tab" onclick="showTab('parse')" id="t-parse">🗂 Parse <span class="badge" id="badge-parse">0</span></div>
   </div>
 
   <div id="pages">
@@ -228,15 +249,35 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       </div>
       <div id="ed-meta">
         <span id="ed-info">Editor kosong — load file dulu</span>
-        <span style="font-size:10px;color:var(--dim)">Auto-clean saat upload ✓</span>
+        <span style="font-size:10px;color:var(--dim)">Upload → otomatis ke Parse ✓</span>
       </div>
       <textarea id="editor" spellcheck="false"></textarea>
       <div id="ed-filter-view" style="display:none;flex:1;overflow-y:auto;padding:12px;font-family:'Cascadia Code','JetBrains Mono',monospace;font-size:13px;line-height:1.7;background:var(--bg);color:var(--text);white-space:pre-wrap;word-break:break-word;"></div>
+      <div id="bulk-bar">
+        <input type="text" id="bulk-input" placeholder="✂️ Hapus teks dari semua baris..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')bulkRemove()">
+        <button class="find-btn" onclick="bulkRemove()">Hapus</button>
+      </div>
       <div id="ed-bar">
         <button class="btn p" onclick="cleanSel()">🧹 Clean</button>
         <button class="btn g" onclick="saveSel()">💾 Save</button>
         <button class="btn" onclick="loadF()">📁 Load</button>
         <input type="file" id="fi" accept=".txt" style="display:none" onchange="handleF(event)">
+      </div>
+    </div>
+
+    <!-- PARSE -->
+    <div class="page" id="p-parse">
+      <div id="pr-search-bar">
+        <input type="text" id="pr-fr" placeholder="🔍 Cari franchise... (contoh: seven knights)" oninput="prSearch()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button class="find-btn pr-save-btn" id="pr-save" onclick="prSave()" style="display:none">💾 Save</button>
+      </div>
+      <div id="pr-preview"></div>
+      <div id="pr-body"></div>
+      <div id="pr-bar">
+        <button class="btn" onclick="prPaste()">📋 Paste</button>
+        <button class="btn" onclick="prLoad()">📁 Load</button>
+        <input type="file" id="pr-fi" accept=".txt" style="display:none" onchange="prHandleFile(event)">
+        <button class="btn r" onclick="prClear()">🗑</button>
       </div>
     </div>
 
@@ -459,6 +500,38 @@ function exportList(){
   toast(`💾 Exported ${items.length} item`);
 }
 
+// Sync editor content → prLines (Parse tab)
+function syncParseFromEditor(){
+  const txt=document.getElementById('editor').value;
+  prLines=txt.split('\n').map(prCleanLoad).filter(Boolean);
+  // Update badge
+  const bp=document.getElementById('badge-parse');
+  bp.textContent=prLines.length;
+  bp.classList.toggle('show',prLines.length>0);
+  // Kalau Parse tab sedang aktif, refresh
+  if(document.getElementById('p-parse').style.display!=='none') prDoSearch();
+}
+
+// Bulk hapus teks dari semua baris di editor + sync ke Parse
+function bulkRemove(){
+  const q=document.getElementById('bulk-input').value.trim();
+  if(!q){toast('⚠️ Ketik teks yang mau dihapus');return;}
+  const ed=document.getElementById('editor');
+  if(!ed.value.trim()){toast('⚠️ Editor kosong');return;}
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  const before=ed.value.split('\n').length;
+  // Hapus teks dari setiap baris, buang baris yang jadi kosong
+  const lines=ed.value.split('\n')
+    .map(l=>l.replace(re,'').replace(/\s{2,}/g,' ').trim())
+    .filter(Boolean);
+  const after=lines.length;
+  ed.value=lines.join('\n');
+  upd();lsSave();
+  syncParseFromEditor();
+  document.getElementById('bulk-input').value='';
+  toast(`✂️ "${q}" dihapus — ${before-after} baris hilang, ${after} tersisa`);
+}
+
 function loadF(){document.getElementById('fi').click();}
 const LOG_CLEAN=/[,._\-+;:'"*!?()\/]/g;
 function handleF(e){
@@ -469,9 +542,9 @@ function handleF(e){
     const cleaned=raw.replace(LOG_CLEAN,' ').replace(/ {2,}/g,' ');
     document.getElementById('editor').value=cleaned;
     upd();
-    const diff=raw.length-cleaned.replace(/ /g,'').length;
     lsSave();
-    toast(`📁 ${f.name} — auto-cleaned`);
+    syncParseFromEditor();
+    toast(`📁 ${f.name} — dimuat ke Editor & Parse`);
   };
   r.readAsText(f,'utf-8');
   e.target.value='';
@@ -537,7 +610,247 @@ function sortEditor(){
 }
 
 
+// ── PARSE TAB ─────────────────────────────────────────
+let prLines=[];   // semua baris filename yang belum diproses
+
+// Dipanggil saat load/paste — strip & normalize sebelum disimpan
+function prCleanLoad(raw){
+  let n=raw.trim();
+  n=n.replace(/\.[^.]+$/,'');           // strip ext
+  n=n.replace(/^_+/,'');               // strip leading _
+  n=n.replace(/_drawn_by_.*$/,'');     // strip drawn_by (sebelum _ diganti)
+  n=n.replace(/_[0-9a-f]{32}$/,'');   // strip MD5
+  n=n.replace(/_[0-9a-f]{8,16}$/,''); // strip short hash
+  n=n.replace(/_p\d+$/,'');           // strip _p0
+  n=n.replace(/[_.'()/:\-]+/g,' ');   // _ . ' ( ) / : - → space
+  n=n.replace(/\s{2,}/g,' ').trim();
+  return n;
+}
+
+// Normalize untuk matching (lowercase)
+function prNorm(cleaned){
+  return cleaned.toLowerCase().trim();
+}
+
+function prExtractChars(norm, frQ){
+  const q=frQ.trim().toLowerCase();
+  const idx=norm.indexOf(q);
+  if(idx<0) return [];
+  // Ambil KIRI franchise saja — kanan adalah tag lain/junk
+  let left=norm.substring(0,idx).trim();
+  // Split by " and " (multi karakter Danbooru)
+  const parts=left.split(/\s+and\s+/)
+    .map(c=>c.trim())
+    .filter(c=>c && !/^\d+\s/.test(c)); // buang "1 more","5 more" tapi bukan "2B","9S"
+  return parts;
+}
+
+function prWithAlias(charName){
+  const words=charName.trim().split(/\s+/);
+  if(words.length<2) return charName;
+  const alias=words[words.length-1];
+  // Jangan tambah alias kalau sama dengan nama atau 1 huruf
+  if(alias===charName||alias.length<=1) return charName;
+  return charName+','+alias;
+}
+
+function prTitleCase(s){
+  return s.replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+// Deduplicate: kalau "yuna li" dan "yuna" ada, ambil yang lebih spesifik
+function prDedup(charArr){
+  const sorted=[...charArr].sort((a,b)=>b.length-a.length);
+  const result=[];
+  sorted.forEach(name=>{
+    const isDup=result.some(e=>e===name||e.startsWith(name+' ')||name.startsWith(e+' '));
+    if(!isDup) result.push(name);
+  });
+  return result;
+}
+
+let prSearchTimer=null;
+function prSearch(){
+  clearTimeout(prSearchTimer);
+  prSearchTimer=setTimeout(prDoSearch,200);
+}
+
+function prDoSearch(){
+  const frQ=document.getElementById('pr-fr').value.trim().toLowerCase();
+  const body=document.getElementById('pr-body');
+  const preview=document.getElementById('pr-preview');
+  const saveBtn=document.getElementById('pr-save');
+
+  if(!prLines.length){
+    body.innerHTML='<span style="color:var(--dim)">Paste atau load file dulu...</span>';
+    preview.innerHTML='<span class="pr-prev-empty">Belum ada file diload</span>';
+    saveBtn.style.display='none';
+    return;
+  }
+
+  if(!frQ){
+    prRenderAll();
+    preview.innerHTML='<span class="pr-prev-empty">Ketik nama franchise untuk mulai...</span>';
+    saveBtn.style.display='none';
+    return;
+  }
+
+  // Filter baris yang mengandung franchise
+  const matched=[];
+  const unmatched=[];
+  prLines.forEach(raw=>{
+    const norm=prNorm(raw);
+    if(norm.includes(frQ)) matched.push(raw);
+    else unmatched.push(raw);
+  });
+
+  // Highlight dan tampilkan semua, yang match di atas
+  const re=new RegExp('('+frQ.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  const mkLine=(raw,highlight)=>{
+    const safe=raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(highlight) return safe.replace(re,'<mark>$1</mark>');
+    return `<span style="color:var(--dim)">${safe}</span>`;
+  };
+  body.innerHTML=[
+    ...matched.map(r=>mkLine(r,true)),
+    ...(unmatched.length?['<span style="color:var(--border)">─────────────────────</span>']:[]),
+    ...unmatched.map(r=>mkLine(r,false))
+  ].join('\n');
+
+  // Extract karakter dari baris yang match
+  const charSet=new Set();
+  matched.forEach(raw=>{
+    const norm=prNorm(raw);
+    prExtractChars(norm,frQ).forEach(c=>{if(c) charSet.add(c);});
+  });
+
+  const chars=prDedup([...charSet]);
+  if(!matched.length){
+    preview.innerHTML=`<span class="pr-prev-empty">Tidak ada file yang cocok dengan "${esc(frQ)}"</span>`;
+    saveBtn.style.display='none';
+  } else if(!chars.length){
+    preview.innerHTML=`
+      <span class="pr-prev-fr">Franchise: <b>${esc(prTitleCase(frQ))}</b> · ${matched.length} file</span>
+      <span class="pr-prev-empty">Tidak ada nama karakter terdeteksi (mungkin file hanya berisi franchise tag)</span>`;
+    saveBtn.style.display='';
+  } else {
+    const charStr=chars.map(prWithAlias).join(';');
+    preview.innerHTML=`
+      <span class="pr-prev-fr">Franchise: <b>${esc(prTitleCase(frQ))}</b> · ${matched.length} file · ${chars.length} karakter</span>
+      <span class="pr-prev-chars">${esc(charStr)}</span>
+      <span class="pr-prev-count">→ akan disave sebagai: <code style="color:var(--accent)">${esc(prTitleCase(frQ))}/${esc(charStr)}</code></span>`;
+    saveBtn.style.display='';
+  }
+}
+
+function prRenderAll(){
+  const body=document.getElementById('pr-body');
+  if(!prLines.length){
+    body.innerHTML='<span style="color:var(--dim)">Paste atau load file dulu...</span>';
+    return;
+  }
+  body.innerHTML=prLines.map(r=>{
+    const safe=r.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return safe;
+  }).join('\n');
+}
+
+function prSave(){
+  const frQ=document.getElementById('pr-fr').value.trim().toLowerCase();
+  if(!frQ){toast('⚠️ Ketik nama franchise dulu');return;}
+
+  const matched=[];
+  const remaining=[];
+  prLines.forEach(raw=>{
+    if(prNorm(raw).includes(frQ)) matched.push(raw);
+    else remaining.push(raw);
+  });
+
+  if(!matched.length){toast('Tidak ada file yang cocok');return;}
+
+  // Kumpulkan semua karakter unik
+  const charSet=new Set();
+  matched.forEach(raw=>{
+    prExtractChars(prNorm(raw),frQ).forEach(c=>{if(c) charSet.add(c);});
+  });
+
+  const frTitle=prTitleCase(frQ);
+  const chars=prDedup([...charSet]);
+  const entry=frTitle+'/'+(chars.length?chars.map(prWithAlias).join(';'):frTitle);
+
+  if(!items.includes(entry)){items.push(entry);}
+  else{
+    // Merge karakter baru ke entry yang sudah ada
+    const idx=items.findIndex(i=>i.startsWith(frTitle+'/'));
+    if(idx>=0){
+      const existing=items[idx].substring(frTitle.length+1).split(';');
+      const merged=[...new Set([...existing,...chars.map(prWithAlias)])];
+      items[idx]=frTitle+'/'+merged.join(';');
+    }
+  }
+
+  // Hapus baris yang sudah diproses
+  prLines=remaining;
+  document.getElementById('pr-fr').value='';
+  prDoSearch();
+  render();updateBadge();lsSave();
+  toast(`✅ ${frTitle}: ${chars.length} karakter — ${matched.length} baris dihapus`);
+  if(!prLines.length) toast('🎉 Semua file sudah diproses!');
+}
+
+function prPaste(){
+  if(!navigator.clipboard){toast('⚠️ Clipboard tidak tersedia, gunakan Load');return;}
+  navigator.clipboard.readText().then(txt=>{
+    if(!txt.trim()){toast('⚠️ Clipboard kosong');return;}
+    prLines=txt.split('\n').map(prCleanLoad).filter(Boolean);
+    document.getElementById('pr-fr').value='';
+    prDoSearch();
+    toast(`📋 ${prLines.length} file diload`);
+  }).catch(()=>toast('⚠️ Clipboard tidak bisa diakses, gunakan Load'));
+}
+
+function prLoad(){document.getElementById('pr-fi').click();}
+function prHandleFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    prLines=ev.target.result.split('\n').map(prCleanLoad).filter(Boolean);
+    document.getElementById('pr-fr').value='';
+    prDoSearch();
+    toast(`📁 ${f.name} — ${prLines.length} file`);
+  };
+  r.readAsText(f,'utf-8');
+  e.target.value='';
+}
+
+function prClear(){
+  if(!prLines.length)return;
+  if(confirm(`Hapus semua ${prLines.length} baris?`)){
+    prLines=[];
+    document.getElementById('pr-fr').value='';
+    prDoSearch();
+  }
+}
+
+// Init
+prDoSearch();
+
+function parseFilename(raw){
+  let n=raw.trim();
+  n=n.replace(/\.[^.]+$/,'');           // strip extension
+  n=n.replace(/_drawn_by_.*$/,'');      // strip drawn_by
+  n=n.replace(/_[0-9a-f]{32}$/,'');    // strip MD5 hash
+  n=n.replace(/_[0-9a-f]{8,16}$/,'');  // strip short hash
+  n=n.replace(/_p\d+$/,'');            // strip page suffix _p0
+  n=n.replace(/_/g,' ').toLowerCase().trim();
+  return n;
+}
+
+// Init parse tab
+prDoSearch();
+
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
 
 let tt;
 function toast(m){
