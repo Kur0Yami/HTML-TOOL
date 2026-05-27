@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Userscript → Telegram</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --card: #141d2b;
+    --border: #1e2d45;
+    --accent: #2ca9f0;
+    --accent2: #5de6c8;
+    --accent-glow: rgba(44,169,240,0.18);
+    --text: #e2eaf6;
+    --muted: #4a6080;
+    --success: #4ade80;
+    --error: #f87171;
+    --warn: #fbbf24;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 80px;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(44,169,240,0.12) 0%, transparent 70%),
+      linear-gradient(180deg, #0a0e17 0%, #060910 100%);
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  header .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(44,169,240,0.35);
+    border-radius: 99px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    letter-spacing: .08em;
+    margin-bottom: 16px;
+  }
+  header h1 {
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Main Layout ── */
+  .container {
+    width: 100%;
+    max-width: 860px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(44,169,240,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+    display: inline-block;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* ── Inputs ── */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 560px) { .input-row { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    letter-spacing: .06em;
+  }
+  .field input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(44,169,240,0.15);
+  }
+  .field input::placeholder { color: var(--muted); }
+
+  /* ── Filename bar ── */
+  .filename-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+  }
+  .filename-bar .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .filename-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--accent2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .filename-bar .ext {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ── Code editor ── */
+  .editor-wrap {
+    position: relative;
+  }
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d1520;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 9px 9px 0 0;
+    padding: 8px 14px;
+  }
+  .editor-dots { display: flex; gap: 6px; }
+  .editor-dots span {
+    width: 11px; height: 11px; border-radius: 50%;
+  }
+  .editor-dots span:nth-child(1) { background: #f87171; }
+  .editor-dots span:nth-child(2) { background: #fbbf24; }
+  .editor-dots span:nth-child(3) { background: #4ade80; }
+  .editor-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .editor-actions { display: flex; gap: 8px; }
+
+  textarea#code {
+    width: 100%;
+    min-height: 320px;
+    background: #0d1520;
+    border: 1px solid var(--border);
+    border-radius: 0 0 9px 9px;
+    color: #a8d8ff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 16px;
+    outline: none;
+    resize: vertical;
+    tab-size: 2;
+    transition: border-color .2s;
+  }
+  textarea#code:focus { border-color: var(--accent); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .04em;
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #1a7fd4);
+    color: #fff;
+    padding: 13px 28px;
+    font-size: 14px;
+    border-radius: 11px;
+    box-shadow: 0 4px 24px rgba(44,169,240,0.3);
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px rgba(44,169,240,0.45);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary.loading {
+    pointer-events: none;
+  }
+
+  /* ── Meta preview ── */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .meta-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .meta-item .key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .08em;
+    margin-bottom: 4px;
+  }
+  .meta-item .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    word-break: break-all;
+  }
+  .meta-empty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── Caption field ── */
+  textarea#caption {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 12px 14px;
+    outline: none;
+    resize: vertical;
+    min-height: 70px;
+    transition: border-color .2s;
+    line-height: 1.6;
+  }
+  textarea#caption:focus { border-color: var(--accent); }
+
+  /* ── Status ── */
+  #status {
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    display: none;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.6;
+  }
+  #status.show { display: flex; }
+  #status.success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: var(--success); }
+  #status.error   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--error); }
+  #status.info    { background: rgba(44,169,240,0.1);  border: 1px solid rgba(44,169,240,0.3);  color: var(--accent); }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* line count */
+  .linecount {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="chip">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+    Telegram File Uploader
+  </div>
+  <h1>Userscript → Telegram</h1>
+  <p>// paste → detect header → kirim sebagai file</p>
+</header>
+
+<div class="container">
+
+  <!-- Bot Config -->
+  <div class="card">
+    <div class="card-title">Bot Config</div>
+    <div class="input-row">
+      <div class="field">
+        <label>BOT TOKEN</label>
+        <input type="password" id="botToken" placeholder="123456:ABC-DEF..." autocomplete="off">
+      </div>
+      <div class="field">
+        <label>CHAT ID / USERNAME</label>
+        <input type="text" id="chatId" placeholder="-100xxxxxxxxx atau @username" autocomplete="off">
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+      <button class="btn btn-ghost" onclick="saveConfig()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Simpan
+      </button>
+      <button class="btn btn-ghost" onclick="clearConfig()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Hapus
+      </button>
+      <span id="configStatus" style="font-family:monospace;font-size:11px;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- Code Editor -->
+  <div class="card">
+    <div class="card-title">Kode Userscript</div>
+
+    <!-- Filename -->
+    <div class="filename-bar">
+      <span class="label">FILE:</span>
+      <input type="text" id="filename" placeholder="nama-script" spellcheck="false">
+      <span class="ext">.user.js</span>
+    </div>
+
+    <!-- Editor -->
+    <div class="editor-wrap">
+      <div class="editor-header">
+        <div class="editor-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="editor-info" id="lineInfo">0 baris</span>
+        <div class="editor-actions">
+          <button class="btn btn-ghost" onclick="clearEditor()" style="padding:4px 10px;font-size:11px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            Clear
+          </button>
+          <button class="btn btn-ghost" onclick="pasteFromClipboard()" style="padding:4px 10px;font-size:11px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Paste
+          </button>
+        </div>
+      </div>
+      <textarea id="code" spellcheck="false" placeholder="// ==UserScript==
+// @name         Nama Script Kamu
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Deskripsi script
+// @author       Kamu
+// @match        https://example.com/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    // kode kamu di sini
+})();"></textarea>
+    </div>
+
+    <!-- Meta Preview -->
+    <div style="margin-top:14px;">
+      <div class="card-title">Header Terdeteksi</div>
+      <div id="metaPreview"><p class="meta-empty">Paste kode dulu...</p></div>
+    </div>
+  </div>
+
+  <!-- Caption -->
+  <div class="card">
+    <div class="card-title">Caption Pesan (opsional)</div>
+    <textarea id="caption" placeholder="Caption untuk file di Telegram... (kosongkan untuk otomatis dari header)"></textarea>
+  </div>
+
+  <!-- Status -->
+  <div id="status"></div>
+
+  <!-- Send Button -->
+  <button class="btn btn-primary" id="sendBtn" onclick="sendToTelegram()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+    Kirim ke Telegram
+  </button>
+
+</div>
+
+<footer>made for userscript devs · data tersimpan lokal di browser</footer>
+
+<script>
+// ─── Config persistence ───────────────────────────────────────────
+function saveConfig() {
+  localStorage.setItem('tg_bot_token', document.getElementById('botToken').value.trim());
+  localStorage.setItem('tg_chat_id', document.getElementById('chatId').value.trim());
+  document.getElementById('configStatus').textContent = '✓ tersimpan';
+  setTimeout(() => document.getElementById('configStatus').textContent = '', 2000);
+}
+
+function clearConfig() {
+  localStorage.removeItem('tg_bot_token');
+  localStorage.removeItem('tg_chat_id');
+  document.getElementById('botToken').value = '';
+  document.getElementById('chatId').value = '';
+  document.getElementById('configStatus').textContent = '✓ dihapus';
+  setTimeout(() => document.getElementById('configStatus').textContent = '', 2000);
+}
+
+function loadConfig() {
+  const t = localStorage.getItem('tg_bot_token');
+  const c = localStorage.getItem('tg_chat_id');
+  if (t) document.getElementById('botToken').value = t;
+  if (c) document.getElementById('chatId').value = c;
+  if (t || c) document.getElementById('configStatus').textContent = '● dimuat dari lokal';
+}
+
+// ─── Userscript header parser ─────────────────────────────────────
+function parseHeader(code) {
+  const meta = {};
+  const block = code.match(/\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/);
+  if (!block) return meta;
+  const lines = block[1].split('\n');
+  for (const line of lines) {
+    const m = line.match(/\/\/\s*@(\w+)\s+(.*)/);
+    if (m) {
+      const key = m[1].trim();
+      const val = m[2].trim();
+      if (!meta[key]) meta[key] = val;
+    }
+  }
+  return meta;
+}
+
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+// ─── Update UI from code ──────────────────────────────────────────
+function onCodeChange() {
+  const code = document.getElementById('code').value;
+  const lines = code.split('\n').length;
+  document.getElementById('lineInfo').textContent = `${lines} baris`;
+
+  const meta = parseHeader(code);
+  const preview = document.getElementById('metaPreview');
+  const filenameInput = document.getElementById('filename');
+
+  // Update filename if it wasn't manually set
+  if (meta.name && !filenameInput.dataset.manual) {
+    filenameInput.value = slugify(meta.name);
+  }
+
+  // Build meta grid
+  const keys = ['name','namespace','version','description','author','match','grant'];
+  const relevant = keys.filter(k => meta[k]).concat(Object.keys(meta).filter(k => !keys.includes(k)));
+
+  if (relevant.length === 0) {
+    preview.innerHTML = '<p class="meta-empty">Tidak ada header ==UserScript== yang terdeteksi</p>';
+    return;
+  }
+
+  preview.innerHTML = '<div class="meta-grid">' +
+    relevant.map(k => `
+      <div class="meta-item">
+        <div class="key">@${k}</div>
+        <div class="val">${escHtml(meta[k])}</div>
+      </div>`
+    ).join('') +
+    '</div>';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Editor helpers ───────────────────────────────────────────────
+function clearEditor() {
+  document.getElementById('code').value = '';
+  document.getElementById('filename').value = '';
+  document.getElementById('filename').dataset.manual = '';
+  document.getElementById('metaPreview').innerHTML = '<p class="meta-empty">Paste kode dulu...</p>';
+  document.getElementById('lineInfo').textContent = '0 baris';
+}
+
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('code').value = text;
+    onCodeChange();
+  } catch {
+    showStatus('Gagal akses clipboard. Paste manual ya.', 'error');
+  }
+}
+
+// Tab support in textarea
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('code');
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = ta.selectionStart, end = ta.selectionEnd;
+      ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(end);
+      ta.selectionStart = ta.selectionEnd = s + 2;
+    }
+  });
+  ta.addEventListener('input', onCodeChange);
+
+  // Manual filename flag
+  document.getElementById('filename').addEventListener('input', function() {
+    this.dataset.manual = this.value ? '1' : '';
+  });
+
+  loadConfig();
+});
+
+// ─── Status helper ────────────────────────────────────────────────
+function showStatus(msg, type = 'info') {
+  const el = document.getElementById('status');
+  const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '→';
+  el.innerHTML = `<span style="flex-shrink:0;font-size:15px;">${icon}</span><span>${escHtml(msg)}</span>`;
+  el.className = `show ${type}`;
+}
+
+function showLoading(msg) {
+  const el = document.getElementById('status');
+  el.innerHTML = `<span class="spinner"></span><span>${escHtml(msg)}</span>`;
+  el.className = 'show info';
+}
+
+// ─── Send to Telegram ─────────────────────────────────────────────
+async function sendToTelegram() {
+  const token  = document.getElementById('botToken').value.trim();
+  const chatId = document.getElementById('chatId').value.trim();
+  const code   = document.getElementById('code').value;
+  const fnRaw  = document.getElementById('filename').value.trim();
+  const caption = document.getElementById('caption').value.trim();
+
+  if (!token)  return showStatus('Masukkan Bot Token dulu!', 'error');
+  if (!chatId) return showStatus('Masukkan Chat ID dulu!', 'error');
+  if (!code.trim()) return showStatus('Kode script kosong!', 'error');
+
+  const meta = parseHeader(code);
+  const filename = (fnRaw || slugify(meta.name || 'userscript') || 'userscript') + '.user.js';
+
+  // Build caption
+  let cap = caption;
+  if (!cap) {
+    const parts = [];
+    if (meta.name)        parts.push(`📜 *${meta.name}*`);
+    if (meta.version)     parts.push(`v${meta.version}`);
+    if (meta.description) parts.push(`_${meta.description}_`);
+    if (meta.author)      parts.push(`👤 ${meta.author}`);
+    if (meta.match)       parts.push(`🔗 \`${meta.match}\``);
+    cap = parts.join('\n') || filename;
+  }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  showLoading(`Mengirim ${filename}...`);
+
+  try {
+    const blob = new Blob([code], { type: 'text/javascript' });
+    const form = new FormData();
+    form.append('chat_id', chatId);
+    form.append('document', blob, filename);
+    form.append('caption', cap);
+    form.append('parse_mode', 'Markdown');
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: 'POST',
+      body: form
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      showStatus(`✓ Berhasil dikirim sebagai "${filename}" ke Telegram!`, 'success');
+    } else {
+      const desc = data.description || JSON.stringify(data);
+      showStatus(`Gagal: ${desc}`, 'error');
+    }
+  } catch (err) {
+    showStatus(`Error jaringan: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+</script>
+</body>
+</html>
