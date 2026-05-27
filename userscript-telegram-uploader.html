@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Userscript → Telegram</title>
+<meta name="description" content="Upload userscript langsung ke Telegram sebagai file">
+<meta name="theme-color" content="#0a0e17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="US→TG">
+<link id="pwa-manifest" rel="manifest">
+<!-- Apple touch icons (inline SVG → PNG via canvas, set by JS) -->
+<link id="apple-touch-icon" rel="apple-touch-icon">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -385,17 +394,40 @@
   <!-- Bot Config -->
   <div class="card">
     <div class="card-title">Bot Config</div>
-    <div class="input-row">
-      <div class="field">
-        <label>BOT TOKEN</label>
-        <input type="password" id="botToken" placeholder="123456:ABC-DEF..." autocomplete="off">
+
+    <div class="field" style="margin-bottom:14px;">
+      <label>BOT TOKEN</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="position:relative;flex:1;">
+          <input type="password" id="botToken" placeholder="123456789:ABC-DEFGHIJKLMNOPQRSTUVWXYZ..." autocomplete="off" style="width:100%;padding-right:40px;">
+          <button onclick="toggleToken()" title="Tampilkan/sembunyikan token"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">
+            <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <button class="btn btn-ghost" onclick="testToken()" id="testBtn" style="white-space:nowrap;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Test Token
+        </button>
       </div>
-      <div class="field">
-        <label>CHAT ID / USERNAME</label>
-        <input type="text" id="chatId" placeholder="-100xxxxxxxxx atau @username" autocomplete="off">
+      <div id="tokenInfo" style="font-family:monospace;font-size:11px;margin-top:6px;display:none;"></div>
+    </div>
+
+    <div class="field" style="margin-bottom:14px;">
+      <label>CHAT ID / USERNAME</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="chatId" placeholder="-100xxxxxxxxx atau @username" autocomplete="off" style="flex:1;">
+        <button class="btn btn-ghost" onclick="getMyId()" style="white-space:nowrap;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Cek Chat ID
+        </button>
+      </div>
+      <div id="chatInfo" style="font-family:monospace;font-size:11px;margin-top:6px;color:var(--muted);display:none;">
+        💡 Kirim pesan ke bot kamu lalu klik "Cek Chat ID" — atau forward pesan ke @userinfobot
       </div>
     </div>
-    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="saveConfig()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Simpan
@@ -406,6 +438,26 @@
       </button>
       <span id="configStatus" style="font-family:monospace;font-size:11px;color:var(--muted);"></span>
     </div>
+
+    <!-- How to get token -->
+    <details style="margin-top:16px;">
+      <summary style="font-family:monospace;font-size:11px;color:var(--muted);cursor:pointer;user-select:none;">
+        ▸ Cara dapat Bot Token &amp; Chat ID
+      </summary>
+      <div style="margin-top:10px;font-family:monospace;font-size:11px;color:var(--muted);line-height:1.9;background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border);">
+        <b style="color:var(--accent);">Bot Token:</b><br>
+        1. Buka Telegram → cari <b>@BotFather</b><br>
+        2. Ketik <code style="background:#0d1520;padding:1px 5px;border-radius:4px;">/newbot</code> → ikuti instruksi<br>
+        3. Copy token format: <code style="background:#0d1520;padding:1px 5px;border-radius:4px;">123456789:ABC-xyz...</code><br><br>
+        <b style="color:var(--accent);">Chat ID (pribadi):</b><br>
+        1. Kirim pesan apapun ke bot kamu dulu<br>
+        2. Klik tombol <b>"Cek Chat ID"</b> di atas — akan muncul update terbaru<br>
+        3. Atau forward pesan ke <b>@userinfobot</b><br><br>
+        <b style="color:var(--accent);">Chat ID (group/channel):</b><br>
+        1. Tambahkan bot ke group/channel<br>
+        2. Format: <code style="background:#0d1520;padding:1px 5px;border-radius:4px;">-100xxxxxxxxxx</code>
+      </div>
+    </details>
   </div>
 
   <!-- Code Editor -->
@@ -477,9 +529,106 @@
 
 </div>
 
-<footer>made for userscript devs · data tersimpan lokal di browser</footer>
+<div id="installBanner" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,rgba(44,169,240,0.15),rgba(93,230,200,0.1));border:1px solid rgba(44,169,240,0.3);border-radius:12px;padding:14px 18px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:20px;">📲</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">Install sebagai App</div>
+      <div style="font-size:11px;color:var(--muted);font-family:monospace;margin-top:2px;">Buka tanpa browser, offline-ready</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button class="btn btn-ghost" onclick="dismissInstall()" style="font-size:11px;padding:6px 10px;">Nanti</button>
+    <button class="btn btn-primary" onclick="installPWA()" style="font-size:12px;padding:8px 16px;width:auto;">Install</button>
+  </div>
+</div>made for userscript devs · data tersimpan lokal di browser</footer>
 
 <script>
+// ─── Token helpers ────────────────────────────────────────────────
+function toggleToken() {
+  const inp = document.getElementById('botToken');
+  const icon = document.getElementById('eyeIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    inp.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+async function testToken() {
+  const token = document.getElementById('botToken').value.trim();
+  const info  = document.getElementById('tokenInfo');
+  const btn   = document.getElementById('testBtn');
+  if (!token) { info.style.display='block'; info.style.color='var(--error)'; info.textContent='⚠ Isi token dulu'; return; }
+
+  btn.disabled = true;
+  info.style.display = 'block';
+  info.style.color = 'var(--muted)';
+  info.textContent = '⏳ Menghubungi Telegram...';
+
+  try {
+    const res  = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+    const data = await res.json();
+    if (data.ok) {
+      const b = data.result;
+      info.style.color = 'var(--success)';
+      info.textContent = '✓ Valid! Bot: @' + b.username + ' (' + b.first_name + ') · ID: ' + b.id;
+    } else {
+      info.style.color = 'var(--error)';
+      info.textContent = '✗ ' + (data.description || 'Token tidak valid');
+    }
+  } catch(e) {
+    info.style.color = 'var(--error)';
+    info.textContent = '✗ Error jaringan: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+async function getMyId() {
+  const token  = document.getElementById('botToken').value.trim();
+  const info   = document.getElementById('chatInfo');
+  info.style.display = 'block';
+  if (!token) { info.style.color='var(--error)'; info.textContent='⚠ Isi token dulu'; return; }
+
+  info.style.color = 'var(--muted)';
+  info.textContent = '⏳ Mengambil update terbaru...';
+
+  try {
+    const res  = await fetch('https://api.telegram.org/bot' + token + '/getUpdates?limit=5');
+    const data = await res.json();
+    if (!data.ok) { info.style.color='var(--error)'; info.textContent='✗ ' + data.description; return; }
+
+    const updates = data.result;
+    if (!updates.length) {
+      info.style.color = 'var(--warn)';
+      info.textContent = '⚠ Belum ada update. Kirim pesan ke bot kamu dulu, lalu coba lagi.';
+      return;
+    }
+
+    const seen = new Map();
+    for (const u of updates) {
+      const msg = u.message || u.channel_post || u.edited_message;
+      if (msg && msg.chat) {
+        const c = msg.chat;
+        seen.set(c.id, { id: c.id, type: c.type, name: c.title || c.username || c.first_name || '?' });
+      }
+    }
+
+    if (!seen.size) { info.style.color='var(--warn)'; info.textContent='⚠ Tidak ada chat ditemukan di update terbaru.'; return; }
+
+    const list = [...seen.values()];
+    info.style.color = 'var(--success)';
+    info.innerHTML = '✓ Chat ditemukan:<br>' + list.map(function(c) {
+      return '<span style="cursor:pointer;text-decoration:underline;color:var(--accent2);" onclick="document.getElementById(\'chatId\').value=\'' + c.id + '\';document.getElementById(\'chatInfo\').textContent=\'✓ Chat ID ' + c.id + ' dipakai\';">[' + c.type + '] ' + escHtml(c.name) + ' → ' + c.id + ' (klik untuk pakai)</span>';
+    }).join('<br>');
+  } catch(e) {
+    info.style.color = 'var(--error)';
+    info.textContent = '✗ Error: ' + e.message;
+  }
+}
+
 // ─── Config persistence ───────────────────────────────────────────
 function saveConfig() {
   localStorage.setItem('tg_bot_token', document.getElementById('botToken').value.trim());
@@ -683,6 +832,159 @@ async function sendToTelegram() {
     btn.classList.remove('loading');
   }
 }
+</script>
+
+<script>
+// ══════════════════════════════════════════════
+//  PWA — inline manifest + service worker
+// ══════════════════════════════════════════════
+
+// 1. Generate icon via Canvas (192 & 512)
+function makeIconDataURL(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  // background
+  ctx.fillStyle = '#0a0e17';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, size, size, size * 0.2);
+  ctx.fill();
+  // accent circle
+  const g = ctx.createLinearGradient(size*0.1, size*0.1, size*0.9, size*0.9);
+  g.addColorStop(0, '#2ca9f0');
+  g.addColorStop(1, '#5de6c8');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(size/2, size/2, size*0.3, 0, Math.PI*2);
+  ctx.fill();
+  // arrow / send icon
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = size * 0.07;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const p = size * 0.22;
+  // paper plane shape
+  ctx.beginPath();
+  ctx.moveTo(size*0.65, size*0.35);
+  ctx.lineTo(size*0.35, size*0.5);
+  ctx.lineTo(size*0.65, size*0.65);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(size*0.35, size*0.5);
+  ctx.lineTo(size*0.5, size*0.58);
+  ctx.stroke();
+  return c.toDataURL('image/png');
+}
+
+const icon192 = makeIconDataURL(192);
+const icon512 = makeIconDataURL(512);
+
+// Apple touch icon
+document.getElementById('apple-touch-icon').href = icon192;
+
+// 2. Inject manifest as blob URL
+const manifest = {
+  name: 'Userscript → Telegram',
+  short_name: 'US→TG',
+  description: 'Upload userscript ke Telegram sebagai file',
+  start_url: './',
+  display: 'standalone',
+  background_color: '#0a0e17',
+  theme_color: '#0a0e17',
+  orientation: 'portrait-primary',
+  icons: [
+    { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+    { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+  ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+
+// 3. Register Service Worker (inline via blob)
+const swCode = `
+const CACHE = 'ustg-v1';
+const ASSETS = ['/'];
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll([])).catch(() => {})
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  // Hanya cache GET, skip Telegram API
+  if (e.request.method !== 'GET') return;
+  if (e.request.url.includes('api.telegram.org')) return;
+  if (e.request.url.includes('fonts.googleapis.com') || e.request.url.includes('fonts.gstatic.com')) {
+    e.respondWith(
+      caches.open(CACHE).then(async cache => {
+        const cached = await cache.match(e.request);
+        if (cached) return cached;
+        const fresh = await fetch(e.request).catch(() => null);
+        if (fresh) cache.put(e.request, fresh.clone());
+        return fresh || new Response('', { status: 503 });
+      })
+    );
+    return;
+  }
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
+});
+`;
+
+if ('serviceWorker' in navigator) {
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swURL  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL, { scope: './' })
+    .then(reg => console.log('[PWA] SW registered, scope:', reg.scope))
+    .catch(err => console.warn('[PWA] SW failed:', err));
+}
+
+// 4. Install prompt
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('installBanner');
+  if (banner && !localStorage.getItem('pwa_dismissed')) {
+    banner.style.display = 'flex';
+  }
+});
+
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    deferredPrompt = null;
+    document.getElementById('installBanner').style.display = 'none';
+    if (result.outcome === 'accepted') {
+      showStatus('✓ App berhasil diinstall!', 'success');
+    }
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('installBanner').style.display = 'none';
+  localStorage.setItem('pwa_dismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').style.display = 'none';
+  console.log('[PWA] installed!');
+});
 </script>
 </body>
 </html>
