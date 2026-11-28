@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MHGU Ganti ID</title>
+<style>
+:root{--bg:#f4f2ec;--card:#fff;--ink:#222;--mute:#6b675e;--line:#d8d3c6;--acc:#7a4b12;--bad:#a4231b}
+@media(prefers-color-scheme:dark){:root{--bg:#171613;--card:#22201c;--ink:#ece8de;--mute:#a49e90;--line:#3a362e;--acc:#d89a4e;--bad:#ff8a7e}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif;padding:20px 16px}
+main{max-width:560px;margin:auto}h1{font-size:22px;margin:0 0 4px}p{margin:6px 0;color:var(--mute);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
+label{display:block;font-weight:600;margin-bottom:6px}input[type=file]{width:100%}
+input[type=text]{width:84px;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.row:first-child{border:0}
+.row div{flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}.row small{display:block;color:var(--mute)}
+input[type=checkbox]{width:20px;height:20px;margin-top:3px}
+button{width:100%;font:inherit;font-weight:700;padding:12px;border:0;border-radius:10px;background:var(--acc);color:var(--bg);margin-top:14px}
+button:disabled{opacity:.45}#msg{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}.bad{color:var(--bad)}
+a.dl{display:block;text-align:center;margin-top:10px;padding:10px;border:1px solid var(--acc);border-radius:10px;color:var(--acc);font-weight:700;text-decoration:none}
+</style></head><body><main>
+<h1>MHGU Ganti ID Long Sword</h1>
+<p>Pindahkan mod senjata (w07) ke ID lain. Semua diproses di perangkat ini, tidak ada yang diunggah.</p>
+<div class="card"><label for="file">1. Pilih file .arc (boleh banyak) atau zip mod</label>
+<input id="file" type="file" multiple accept=".zip,.arc"></div>
+<div class="card"><label for="all">2. Isi ID tujuan</label>
+<p>Ketik di tiap file, atau isi ID awal di sini supaya terisi berurutan.</p>
+<input id="all" type="text" inputmode="numeric" maxlength="3" placeholder="131">
+<div id="list"><p>Belum ada file.</p></div></div>
+<button id="go" disabled>3. Buat file .arc</button>
+<div id="out"></div><p id="msg" role="status"></p>
+<div class="card"><p>Yang berubah hanya nama file di dalam ARC dan path teksturnya. Bentuk model tidak berubah.</p>
+<p>Gerakan dan sarung mengikuti data game untuk ID tujuan. Contoh: scythe lipat dari 175 belum tentu melipat di ID lain, dan sarung belum tentu muncul.</p>
+<p>Taruh hasilnya di folder mod: <b>NamaMod/romfs/nativeNX/arc/weapon/w07/</b></p><p>Matikan mod lain yang memakai ID yang sama.</p></div>
+</main><script>
+"use strict";
+const $=i=>document.getElementById(i),enc=new TextEncoder,dec=new TextDecoder;
+const pipe=async(u8,s)=>new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(s)).arrayBuffer());
+const view=u=>new DataView(u.buffer,u.byteOffset,u.byteLength);
+
+async function readArc(d){
+  const v=view(d);
+  if(d.length<12||dec.decode(d.subarray(0,3))!=="ARC"||d[3])throw Error("bukan file ARC");
+  const out=[];
+  for(let i=0;i<v.getUint16(6,true);i++){
+    const at=12+i*80,csize=v.getUint32(at+68,true),dsize=v.getUint32(at+72,true),off=v.getUint32(at+76,true);
+    const raw=await pipe(d.subarray(off,off+csize),new DecompressionStream("deflate"));
+    if(raw.length!==(dsize&0x1fffffff))throw Error("ukuran isi ARC tidak cocok");
+    const n=d.subarray(at,at+64),z=n.indexOf(0);
+    out.push({name:dec.decode(n.subarray(0,z<0?64:z)),at,off,flags:(dsize&0xe0000000)>>>0,raw});
+  }
+  return out;
+}
+const isMagic=(r,m)=>r[0]===m.charCodeAt(0)&&r[1]===m.charCodeAt(1)&&r[2]===m.charCodeAt(2)&&r[3]===0;
+function oldId(entries){
+  const m=entries.filter(e=>isMagic(e.raw,"MOD")).map(e=>e.name.match(/^weapon\\w07\\.*\\ken(\d{3})$/)).find(Boolean);
+  if(!m)throw Error("bukan ARC long sword (tidak ada model ken di weapon\\w07)");
+  return m[1];
+}
+function replaceBytes(u,a,b){            // a dan b sama panjang
+  const A=enc.encode(a),B=enc.encode(b),o=u.slice();
+  for(let i=0;i+A.length<=o.length;i++){
+    let k=0;while(k<A.length&&o[i+k]===A[k])k++;
+    if(k===A.length){o.set(B,i);i+=k-1}
+  }
+  return o;
+}
+function changeId(entries,old,id){
+  return entries.map(e=>{
+    if(e.name.split("\\").includes("common"))return e;
+    let {name,raw}=e;
+    for(const p of ["swo","ken","saya"]){
+      name=name.split(p+old).join(p+id);
+      if(isMagic(raw,"MRL"))raw=replaceBytes(raw,"\\"+p+old,"\\"+p+id);
+    }
+    return {...e,name,raw};
+  });
+}
+async function writeArc(tpl,entries){
+  const start=Math.min(...entries.map(e=>e.off)),head=tpl.slice(0,start),hv=view(head),body=[];
+  let len=start;
+  for(const e of [...entries].sort((a,b)=>a.off-b.off)){
+    const comp=await pipe(e.raw,new CompressionStream("deflate"));
+    head.fill(0,e.at,e.at+64);head.set(enc.encode(e.name),e.at);
+    hv.setUint32(e.at+68,comp.length,true);
+    hv.setUint32(e.at+72,(e.raw.length|e.flags)>>>0,true);
+    hv.setUint32(e.at+76,len,true);
+    body.push(comp);len+=comp.length;
+  }
+  return new Uint8Array(await new Blob([head,...body]).arrayBuffer());
+}
+
+async function readZip(d){
+  const v=view(d);let end=d.length-22;
+  while(end>=0&&v.getUint32(end,true)!==0x06054b50)end--;
+  if(end<0)throw Error("zip rusak");
+  let p=v.getUint32(end+16,true);const out=[];
+  for(let i=0;i<v.getUint16(end+10,true);i++){
+    const method=v.getUint16(p+10,true),csize=v.getUint32(p+20,true),n=v.getUint16(p+28,true),x=v.getUint16(p+30,true),c=v.getUint16(p+32,true),lo=v.getUint32(p+42,true);
+    const name=dec.decode(d.subarray(p+46,p+46+n)).replace(/\\/g,"/");p+=46+n+x+c;
+    if(!/\.arc$/i.test(name))continue;
+    const s=lo+30+v.getUint16(lo+26,true)+v.getUint16(lo+28,true),data=d.subarray(s,s+csize);
+    if(method!==0&&method!==8)throw Error("metode kompresi zip tidak didukung");
+    out.push({path:name,data:method?await pipe(data,new DecompressionStream("deflate-raw")):data});
+  }
+  return out;
+}
+let items=[],urls=[],round=0;
+const say=(t,bad)=>{$("msg").textContent=t;$("msg").className=bad?"bad":""};
+function clearOut(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];$("out").textContent="";say("")}
+function el(tag,props,...kids){const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e}
+
+$("file").onchange=async ev=>{
+  const mine=++round;clearOut();items=[];$("go").disabled=true;$("list").textContent="Membaca…";
+  const found=[],errors=[];
+  for(const f of ev.target.files){
+    try{
+      const d=new Uint8Array(await f.arrayBuffer());
+      const arcs=/\.zip$/i.test(f.name)?await readZip(d):[{path:f.name,data:d}];
+      if(!arcs.length)throw Error("tidak ada file .arc");
+      for(const a of arcs){
+        try{
+          const entries=await readArc(a.data),parts=a.path.split("/"),r=parts.indexOf("romfs");
+          found.push({source:f.name,path:a.path,data:a.data,entries,old:oldId(entries),mod:r>0?parts[r-1]:""});
+        }catch(e){errors.push(a.path+": "+e.message)}
+      }
+    }catch(e){errors.push(f.name+": "+e.message)}
+  }
+  if(mine!==round)return;
+  items=found.sort((a,b)=>a.old.localeCompare(b.old)||a.path.localeCompare(b.path));$("list").textContent="";
+  for(const it of items){
+    it.box=el("input",{type:"checkbox",checked:true,onchange:clearOut});it.box.setAttribute("aria-label","pakai "+it.path);
+    it.id=el("input",{type:"text",inputMode:"numeric",maxLength:3,placeholder:"ID",oninput:clearOut});it.box.addEventListener("change",fill);it.id.setAttribute("aria-label","ID baru untuk "+it.path);
+    const sheath=it.entries.some(e=>/\\saya\d{3}$/.test(e.name));
+    $("list").append(el("div",{className:"row"},it.box,el("div",{},el("b",{textContent:it.old+".arc →"}),el("small",{textContent:[it.mod||(it.source===it.old+".arc"?"":it.source),sheath?"ada sarung":"tanpa sarung"].filter(Boolean).join(" · ")})),it.id));
+  }
+  if(!items.length)$("list").append(el("p",{textContent:"Tidak ada ARC yang bisa dipakai."}));
+  fill();$("go").disabled=!items.length;
+  if(errors.length)say(errors.join("\n"),true);
+};
+function fill(){          // ID awal -> berurutan untuk file yang dicentang
+  const v=$("all").value.trim();if(!/^\d{3}$/.test(v))return;
+  let n=+v;for(const it of items)if(it.box.checked){it.id.value=n<1000?String(n).padStart(3,"0"):"";n++}
+}
+$("all").oninput=()=>{clearOut();fill()};
+
+$("go").onclick=async()=>{
+  clearOut();$("go").disabled=true;const mine=round;
+  try{
+    const picked=items.filter(i=>i.box.checked);
+    if(!picked.length)throw Error("Centang minimal satu file.");
+    const files=[],seen=new Map;
+    for(const it of picked){
+      const id=it.id.value.trim(),extra=it.mod||(it.source===it.old+".arc"?"":it.source),label=it.old+".arc"+(extra?" ("+extra+")":"");
+      if(!/^\d{3}$/.test(id))throw Error("Isi ID tujuan 3 angka untuk "+label+".");
+      if(seen.has(id))throw Error("Dua file memakai ID tujuan "+id+":\n- "+seen.get(id)+"\n- "+label+"\nBeri ID berbeda atau hilangkan salah satu centang.");
+      seen.set(id,label);
+      const out=await writeArc(it.data,changeId(it.entries,it.old,id));
+      if(oldId(await readArc(out))!==id)throw Error("pemeriksaan ulang gagal");
+      files.push({name:id+".arc",old:it.old,data:out});
+    }
+    if(mine!==round)return;
+    const links=files.map(f=>{
+      const u=URL.createObjectURL(new Blob([f.data],{type:"application/octet-stream"}));urls.push(u);
+      return el("a",{className:"dl",href:u,download:f.name,textContent:"Unduh "+f.name+"  (dari "+f.old+")"});
+    });
+    if(links.length>1){
+      const all=el("button",{textContent:"Unduh semua ("+links.length+" file)"});
+      all.onclick=async()=>{all.disabled=true;for(const a of links){if(!a.isConnected)return;a.click();await new Promise(r=>setTimeout(r,600))}all.disabled=false};
+      $("out").append(all);
+    }
+    $("out").append(...links);
+    if(links.length===1)links[0].click();
+    say("Selesai. Kalau diminta izin mengunduh banyak file, pilih Izinkan.\nKalau tidak terunduh, tekan tombol per file atau buka halaman ini di Chrome.");
+  }catch(e){say(e.message,true)}
+  $("go").disabled=false;
+};
+if(!window.DecompressionStream||!window.CompressionStream){say("Browser ini terlalu lama. Buka dengan Chrome versi baru.",true);$("file").disabled=true}
+</script></body></html>
