@@ -11,7 +11,10 @@ label{display:block;font-weight:600;margin-bottom:6px}input[type=file]{width:100
 input[type=text]{width:84px;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.row:first-child{border:0}
 .row div{flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}.row small{display:block;color:var(--mute)}
-input[type=checkbox]{width:20px;height:20px;margin-top:3px}
+input[type=checkbox]{width:20px;height:20px;margin-top:3px;flex:none}
+input[type=search],#list input[type=text]{width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);margin-top:6px}
+.name{display:block;font-weight:600;color:var(--acc);margin-top:4px}
+.hits{max-height:240px;overflow:auto}.hits button{display:block;text-align:left;margin:6px 0 0;padding:8px 10px;font-weight:400;background:var(--bg);color:var(--ink);border:1px solid var(--line)}
 button{width:100%;font:inherit;font-weight:700;padding:12px;border:0;border-radius:10px;background:var(--acc);color:var(--bg);margin-top:14px}
 button:disabled{opacity:.45}#msg{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}.bad{color:var(--bad)}
 a.dl{display:block;text-align:center;margin-top:10px;padding:10px;border:1px solid var(--acc);border-radius:10px;color:var(--acc);font-weight:700;text-decoration:none}
@@ -21,16 +24,19 @@ a.dl{display:block;text-align:center;margin-top:10px;padding:10px;border:1px sol
 <div class="card"><label for="file">1. Pilih file .arc (boleh banyak) atau zip mod</label>
 <input id="file" type="file" multiple accept=".zip,.arc"></div>
 <div class="card"><label for="all">2. Isi ID tujuan</label>
-<p>Ketik di tiap file, atau isi ID awal di sini supaya terisi berurutan.</p>
+<p>Di tiap file, ketik ID atau nama weapon. Atau isi ID awal di sini supaya terisi berurutan.</p>
 <input id="all" type="text" inputmode="numeric" maxlength="3" placeholder="131">
 <div id="list"><p>Belum ada file.</p></div></div>
 <button id="go" disabled>3. Buat file .arc</button>
 <div id="out"></div><p id="msg" role="status"></p>
+<div class="card"><label for="q">Cari weapon (nama atau ID)</label>
+<input id="q" type="search" placeholder="contoh: scythe atau 171" autocomplete="off"><div id="found" class="hits"></div></div>
 <div class="card"><p>Yang berubah hanya nama file di dalam ARC dan path teksturnya. Bentuk model tidak berubah.</p>
 <p>Gerakan dan sarung mengikuti data game untuk ID tujuan. Contoh: scythe lipat dari 175 belum tentu melipat di ID lain, dan sarung belum tentu muncul.</p>
-<p>Taruh hasilnya di folder mod: <b>NamaMod/romfs/nativeNX/arc/weapon/w07/</b></p><p>Matikan mod lain yang memakai ID yang sama.</p></div>
+<p>Taruh hasilnya di folder mod: <b>NamaMod/romfs/nativeNX/arc/weapon/w07/</b></p><p>Matikan mod lain yang memakai ID yang sama.</p><p>Nama weapon dari wiki RTHKKona/MHGU-Modding, halaman Long Sword IDs.</p></div>
 </main><script>
 "use strict";
+const NAMES={"001":"Reaver \"Cruelty\"","002":"Guardian Sword","003":"Eager Cleaver","004":"Bone","005":"Barbarian Blade","007":"Demon Halberd","008":"Daito Crow","009":"Icesteel Blade","010":"Black Scythe","011":"Tigrine Edge","012":"Usurper's Boltslicer","013":"Curviscera","015":"Aikuchi","016":"Rusty Claymore","017":"Blood Cry","018":"Coiled Nail","019":"Wailing Ghost","020":"Stahlfakt","022":"Bicurviscera","023":"Windeater","024":"Canine Katana","025":"Rimeblossom","026":"Iron Katana","027":"Hairtail's Hairblade","028":"Dios Katana","029":"Wyvern Blade \"Blood\"","030":"Worn Long Sword","031":"Noble Blood Cry","032":"Akantor Katana","033":"La Justicière","034":"Toad Abetter","035":"Daito Bane","037":"Demolition Katana","039":"Notos","041":"Consummate Katana","044":"Coiled Saber","045":"Wyvern Blade \"Pale\"","046":"Oblivion","073":"Fox Select","078":"Khanga Edge","080":"Seditious Edge","081":"Übel/Equité","083":"Lightbreak Edge","084":"Demonlord Katana","088":"Imperial Saber","092":"Fatalis Ascencia","093":"Ukanlos Slicer","094":"Mirage Finsword","095":"Crab Cutter","099":"Aqua Guardian","100":"Centenarian Dagger","101":"Hidden Saber","105":"Yuki Ichimonji","116":"Thunderclap","117":"Chainslaughter","118":"Despot's Boltrunner","119":"Fan Club Bamboo Rod","120":"Petrified Saber","121":"Obsidian Saber","122":"Plume Sword","123":"Billowing Luger","124":"Skeletal Sword","125":"Astral Pisces","126":"Wyvern Blade \"Beryl\"","127":"Giant's Tower","128":"Kakaru Kumo Naki","129":"Crimson Maw","130":"Ebon Rabbit","131":"Demon Swirl","132":"Stonefist Cutter","133":"Daito Calamity","134":"Tomb Saber","135":"Seize Cutter","136":"Nightfall Saber","137":"Thunderlord Raikiri","138":"Blazing Ognar","139":"Geode Saber","140":"Anteka Blade","141":"Ivory Rabbit","142":"Serrated Jaw","143":"Moofah Staff","144":"Cheese Knife","145":"Cawscythe","146":"Shogun Splitter","147":"Dark Scythe","148":"Scythe of Menace","149":"Yukumo Long Sword / Yukumo Puresword","150":"Great Hornfly Saber","151":"Bone Katana \"Wolf\"","152":"Blango Destroyer","153":"Black Katana Mk.I","154":"Arzuros Naginata","155":"Drowning Shaft","156":"Wyvern Blade \"Verde\"","157":"Shogun Cutter","158":"Blango Decimator","159":"Diapason","160":"Wyvern Blade \"Flame\"","161":"Liquid Fire Blade","162":"Plesioth Splasher","163":"Mountain Reaper","164":"Dancing Flames","165":"Dark Claw","166":"Ominous Spring","167":"Light Works","168":"Pirate Sword J","169":"Wing of Judgment","170":"Silverwing Long Sword","171":"Goldscythe","172":"Wyvern Blade \"Corund\"","173":"Unsan Musho","174":"Elderfrost Long Sword","175":"Razor Splitter","176":"Cloaked Baron","177":"Fatalis Scythe","178":"Gigant Makra","179":"Bastine Edge","180":"Roguemaster","181":"Research Saber","182":"Rushin' Blue","183":"Burning Dragonsword","184":"Elder Saber","185":"Urano Metria"};
 const $=i=>document.getElementById(i),enc=new TextEncoder,dec=new TextDecoder;
 const pipe=async(u8,s)=>new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(s)).arrayBuffer());
 const view=u=>new DataView(u.buffer,u.byteOffset,u.byteLength);
@@ -102,6 +108,12 @@ async function readZip(d){
   }
   return out;
 }
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"");
+const nameOf=id=>NAMES[id]||"";
+function search(q){      // semua kata harus cocok dengan "ID nama"
+  const words=q.split(/\s+/).map(norm).filter(Boolean);if(!words.length)return[];
+  return Object.keys(NAMES).sort().filter(id=>words.every(w=>norm(id+" "+NAMES[id]).includes(w)));
+}
 let items=[],urls=[],round=0;
 const say=(t,bad)=>{$("msg").textContent=t;$("msg").className=bad?"bad":""};
 function clearOut(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];$("out").textContent="";say("")}
@@ -127,17 +139,33 @@ $("file").onchange=async ev=>{
   items=found.sort((a,b)=>a.old.localeCompare(b.old)||a.path.localeCompare(b.path));$("list").textContent="";
   for(const it of items){
     it.box=el("input",{type:"checkbox",checked:true,onchange:clearOut});it.box.setAttribute("aria-label","pakai "+it.path);
-    it.id=el("input",{type:"text",inputMode:"numeric",maxLength:3,placeholder:"ID",oninput:clearOut});it.box.addEventListener("change",fill);it.id.setAttribute("aria-label","ID baru untuk "+it.path);
+    it.id=el("input",{type:"text",placeholder:"ID atau nama tujuan",autocomplete:"off",oninput:()=>typed(it)});it.name=el("span",{className:"name"});it.hits=el("div",{className:"hits"});it.box.addEventListener("change",fill);it.id.setAttribute("aria-label","ID baru untuk "+it.path);
     const sheath=it.entries.some(e=>/\\saya\d{3}$/.test(e.name));
-    $("list").append(el("div",{className:"row"},it.box,el("div",{},el("b",{textContent:it.old+".arc →"}),el("small",{textContent:[it.mod||(it.source===it.old+".arc"?"":it.source),sheath?"ada sarung":"tanpa sarung"].filter(Boolean).join(" · ")})),it.id));
+    $("list").append(el("div",{className:"row"},it.box,el("div",{},el("b",{textContent:it.old+".arc"+(nameOf(it.old)?" · "+nameOf(it.old):"")+" →"}),el("small",{textContent:[it.mod||(it.source===it.old+".arc"?"":it.source),sheath?"ada sarung":"tanpa sarung"].filter(Boolean).join(" · ")}),it.id,it.name,it.hits)));
   }
   if(!items.length)$("list").append(el("p",{textContent:"Tidak ada ARC yang bisa dipakai."}));
   fill();$("go").disabled=!items.length;
   if(errors.length)say(errors.join("\n"),true);
 };
+function showName(it){
+  const v=it.id.value.trim();
+  it.name.textContent=/^\d{3}$/.test(v)?(nameOf(v)||"ID "+v+" tidak ada di daftar"):"";
+}
+function typed(it){
+  clearOut();showName(it);it.hits.textContent="";
+  const v=it.id.value.trim();if(!v||/^\d{3}$/.test(v))return;
+  const ids=search(v);
+  for(const id of ids)it.hits.append(el("button",{type:"button",textContent:id+" · "+nameOf(id),onclick:()=>{clearOut();it.id.value=id;it.hits.textContent="";showName(it)}}));
+  if(!ids.length)it.hits.textContent="Tidak ada nama yang cocok.";
+}
+$("q").oninput=()=>{
+  const ids=search($("q").value);$("found").textContent="";
+  for(const id of ids)$("found").append(el("p",{textContent:id+".arc · "+nameOf(id)}));
+  if($("q").value.trim()&&!ids.length)$("found").textContent="Tidak ada nama yang cocok.";
+};
 function fill(){          // ID awal -> berurutan untuk file yang dicentang
   const v=$("all").value.trim();if(!/^\d{3}$/.test(v))return;
-  let n=+v;for(const it of items)if(it.box.checked){it.id.value=n<1000?String(n).padStart(3,"0"):"";n++}
+  let n=+v;for(const it of items)if(it.box.checked){it.id.value=n<1000?String(n).padStart(3,"0"):"";it.hits.textContent="";showName(it);n++}
 }
 $("all").oninput=()=>{clearOut();fill()};
 
@@ -149,7 +177,7 @@ $("go").onclick=async()=>{
     const files=[],seen=new Map;
     for(const it of picked){
       const id=it.id.value.trim(),extra=it.mod||(it.source===it.old+".arc"?"":it.source),label=it.old+".arc"+(extra?" ("+extra+")":"");
-      if(!/^\d{3}$/.test(id))throw Error("Isi ID tujuan 3 angka untuk "+label+".");
+      if(!/^\d{3}$/.test(id))throw Error("Isi ID tujuan untuk "+label+" (3 angka, atau ketik nama lalu pilih).");
       if(seen.has(id))throw Error("Dua file memakai ID tujuan "+id+":\n- "+seen.get(id)+"\n- "+label+"\nBeri ID berbeda atau hilangkan salah satu centang.");
       seen.set(id,label);
       const out=await writeArc(it.data,changeId(it.entries,it.old,id));
@@ -159,7 +187,7 @@ $("go").onclick=async()=>{
     if(mine!==round)return;
     const links=files.map(f=>{
       const u=URL.createObjectURL(new Blob([f.data],{type:"application/octet-stream"}));urls.push(u);
-      return el("a",{className:"dl",href:u,download:f.name,textContent:"Unduh "+f.name+"  (dari "+f.old+")"});
+      return el("a",{className:"dl",href:u,download:f.name,textContent:"Unduh "+f.name+(nameOf(f.name.slice(0,3))?" · "+nameOf(f.name.slice(0,3)):"")+" (dari "+f.old+")"});
     });
     if(links.length>1){
       const all=el("button",{textContent:"Unduh semua ("+links.length+" file)"});
